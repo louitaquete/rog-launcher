@@ -4,6 +4,8 @@ A lightweight, free launcher for **Minecraft: Java Edition**, built with [Tauri]
 
 > Status: early development. The UI is designed in Figma and the app is being built now.
 
+![Rog Launcher — home screen](docs/screenshots/inicio.png)
+
 ## Planned features
 
 - **Instances** — separate game folders for Vanilla, modded and PvP setups, each with its own settings.
