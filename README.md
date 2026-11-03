@@ -26,6 +26,19 @@ A lightweight, free launcher for **Minecraft: Java Edition**, built with [Tauri]
 | UI | React + TypeScript + Tailwind |
 | Mods source | Modrinth API |
 
+## Development
+
+Requirements: [Node.js 22](https://nodejs.org), [Rust](https://rustup.rs) and the [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS.
+
+```bash
+npm install
+npm run tauri dev     # app window with hot reload
+npm run dev           # UI only, in the browser (http://localhost:1420)
+npm run tauri build   # installer in src-tauri/target/release/bundle
+```
+
+Every push to `main` builds a Windows installer in GitHub Actions (download it from the run's artifacts).
+
 ## Privacy
 
 Rog Launcher signs players in only to verify game ownership and launch Minecraft in online mode. It stores only the tokens needed to launch the game, on the user's own computer, and shares no account data.

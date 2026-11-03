@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Tokens do Figma (monocromático, flat, sem cantos arredondados) */
+@theme {
+  --color-bg: #0d0d0d;
+  --color-bar: #121212;
+  --color-sidebar: #161616;
+  --color-surface: #151515;
+  --color-card: #171717;
+  --color-raised: #1c1c1c;
+  --color-active: #242424;
+  --color-line: #222222;
+  --color-edge: #2e2e2e;
+  --color-ink: #ededed;
+  --color-soft: #bdbdbd;
+  --color-muted: #7a7a7a;
+  --color-faint: #5a5a5a;
+
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-brand: "Orbitron", "Poppins", sans-serif;
+
+  --radius-*: initial;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+* {
+  border-radius: 0;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-edge);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
