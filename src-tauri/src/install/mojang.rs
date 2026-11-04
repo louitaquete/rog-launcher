@@ -42,6 +42,16 @@ pub struct VersionEntry {
 #[serde(rename_all = "camelCase")]
 pub struct VersionJson {
     pub id: String,
+    #[serde(default)]
+    pub main_class: String,
+    #[serde(default, rename = "type")]
+    pub kind: String,
+    /// Formato novo (1.13+): listas de argumentos com regras.
+    #[serde(default)]
+    pub arguments: Option<Arguments>,
+    /// Formato antigo (até 1.12): uma string só.
+    #[serde(default)]
+    pub minecraft_arguments: Option<String>,
     pub asset_index: AssetIndexRef,
     pub downloads: VersionDownloads,
     #[serde(default)]
@@ -50,6 +60,29 @@ pub struct VersionJson {
     pub libraries: Vec<Library>,
     #[serde(default)]
     pub logging: Option<Logging>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct Arguments {
+    #[serde(default)]
+    pub game: Vec<Argument>,
+    #[serde(default)]
+    pub jvm: Vec<Argument>,
+}
+
+/// Um argumento é texto puro ou `{rules, value}`, onde value é texto ou lista.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Argument {
+    Plain(String),
+    Ruled { rules: Vec<Rule>, value: ArgValue },
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum ArgValue {
+    One(String),
+    Many(Vec<String>),
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -129,6 +162,8 @@ pub struct Logging {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct LoggingClient {
+    #[serde(default)]
+    pub argument: String,
     pub file: LoggingFile,
 }
 
@@ -210,23 +245,34 @@ pub fn java_platform() -> &'static str {
 // ---------------------------------------------------------------- regras e bibliotecas
 
 /// Avalia as regras de uma biblioteca para o sistema `os`. Sem regras = permitido.
+/// Regras com `features` são ignoradas aqui (valem só para argumentos).
 pub fn rules_allow(rules: &[Rule], os: &str) -> bool {
+    rules_allow_with(rules, os, &|_| false, true)
+}
+
+/// Versão completa: `feature(nome)` diz se uma feature está ligada (ex.: "has_custom_resolution").
+/// Com `skip_features`, regras que dependem de features não contam.
+pub fn rules_allow_with(rules: &[Rule], os: &str, feature: &dyn Fn(&str) -> bool, skip_features: bool) -> bool {
     if rules.is_empty() {
         return true;
     }
     let mut allowed = false;
     for rule in rules {
-        if rule.features.is_some() {
+        if rule.features.is_some() && skip_features {
             continue;
         }
-        let matches = match &rule.os {
+        let os_ok = match &rule.os {
             None => true,
             Some(o) => {
                 o.name.as_deref().is_none_or(|n| n == os)
                     && o.arch.as_deref().is_none_or(|a| a == "x86" && std::env::consts::ARCH == "x86")
             }
         };
-        if matches {
+        let features_ok = match &rule.features {
+            Some(serde_json::Value::Object(map)) => map.iter().all(|(k, v)| v.as_bool().unwrap_or(false) == feature(k)),
+            _ => true,
+        };
+        if os_ok && features_ok {
             allowed = rule.action == "allow";
         }
     }

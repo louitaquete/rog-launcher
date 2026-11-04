@@ -1,5 +1,6 @@
 import { windowControls } from "../lib/window";
 import { Icon } from "./ui";
+import { useApp } from "../lib/store";
 
 function WinButton({ label, onClick, children, danger }: { label: string; onClick: () => void; children: React.ReactNode; danger?: boolean }) {
   return (
@@ -14,6 +15,7 @@ function WinButton({ label, onClick, children, danger }: { label: string; onClic
 }
 
 export function TitleBar() {
+  const { devOffline } = useApp();
   return (
     <header
       data-tauri-drag-region
@@ -23,6 +25,7 @@ export function TitleBar() {
       <span data-tauri-drag-region className="font-brand text-sm font-bold tracking-[0.04em] text-soft">
         Rog Launcher
       </span>
+      {devOffline && <span className="border border-edge px-1.5 py-px font-brand text-[9px] tracking-[0.14em] text-muted">DEV · OFFLINE</span>}
       <div data-tauri-drag-region className="flex-1 self-stretch" />
       <WinButton label="Minimizar" onClick={windowControls.minimize}>
         <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" strokeWidth="1.2" /></svg>

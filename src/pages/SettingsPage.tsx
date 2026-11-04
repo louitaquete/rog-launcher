@@ -61,7 +61,7 @@ function CommitInput({ value, onCommit, className = "w-[260px]", type = "text" }
 
 export function SettingsPage() {
   const { section = "geral" } = useParams();
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings, devOffline } = useApp();
   const [dataDir, setDataDir] = useState("");
   const [version, setVersion] = useState("");
   useEffect(() => {
@@ -118,6 +118,11 @@ export function SettingsPage() {
             <Row title="Atualizações automáticas" desc="Baixa novas versões do launcher em segundo plano">
               <Toggle on={general.autoUpdate} onChange={(v) => set("general", { autoUpdate: v })} />
             </Row>
+            {devOffline && (
+              <Row title="Nick do modo de teste" desc="Build de desenvolvedor: o jogo abre offline com este nome">
+                <CommitInput value={general.devNickname} onCommit={(v) => set("general", { devNickname: v.trim().slice(0, 16) || "Jogador" })} className="w-[200px]" />
+              </Row>
+            )}
             <Row title="Aviso do Kill game" desc={general.killWarningDismissed ? "Desligado: o Kill game fecha o jogo direto" : "Aparece antes de forçar o fechamento do jogo"}>
               <Toggle on={!general.killWarningDismissed} onChange={(v) => set("general", { killWarningDismissed: !v })} />
             </Row>

@@ -12,7 +12,7 @@ export function instancePath(i: Instance) {
 
 export function InstanceCard({ instance }: { instance: Instance }) {
   const navigate = useNavigate();
-  const { startInstall } = useApp();
+  const { play } = useApp();
   const open = () => navigate(instancePath(instance));
 
   return (
@@ -44,7 +44,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              startInstall(instance.id);
+              play(instance.id);
               navigate(instance.kind === "pvp" ? "/pvp/jogar" : `/${instance.kind}/${instance.id}/jogar`);
             }}
             className="flex h-[38px] flex-1 items-center justify-center gap-2 bg-active text-[13px] font-semibold text-[#d0d0d0] transition-colors group-hover:bg-ink group-hover:text-[#111]"

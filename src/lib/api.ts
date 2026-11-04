@@ -50,6 +50,7 @@ export interface Settings {
     startWithSystem: boolean;
     autoUpdate: boolean;
     killWarningDismissed: boolean;
+    devNickname: string;
   };
   java: { maxMemoryMb: number; minMemoryMb: number; javaPath: string | null; jvmArgs: string };
   launch: { skipMojangIntro: boolean; fullscreen: boolean; width: number; height: number };
@@ -61,7 +62,7 @@ export const isTauri = "__TAURI_INTERNALS__" in window;
 
 // ---------- Armazenamento falso para o navegador ----------
 const DEFAULT_SETTINGS: Settings = {
-  general: { language: "pt-BR", onLaunch: "minimize", startWithSystem: false, autoUpdate: true, killWarningDismissed: false },
+  general: { language: "pt-BR", onLaunch: "minimize", startWithSystem: false, autoUpdate: true, killWarningDismissed: false, devNickname: "Jogador" },
   java: { maxMemoryMb: 6144, minMemoryMb: 2048, javaPath: null, jvmArgs: "-XX:+UseG1GC -XX:MaxGCPauseMillis=50" },
   launch: { skipMojangIntro: true, fullscreen: false, width: 1920, height: 1080 },
   downloads: { concurrent: 8, modSource: "modrinth", autoUpdateMods: false, speedLimitMbps: 0 },
@@ -194,4 +195,55 @@ async function simulateInstall(id: string, on: (p: Progress) => void) {
     }
   }
   on({ instanceId: id, stage: "done", filesDone: 0, filesTotal: 0, bytesPerSec: 0, current: "", error: null });
+}
+
+// ---------- Jogo ----------
+export interface GameState {
+  instanceId: string;
+  state: "running" | "exited";
+  exitCode: number | null;
+  killed: boolean;
+  startedAt: number;
+}
+
+export interface LogLine {
+  instanceId: string;
+  line: string;
+  stderr: boolean;
+}
+
+export const gameApi = {
+  devOffline: (): Promise<boolean> => (isTauri ? invoke("dev_offline") : Promise.resolve(true)),
+  /** Resolve quando o jogo fecha. */
+  launch: (id: string): Promise<void> => (isTauri ? invoke("launch_instance", { id }) : simulateGame(id)),
+  kill: (id: string): Promise<boolean> => (isTauri ? invoke("kill_game", { id }) : Promise.resolve((simKill[id] = true))),
+  /** Assina os eventos do jogo; devolve a função para cancelar. */
+  listen: async (onLog: (l: LogLine) => void, onState: (s: GameState) => void): Promise<() => void> => {
+    if (!isTauri) {
+      simHandlers = { onLog, onState };
+      return () => (simHandlers = null);
+    }
+    const { listen } = await import("@tauri-apps/api/event");
+    const a = await listen<LogLine>("game-log", (e) => onLog(e.payload));
+    const b = await listen<GameState>("game-state", (e) => onState(e.payload));
+    return () => {
+      a();
+      b();
+    };
+  },
+};
+
+// Simulação no navegador
+const simKill: Record<string, boolean> = {};
+let simHandlers: { onLog: (l: LogLine) => void; onState: (s: GameState) => void } | null = null;
+async function simulateGame(id: string) {
+  simKill[id] = false;
+  const startedAt = Math.floor(Date.now() / 1000);
+  simHandlers?.onState({ instanceId: id, state: "running", exitCode: null, killed: false, startedAt });
+  const lines = ["[Render thread/INFO]: Setting user: Jogador", "[Render thread/INFO]: Backend library: LWJGL version 3.3.3", "[Render thread/WARN]: Missing sound for event: minecraft:item.goat_horn.play", "[Render thread/INFO]: Loaded 1373 recipes", "[Server thread/INFO]: Starting integrated minecraft server version 1.21.4"];
+  for (let i = 0; i < 40 && !simKill[id]; i++) {
+    simHandlers?.onLog({ instanceId: id, line: `[21:40:${String(i).padStart(2, "0")}] ${lines[i % lines.length]}`, stderr: false });
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  simHandlers?.onState({ instanceId: id, state: "exited", exitCode: simKill[id] ? -1 : 0, killed: !!simKill[id], startedAt });
 }

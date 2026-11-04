@@ -1,4 +1,4 @@
-import type { Instance, Progress, Stage } from "../lib/api";
+import { api, type Instance, type Progress, type Stage } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Button, Chip, Icon } from "../components/ui";
 import type { IconName } from "../components/icons";
@@ -40,8 +40,12 @@ function unit(stage: Stage) {
 }
 
 export function PlayTab({ instance }: { instance: Instance }) {
-  const { installs, startInstall, cancelInstall } = useApp();
+  const { installs, play, cancelInstall, games, logs, launchErrors } = useApp();
   const p: Progress | undefined = installs[instance.id];
+  const game = games[instance.id];
+  const inGame = game?.state === "running";
+  const crashed = game?.state === "exited" && !game.killed && game.exitCode !== 0 && game.exitCode !== null;
+  const launchError = launchErrors[instance.id];
   const running = p && RUNNING.includes(p.stage);
   const ratio = p && p.filesTotal ? p.filesDone / p.filesTotal : 0;
   const at = p ? ORDER.indexOf(p.stage) : -1;
@@ -79,21 +83,64 @@ export function PlayTab({ instance }: { instance: Instance }) {
                 <Button variant="ghost" onClick={() => cancelInstall(instance.id)}>Cancelar</Button>
               </div>
             </div>
+          ) : inGame ? (
+            <div className="mt-1 flex items-center gap-3">
+              <div className="flex h-14 w-60 items-center justify-center gap-3 border border-edge bg-raised text-[17px] font-semibold text-[#9a9a9a]">
+                <span className="h-2 w-2 animate-pulse bg-[#9a9a9a]" />
+                Em jogo
+              </div>
+            </div>
           ) : (
             <div className="mt-1 flex items-center gap-2">
               <button
-                onClick={() => startInstall(instance.id)}
+                onClick={() => play(instance.id)}
                 className="flex h-14 w-60 items-center justify-center gap-3 bg-ink text-[17px] font-semibold text-[#111] transition-colors hover:bg-white"
               >
                 <svg width="14" height="14" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="currentColor" /></svg>
                 Jogar
               </button>
-              {p?.stage === "done" && <span className="text-[13px] text-soft">Arquivos prontos. Abrir o jogo chega na próxima etapa.</span>}
               {p?.stage === "cancelled" && <span className="text-[13px] text-muted">Download cancelado. O que já baixou fica salvo.</span>}
             </div>
           )}
         </div>
       </div>
+
+      {launchError && !inGame && (
+        <div className="flex items-center gap-4 border-l-2 border-ink bg-[#1a1a1a] px-4 py-3">
+          <div className="flex-1">
+            {launchError.includes("NEEDS_ACCOUNT") ? (
+              <>
+                <p className="m-0 text-[13px] font-semibold">Conecte sua conta Microsoft para jogar</p>
+                <p className="m-0 mt-0.5 text-xs text-[#9a9a9a]">O login chega assim que a Mojang aprovar o app. Os arquivos já estão baixados.</p>
+              </>
+            ) : (
+              <>
+                <p className="m-0 text-[13px] font-semibold">Não deu para abrir o jogo</p>
+                <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{launchError}</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {crashed && (
+        <div className="flex flex-col border border-edge bg-surface">
+          <div className="flex items-center gap-4 px-5 py-4">
+            <div className="flex h-11 w-11 items-center justify-center bg-ink">
+              <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2 L23 21 H1 Z" fill="#111" /><rect x="11" y="9" width="2" height="6" fill="#EDEDED" /><rect x="11" y="17" width="2" height="2" fill="#EDEDED" /></svg>
+            </div>
+            <div className="flex-1">
+              <p className="m-0 text-base font-semibold">O jogo fechou inesperadamente</p>
+              <p className="m-0 mt-0.5 text-xs text-muted">Código de saída {game!.exitCode}. O fim do log está abaixo.</p>
+            </div>
+            <Button variant="outline" onClick={() => navigator.clipboard.writeText((logs[instance.id] ?? []).join("\n"))}>Copiar log</Button>
+            <Button variant="outline" onClick={() => api.openFolder(instance.id)}>Abrir pasta da instância</Button>
+          </div>
+          <pre className="m-0 max-h-64 overflow-auto border-t border-line bg-[#0a0a0a] px-5 py-3 font-mono text-xs leading-5 text-[#9a9a9a] select-text">
+            {(logs[instance.id] ?? []).slice(-40).join("\n") || "Sem log."}
+          </pre>
+        </div>
+      )}
 
       {p?.stage === "error" && (
         <div className="flex items-center gap-4 border-l-2 border-ink bg-[#1a1a1a] px-4 py-3">
@@ -101,12 +148,12 @@ export function PlayTab({ instance }: { instance: Instance }) {
             <p className="m-0 text-[13px] font-semibold">Não deu para baixar os arquivos</p>
             <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{p.error}</p>
           </div>
-          <Button variant="outline" onClick={() => startInstall(instance.id)}>Tentar de novo</Button>
+          <Button variant="outline" onClick={() => play(instance.id)}>Tentar de novo</Button>
         </div>
       )}
 
       {/* Etapas */}
-      {p && p.stage !== "done" && (
+      {p && !["done", "cancelled", "error"].includes(p.stage) && (
         <div className="flex flex-col border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line">
           {STEPS.map((s, i) => {
             const state = i < at || p.stage === "done" ? "done" : i === at && running ? "now" : "wait";

@@ -1,4 +1,5 @@
 mod install;
+mod launch;
 mod store;
 
 use store::instances::{Instance, NewInstance};
@@ -94,6 +95,77 @@ async fn install_instance(app: tauri::AppHandle, store: State<'_, Store>, instal
     result
 }
 
+/// Indica se este build abre o jogo sem conta (só builds de desenvolvedor).
+#[tauri::command]
+fn dev_offline() -> bool {
+    cfg!(feature = "dev-offline")
+}
+
+fn account_for(settings: &store::settings::Settings) -> Res<launch::args::Account> {
+    if cfg!(feature = "dev-offline") {
+        let nick = settings.general.dev_nickname.trim();
+        let nick = if nick.is_empty() { "Jogador" } else { nick };
+        return Ok(launch::args::Account::offline(nick));
+    }
+    let _ = settings;
+    // Login Microsoft entra aqui quando a Mojang aprovar o app.
+    Err("NEEDS_ACCOUNT: conecte sua conta Microsoft para jogar".into())
+}
+
+/// Abre o jogo. Logs chegam pelo evento `game-log`; início e fim, por `game-state`.
+#[tauri::command]
+async fn launch_instance(app: tauri::AppHandle, store: State<'_, Store>, running: State<'_, launch::Running>, id: String) -> Res<()> {
+    if running.is_running(&id) {
+        return Err("o jogo já está aberto".into());
+    }
+    let settings = store.load_settings().map_err(err)?;
+    let account = account_for(&settings)?;
+    let mut inst = store.get_instance(&id).map_err(err)?;
+    let game_dir = store.game_dir(&id).map_err(err)?;
+    let prepared = launch::prepare(store.root(), &game_dir, &inst, &settings, &account)?;
+
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    running.0.lock().unwrap().insert(id.clone(), tx);
+
+    let (log_app, state_app) = (app.clone(), app.clone());
+    let minimize = settings.general.on_launch != store::settings::OnLaunch::KeepOpen;
+    let result = launch::run(
+        prepared,
+        id.clone(),
+        rx,
+        move |l| {
+            let _ = log_app.emit("game-log", l);
+        },
+        move |s| {
+            if let Some(w) = state_app.get_webview_window("main") {
+                if s.state == "running" && minimize {
+                    let _ = w.minimize();
+                } else if s.state == "exited" {
+                    let _ = w.unminimize();
+                    let _ = w.set_focus();
+                }
+            }
+            let _ = state_app.emit("game-state", s);
+        },
+    )
+    .await;
+    running.0.lock().unwrap().remove(&id);
+
+    if let Ok(end) = &result {
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        inst.last_played_at = Some(end.started_at);
+        inst.play_time_secs += now.saturating_sub(end.started_at);
+        let _ = store.update_instance(inst);
+    }
+    result.map(|_| ())
+}
+
+/// Fecha o jogo na força.
+#[tauri::command]
+fn kill_game(running: State<launch::Running>, id: String) -> bool {
+    running.kill(&id)
+}
+
 #[tauri::command]
 fn cancel_install(installs: State<install::Installs>, id: String) -> bool {
     installs.cancel(&id)
@@ -120,6 +192,7 @@ pub fn run() {
             store.ensure_pvp()?;
             app.manage(store);
             app.manage(install::Installs::default());
+            app.manage(launch::Running::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -136,6 +209,9 @@ pub fn run() {
             list_versions,
             install_instance,
             cancel_install,
+            launch_instance,
+            kill_game,
+            dev_offline,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

@@ -37,6 +37,8 @@ pub struct General {
     pub auto_update: bool,
     /// Aviso do Kill game já foi mostrado e o usuário marcou "não mostrar de novo".
     pub kill_warning_dismissed: bool,
+    /// Nick usado no modo offline dos builds de desenvolvedor.
+    pub dev_nickname: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -87,7 +89,7 @@ pub struct Appearance {
 
 impl Default for General {
     fn default() -> Self {
-        Self { language: "pt-BR".into(), on_launch: OnLaunch::Minimize, start_with_system: false, auto_update: true, kill_warning_dismissed: false }
+        Self { language: "pt-BR".into(), on_launch: OnLaunch::Minimize, start_with_system: false, auto_update: true, kill_warning_dismissed: false, dev_nickname: "Jogador".into() }
     }
 }
 impl Default for Java {

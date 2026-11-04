@@ -8,6 +8,15 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          # Versão normal: abrir o jogo exige login Microsoft.
+          - name: rog-launcher-windows
+            args: ""
+          # Só para testar enquanto o login não é aprovado. Não distribuir.
+          - name: rog-launcher-windows-DEV-offline
+            args: "--features dev-offline"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,11 +27,13 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          key: ${{ matrix.name }}
       - run: npm ci
-      - run: npm run tauri build
+      - run: npm run tauri build -- ${{ matrix.args }}
       - uses: actions/upload-artifact@v4
         with:
-          name: rog-launcher-windows
+          name: ${{ matrix.name }}
+          retention-days: ${{ matrix.args == '' && 30 || 3 }}
           path: |
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/msi/*.msi
