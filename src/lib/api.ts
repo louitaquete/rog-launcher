@@ -136,6 +136,11 @@ export const api = {
     mock.write("instances", [...list, inst]);
     return Promise.resolve(inst);
   },
+  updateInstance: (instance: Instance): Promise<Instance> => {
+    if (isTauri) return invoke("update_instance", { instance });
+    mock.write("instances", mock.instances().map((i) => (i.id === instance.id ? instance : i)));
+    return Promise.resolve(instance);
+  },
   deleteInstance: (id: string): Promise<void> => {
     if (isTauri) return invoke("delete_instance", { id });
     mock.write("instances", mock.instances().filter((i) => i.id !== id || id === "pvp"));
