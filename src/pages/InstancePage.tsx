@@ -1,5 +1,5 @@
 import { NavLink, Navigate, useParams, Link } from "react-router-dom";
-import { instances } from "../data/instances";
+import { useApp } from "../lib/store";
 import { Icon } from "../components/ui";
 import type { IconName } from "../components/icons";
 import { Placeholder } from "./Placeholder";
@@ -14,8 +14,10 @@ const allTabs: { slug: string; label: string; icon: IconName }[] = [
 // Página de instância: breadcrumb + abas estilo navegador. PVP não tem aba Mods.
 export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
   const { id = "pvp", tab = "jogar" } = useParams();
+  const { instances } = useApp();
+  if (instances === null) return null;
   const inst = instances.find((i) => i.id === id);
-  if (!inst) return <Navigate to={`/${area}`} replace />;
+  if (!inst) return <Navigate to={area === "pvp" ? "/" : `/${area}`} replace />;
 
   const base = area === "pvp" ? "/pvp" : `/${area}/${id}`;
   const tabs = area === "pvp" ? allTabs.filter((t) => t.slug !== "mods") : allTabs;

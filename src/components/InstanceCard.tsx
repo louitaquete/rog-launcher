@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import type { Instance } from "../data/instances";
+import type { Instance } from "../lib/api";
 import { Chip, Icon } from "./ui";
 import type { IconName } from "./icons";
 
@@ -28,8 +28,14 @@ export function InstanceCard({ instance }: { instance: Instance }) {
       <div className="flex flex-1 flex-col gap-2.5 p-3.5">
         <p className="m-0 truncate text-sm font-semibold text-ink">{instance.name}</p>
         <div className="flex gap-1.5">
-          {instance.mcVersion && <Chip>{instance.mcVersion}</Chip>}
-          <Chip>{instance.tag ?? instance.loader}</Chip>
+          {instance.kind === "pvp" ? (
+            <Chip>Competitivo</Chip>
+          ) : (
+            <>
+              <Chip>{instance.mcVersion}</Chip>
+              <Chip>{instance.loader.type}</Chip>
+            </>
+          )}
         </div>
         <div className="flex-1" />
         <div className="flex gap-1.5">
@@ -59,9 +65,9 @@ export function InstanceCard({ instance }: { instance: Instance }) {
   );
 }
 
-export function NewInstanceCard() {
+export function NewInstanceCard({ onClick }: { onClick: () => void }) {
   return (
-    <button className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 border border-dashed border-edge text-[#6a6a6a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
+    <button onClick={onClick} className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 border border-dashed border-edge text-[#6a6a6a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
       <span className="text-[32px] leading-none">+</span>
       <span className="text-[13px] font-medium">Nova instância</span>
     </button>

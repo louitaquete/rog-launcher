@@ -51,3 +51,28 @@ body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Slider reto, no padrão do Figma */
+.rog-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  cursor: pointer;
+}
+.rog-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--color-ink);
+  border: 0;
+}
+.rog-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--color-ink);
+  border: 0;
+}
+
+select option {
+  background: #1c1c1c;
+}

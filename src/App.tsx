@@ -4,9 +4,12 @@ import { Sidebar } from "./components/Sidebar";
 import { InstanceList } from "./pages/InstanceList";
 import { InstancePage } from "./pages/InstancePage";
 import { Placeholder } from "./pages/Placeholder";
+import { SettingsPage } from "./pages/SettingsPage";
+import { AppProvider } from "./lib/store";
 
 export default function App() {
   return (
+    <AppProvider>
     <HashRouter>
       <div className="flex h-full flex-col">
         <TitleBar />
@@ -24,12 +27,14 @@ export default function App() {
               <Route path="/pvp" element={<Navigate to="/pvp/jogar" replace />} />
               <Route path="/pvp/:tab" element={<InstancePage area="pvp" />} />
               <Route path="/skin" element={<Placeholder title="Skin global" />} />
-              <Route path="/config" element={<Placeholder title="Configurações" />} />
+              <Route path="/config" element={<Navigate to="/config/geral" replace />} />
+              <Route path="/config/:section" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
         </div>
       </div>
     </HashRouter>
+    </AppProvider>
   );
 }
