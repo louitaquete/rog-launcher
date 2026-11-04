@@ -25,11 +25,41 @@ impl std::fmt::Display for DlError {
     }
 }
 
+/// Proxy configurado no Windows (Configurações › Rede › Proxy). O reqwest só lê variáveis de ambiente.
+#[cfg(windows)]
+fn system_proxy() -> Option<String> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+    let key = RegKey::predef(HKEY_CURRENT_USER).open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Internet Settings").ok()?;
+    let enabled: u32 = key.get_value("ProxyEnable").ok()?;
+    if enabled == 0 {
+        return None;
+    }
+    let server: String = key.get_value("ProxyServer").ok()?;
+    // Pode vir como "host:porta" ou "http=host:porta;https=host:porta".
+    let chosen = server
+        .split(';')
+        .find_map(|p| p.strip_prefix("https="))
+        .or_else(|| server.split(';').find_map(|p| p.strip_prefix("http=")))
+        .unwrap_or(&server)
+        .trim()
+        .to_string();
+    (!chosen.is_empty()).then(|| if chosen.contains("://") { chosen } else { format!("http://{chosen}") })
+}
+
+#[cfg(not(windows))]
+fn system_proxy() -> Option<String> {
+    None
+}
+
 pub fn client() -> reqwest::Client {
-    reqwest::Client::builder()
+    let mut builder = reqwest::Client::builder();
+    if let Some(proxy) = system_proxy().and_then(|p| reqwest::Proxy::all(p).ok()) {
+        builder = builder.proxy(proxy);
+    }
+    builder
         .user_agent(concat!("RogLauncher/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(Duration::from_secs(15))
-        .timeout(Duration::from_secs(300))
+        .read_timeout(Duration::from_secs(30))
         .build()
         .expect("cliente HTTP")
 }
@@ -49,6 +79,18 @@ pub async fn is_valid(path: &Path, size: u64, sha1: Option<&str>) -> bool {
     }
 }
 
+/// Mensagem de erro com a causa de verdade (o reqwest só diz "error sending request" no topo).
+fn describe(e: &reqwest::Error) -> String {
+    let mut msg = if e.is_timeout() { "tempo esgotado".to_string() } else if e.is_connect() { "não conectou".to_string() } else { "falha de rede".to_string() };
+    let mut src = std::error::Error::source(e);
+    while let Some(s) = src {
+        msg.push_str(": ");
+        msg.push_str(&s.to_string());
+        src = s.source();
+    }
+    msg
+}
+
 /// Baixa um arquivo para memória, conferindo o hash, com até 3 tentativas.
 pub async fn fetch(client: &reqwest::Client, url: &str, sha1: Option<&str>) -> Result<Vec<u8>, String> {
     let mut last = String::new();
@@ -57,11 +99,11 @@ pub async fn fetch(client: &reqwest::Client, url: &str, sha1: Option<&str>) -> R
             tokio::time::sleep(Duration::from_millis(500 * attempt)).await;
         }
         let res = async {
-            let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+            let resp = client.get(url).send().await.map_err(|e| describe(&e))?;
             if !resp.status().is_success() {
                 return Err(format!("HTTP {}", resp.status()));
             }
-            let bytes = resp.bytes().await.map_err(|e| e.to_string())?.to_vec();
+            let bytes = resp.bytes().await.map_err(|e| describe(&e))?.to_vec();
             if let Some(expected) = sha1 {
                 let got = sha1_hex(&bytes);
                 if got != expected {
