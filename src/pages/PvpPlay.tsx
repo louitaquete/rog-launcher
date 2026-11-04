@@ -22,7 +22,7 @@ function VersionArt({ base, big, dim }: { base: string; big?: boolean; dim?: boo
   const seed = Number(base.split(".")[1]) || 8;
   const blocks = Array.from({ length: big ? 26 : 14 }, (_, i) => 22 + ((seed * (i + 3) * 37) % 45));
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-[#2a2a2a] to-[#121212]">
+    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-[#2c2c2c] to-[#1a1a1a]">
       <div className="absolute inset-x-0 bottom-0 flex h-full items-end opacity-[0.07]">
         {blocks.map((h, i) => (
           <div key={i} className="flex-1 bg-white" style={{ height: `${h}%` }} />
@@ -30,13 +30,44 @@ function VersionArt({ base, big, dim }: { base: string; big?: boolean; dim?: boo
       </div>
       <div className="absolute inset-0 flex items-center justify-center">
         <span
-          className={`font-black italic tracking-[-0.01em] text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] ${big ? "text-7xl" : "text-[40px]"}`}
+          className={`font-black italic tracking-[-0.01em] text-ink drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] ${big ? "text-7xl" : "text-[40px]"}`}
           style={{ fontFamily: "Poppins" }}
         >
           VERSÃO {base}
         </span>
       </div>
-      {dim && <div className="absolute inset-0 bg-[#080808]/55 transition-opacity group-hover:opacity-40" />}
+      {dim && <div className="absolute inset-0 bg-black/25 transition-opacity group-hover:opacity-0" />}
+    </div>
+  );
+}
+
+function SubPicker({ subs, value, disabled, onPick }: { subs: string[]; value: string; disabled?: boolean; onPick: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const many = subs.length > 1;
+  return (
+    <div className="relative w-32" onMouseLeave={() => setOpen(false)}>
+      <button
+        disabled={disabled || !many}
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-full w-full items-center justify-center gap-2 border-l border-[#bdbdbd] bg-[#d6d6d6] font-brand text-base font-bold text-[#111] hover:bg-[#e2e2e2] disabled:hover:bg-[#d6d6d6]"
+      >
+        {value}
+        {many && <svg width="12" height="12" viewBox="0 0 12 12" className={open ? "rotate-180" : ""}><path d="M2 4 L6 8 L10 4" stroke="#111" strokeWidth="1.6" fill="none" /></svg>}
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full left-0 z-10 border border-edge bg-raised py-1">
+          {subs.map((s) => (
+            <button
+              key={s}
+              onClick={() => { onPick(s); setOpen(false); }}
+              className={`flex w-full items-center justify-between px-4 py-2 font-brand text-sm font-bold ${s === value ? "text-ink" : "text-muted hover:bg-active hover:text-ink"}`}
+            >
+              {s}
+              {s === value && <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6 L5 9 L10 3" stroke="currentColor" strokeWidth="1.8" fill="none" /></svg>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -81,7 +112,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
                   setBase(b.base);
                   save(b.subs[0], module);
                 }}
-                className={`group relative aspect-[400/190] overflow-hidden text-left ${sel ? "outline-2 -outline-offset-2 outline-ink" : ""}`}
+                className={`group relative aspect-[400/190] overflow-hidden border text-left transition-colors ${sel ? "border-ink" : "border-edge hover:border-[#555]"}`}
               >
                 <VersionArt base={b.base} dim={!sel} />
                 {sel && <span className={`${label} absolute top-3 left-3 bg-ink px-2 py-0.5 text-[9px] text-[#111]`}>PADRÃO</span>}
@@ -102,6 +133,30 @@ export function PvpPlay({ instance }: { instance: Instance }) {
         <p className="m-0 text-sm leading-relaxed text-soft">{current.desc}</p>
 
         <div className="flex-1" />
+
+        {/* Módulos */}
+        <div className="flex flex-col gap-2">
+          <span className={`${label} text-soft`}>MÓDULO</span>
+          <div className="grid grid-cols-2 border border-edge">
+            {([
+              { id: "OptiFine", ok: true },
+              { id: "Fabric", ok: fabricAllowed(base) },
+            ] as const).map((m) => {
+              const on = module === m.id;
+              return (
+                <button
+                  key={m.id}
+                  title={m.ok ? undefined : "Disponível a partir da 1.16"}
+                  disabled={!m.ok || inGame}
+                  onClick={() => save(sub, m.id)}
+                  className={`h-11 font-brand text-sm font-bold tracking-[0.06em] transition-colors ${on ? "bg-raised text-ink shadow-[inset_0_-2px_0_#ededed]" : "text-muted hover:bg-[#181818] hover:text-ink"} disabled:cursor-not-allowed disabled:text-[#444] disabled:hover:bg-transparent`}
+                >
+                  {m.id}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Jogar + subversão */}
         {downloading ? (
@@ -125,53 +180,12 @@ export function PvpPlay({ instance }: { instance: Instance }) {
               {inGame ? <span className="h-2 w-2 animate-pulse bg-[#9a9a9a]" /> : <svg width="16" height="16" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="currentColor" /></svg>}
               <span className="font-brand text-xl font-black tracking-[0.08em]">{inGame ? "EM JOGO" : "JOGAR"}</span>
             </button>
-            <label className="relative flex w-28 items-center bg-[#d6d6d6] text-[#111]">
-              <select
-                value={sub}
-                disabled={inGame || current.subs.length < 2}
-                onChange={(e) => save(e.target.value, module)}
-                className="h-full w-full cursor-pointer appearance-none bg-transparent pr-7 pl-5 font-brand text-base font-bold outline-none disabled:cursor-default"
-              >
-                {current.subs.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              {current.subs.length > 1 && (
-                <svg className="pointer-events-none absolute right-3" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="#111" strokeWidth="1.6" fill="none" /></svg>
-              )}
-            </label>
+            <SubPicker subs={current.subs} value={sub} disabled={inGame} onPick={(v) => save(v, module)} />
           </div>
         )}
 
         {err && <p className="m-0 border-l-2 border-ink bg-[#1a1a1a] px-3 py-2 text-xs break-all text-[#9a9a9a]">{String(err).replace("NEEDS_ACCOUNT: ", "")}</p>}
 
-        {/* Módulos */}
-        <div className="flex items-center gap-3">
-          <span className={`${label} text-soft`}>MÓDULOS:</span>
-          {([
-            { id: "OptiFine", mark: "OF", ok: true },
-            { id: "Fabric", mark: "FB", ok: fabricAllowed(base) },
-          ] as const).map((m) => {
-            const on = module === m.id;
-            return (
-              <button
-                key={m.id}
-                title={m.ok ? m.id : "Fabric + Sodium a partir da 1.16"}
-                disabled={!m.ok || inGame}
-                onClick={() => save(sub, m.id)}
-                className={`relative flex h-11 w-11 items-center justify-center border font-brand text-[13px] font-black ${on ? "border-ink bg-ink text-[#111]" : "border-edge bg-raised text-[#9a9a9a]"} disabled:opacity-35`}
-              >
-                {m.mark}
-                {on && (
-                  <svg className="absolute -right-1 -bottom-1" width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" fill="#111" /><path d="M4 8 L7 11 L12 5" stroke="#EDEDED" strokeWidth="1.8" fill="none" /></svg>
-                )}
-              </button>
-            );
-          })}
-          <span className="text-xs text-[#6a6a6a]">
-            {module === "OptiFine" ? "OptiFine: coloque o arquivo na pasta mods (sem download automático)" : "Fabric ativo"} · Fabric a partir da 1.16
-          </span>
-        </div>
       </div>
     </div>
   );
