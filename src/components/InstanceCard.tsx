@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { Instance } from "../lib/api";
+import { useApp } from "../lib/store";
 import { Chip, Icon } from "./ui";
 import type { IconName } from "./icons";
 
@@ -11,6 +12,7 @@ export function instancePath(i: Instance) {
 
 export function InstanceCard({ instance }: { instance: Instance }) {
   const navigate = useNavigate();
+  const { startInstall } = useApp();
   const open = () => navigate(instancePath(instance));
 
   return (
@@ -40,7 +42,11 @@ export function InstanceCard({ instance }: { instance: Instance }) {
         <div className="flex-1" />
         <div className="flex gap-1.5">
           <button
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              startInstall(instance.id);
+              navigate(instance.kind === "pvp" ? "/pvp/jogar" : `/${instance.kind}/${instance.id}/jogar`);
+            }}
             className="flex h-[38px] flex-1 items-center justify-center gap-2 bg-active text-[13px] font-semibold text-[#d0d0d0] transition-colors group-hover:bg-ink group-hover:text-[#111]"
           >
             <svg width="10" height="10" viewBox="0 0 12 12">

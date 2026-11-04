@@ -141,3 +141,57 @@ export const api = {
   },
   openFolder: (id?: string): Promise<void> => (isTauri ? invoke("open_folder", { id: id ?? null }) : Promise.resolve()),
 };
+
+// ---------- Versões e instalação ----------
+export interface VersionInfo {
+  id: string;
+  kind: string;
+  latest: boolean;
+}
+
+export type Stage = "java" | "version" | "libraries" | "assets" | "done" | "cancelled" | "error";
+
+export interface Progress {
+  instanceId: string;
+  stage: Stage;
+  filesDone: number;
+  filesTotal: number;
+  bytesPerSec: number;
+  current: string;
+  error: string | null;
+}
+
+const FALLBACK_VERSIONS = ["1.21.4", "1.21.1", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2", "1.16.5", "1.12.2", "1.8.9"];
+
+export const installApi = {
+  listVersions: (snapshots = false): Promise<VersionInfo[]> =>
+    isTauri ? invoke("list_versions", { snapshots }) : Promise.resolve(FALLBACK_VERSIONS.map((id, i) => ({ id, kind: "release", latest: i === 0 }))),
+
+  /** Instala e chama `onProgress` a cada atualização. Resolve quando termina (ou é cancelado). */
+  install: async (id: string, onProgress: (p: Progress) => void): Promise<void> => {
+    if (!isTauri) return simulateInstall(id, onProgress);
+    const { listen } = await import("@tauri-apps/api/event");
+    const unlisten = await listen<Progress>("install-progress", (e) => e.payload.instanceId === id && onProgress(e.payload));
+    try {
+      await invoke("install_instance", { id });
+    } finally {
+      unlisten();
+    }
+  },
+  cancel: (id: string): Promise<boolean> => (isTauri ? invoke("cancel_install", { id }) : Promise.resolve((simCancel[id] = true))),
+};
+
+// Simulação para o navegador, para dar para ver a tela de progresso.
+const simCancel: Record<string, boolean> = {};
+async function simulateInstall(id: string, on: (p: Progress) => void) {
+  simCancel[id] = false;
+  const plan: [Stage, number][] = [["java", 120], ["version", 2], ["libraries", 64], ["assets", 3400]];
+  for (const [stage, total] of plan) {
+    for (let done = 0; done <= total; done += Math.ceil(total / 25)) {
+      if (simCancel[id]) return on({ instanceId: id, stage: "cancelled", filesDone: done, filesTotal: total, bytesPerSec: 0, current: "", error: null });
+      on({ instanceId: id, stage, filesDone: Math.min(done, total), filesTotal: total, bytesPerSec: 12_400_000, current: `${stage}-${done}.bin`, error: null });
+      await new Promise((r) => setTimeout(r, 60));
+    }
+  }
+  on({ instanceId: id, stage: "done", filesDone: 0, filesTotal: 0, bytesPerSec: 0, current: "", error: null });
+}

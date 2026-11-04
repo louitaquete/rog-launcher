@@ -1,11 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, type LoaderType } from "../lib/api";
+import { api, installApi, type LoaderType, type VersionInfo } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Button, Field, Modal, Segmented, Select, TextInput } from "./ui";
 
-// Lista provisória: a próxima etapa troca por versões vindas do manifesto oficial da Mojang.
-const VERSIONS = ["1.21.4", "1.21.1", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2", "1.16.5", "1.12.2", "1.8.9"];
 const LOADERS: LoaderType[] = ["Fabric", "Forge", "NeoForge", "Quilt"];
 
 export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose: () => void; defaultKind?: "vanilla" | "mods" }) {
@@ -13,12 +11,24 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"vanilla" | "mods">(defaultKind);
-  const [version, setVersion] = useState(VERSIONS[0]);
+  const [versions, setVersions] = useState<VersionInfo[]>([]);
+  const [snapshots, setSnapshots] = useState(false);
+  const [version, setVersion] = useState("");
+  useEffect(() => {
+    installApi
+      .listVersions(snapshots)
+      .then((v) => {
+        setVersions(v);
+        setVersion((cur) => (v.some((x) => x.id === cur) ? cur : (v.find((x) => x.latest) ?? v[0])?.id ?? ""));
+      })
+      .catch((e) => setError(String(e)));
+  }, [snapshots]);
   const [loader, setLoader] = useState<LoaderType>("Fabric");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function create() {
+    if (!version) return;
     setBusy(true);
     setError(null);
     try {
@@ -60,7 +70,13 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
           <Segmented full value={kind} onChange={setKind} options={[{ value: "vanilla", label: "Vanilla" }, { value: "mods", label: "Com mods" }]} />
         </Field>
         <Field label="Versão do Minecraft">
-          <Select value={version} onChange={setVersion} options={VERSIONS.map((v) => ({ value: v, label: v }))} className="w-64" />
+          <div className="flex items-center gap-4">
+            <Select value={version} onChange={setVersion} options={versions.map((v) => ({ value: v.id, label: v.latest ? `${v.id} (mais recente)` : v.id }))} className="w-64" />
+            <label className="flex items-center gap-2 text-xs text-[#9a9a9a]">
+              <input type="checkbox" checked={snapshots} onChange={(e) => setSnapshots(e.target.checked)} className="accent-[#ededed]" />
+              Mostrar snapshots
+            </label>
+          </div>
         </Field>
         {kind === "mods" && (
           <Field label="Loader" hint="A versão do loader é escolhida automaticamente (mais recente estável)">

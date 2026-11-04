@@ -1,9 +1,10 @@
+mod install;
 mod store;
 
 use store::instances::{Instance, NewInstance};
 use store::settings::Settings;
 use store::Store;
-use tauri::{Manager, State};
+use tauri::{Emitter, Manager, State};
 use tauri_plugin_opener::OpenerExt;
 
 /// Erros chegam ao front como texto simples.
@@ -58,6 +59,46 @@ fn delete_instance(store: State<Store>, id: String) -> Res<()> {
     store.delete_instance(&id).map_err(err)
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct VersionInfo {
+    id: String,
+    kind: String,
+    latest: bool,
+}
+
+/// Versões oficiais: releases, e snapshots só se pedido.
+#[tauri::command]
+async fn list_versions(store: State<'_, Store>, snapshots: bool) -> Res<Vec<VersionInfo>> {
+    let m = install::version_manifest(store.root()).await?;
+    Ok(m.versions
+        .into_iter()
+        .filter(|v| v.kind == "release" || (snapshots && v.kind == "snapshot"))
+        .map(|v| VersionInfo { latest: v.id == m.latest.release, id: v.id, kind: v.kind })
+        .collect())
+}
+
+/// Baixa (ou confere) todos os arquivos do jogo da instância. O progresso chega pelo evento `install-progress`.
+#[tauri::command]
+async fn install_instance(app: tauri::AppHandle, store: State<'_, Store>, installs: State<'_, install::Installs>, id: String) -> Res<()> {
+    let inst = store.get_instance(&id).map_err(err)?;
+    let concurrency = store.load_settings().map(|s| s.downloads.concurrent as usize).unwrap_or(8);
+    let cancel = installs.start(&id).ok_or("essa instância já está sendo instalada")?;
+    let job = install::Job { root: store.root().to_path_buf(), instance_id: id.clone(), mc_version: inst.mc_version, concurrency, cancel };
+    let emitter = app.clone();
+    let result = install::install(job, move |p| {
+        let _ = emitter.emit("install-progress", p);
+    })
+    .await;
+    installs.finish(&id);
+    result
+}
+
+#[tauri::command]
+fn cancel_install(installs: State<install::Installs>, id: String) -> bool {
+    installs.cancel(&id)
+}
+
 /// Abre no Explorer a pasta do launcher (`id` vazio) ou a pasta do jogo de uma instância.
 #[tauri::command]
 fn open_folder(app: tauri::AppHandle, store: State<Store>, id: Option<String>) -> Res<()> {
@@ -78,6 +119,7 @@ pub fn run() {
             store.load_settings()?;
             store.ensure_pvp()?;
             app.manage(store);
+            app.manage(install::Installs::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -91,6 +133,9 @@ pub fn run() {
             update_instance,
             delete_instance,
             open_folder,
+            list_versions,
+            install_instance,
+            cancel_install,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

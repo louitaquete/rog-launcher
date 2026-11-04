@@ -3,6 +3,7 @@ import { useApp } from "../lib/store";
 import { Icon } from "../components/ui";
 import type { IconName } from "../components/icons";
 import { Placeholder } from "./Placeholder";
+import { PlayTab } from "./PlayTab";
 
 const allTabs: { slug: string; label: string; icon: IconName }[] = [
   { slug: "jogar", label: "Jogar", icon: "play" },
@@ -57,7 +58,7 @@ export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
         ))}
       </div>
       <div className="flex-1 overflow-y-auto">
-        <Placeholder title={`${inst.name} · ${current.label}`} />
+        {current.slug === "jogar" ? <PlayTab instance={inst} /> : <Placeholder title={`${inst.name} · ${current.label}`} />}
       </div>
     </div>
   );
