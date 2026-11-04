@@ -14,6 +14,14 @@ const BASES = [
   { base: "1.21", subs: ["1.21.4", "1.21.1"], desc: "Tricky Trials: a maça, as câmaras de desafio e o combate mais recente do jogo." },
 ];
 
+/** Banners: coloque `src/assets/pvp/<versão>.webp|jpg|png` (ex.: 1.21.webp), 16:9. */
+const ART = Object.fromEntries(
+  Object.entries(import.meta.glob("../assets/pvp/*.{webp,jpg,jpeg,png}", { eager: true, import: "default" })).map(([k, v]) => [
+    k.split("/").pop()!.replace(/\.(webp|jpe?g|png)$/, ""),
+    v as string,
+  ]),
+);
+
 const baseOf = (mc: string) => BASES.find((b) => b.subs.includes(mc) || mc.startsWith(b.base + "."))?.base ?? "1.8";
 const fabricAllowed = (base: string) => Number(base.split(".")[1]) >= 16;
 
@@ -23,7 +31,13 @@ function VersionArt({ base, big, dim }: { base: string; big?: boolean; dim?: boo
   const blocks = Array.from({ length: big ? 26 : 14 }, (_, i) => 22 + ((seed * (i + 3) * 37) % 45));
   return (
     <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-[#2c2c2c] to-[#1a1a1a]">
-      <div className="absolute inset-x-0 bottom-0 flex h-full items-end opacity-[0.07]">
+      {ART[base] && (
+        <>
+          <img src={ART[base]} alt="" className={`absolute inset-0 h-full w-full object-cover transition-[filter] duration-300 ${dim ? "grayscale group-hover:grayscale-0" : ""}`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10" />
+        </>
+      )}
+      <div className={`absolute inset-x-0 bottom-0 flex h-full items-end opacity-[0.07] ${ART[base] ? "hidden" : ""}`}>
         {blocks.map((h, i) => (
           <div key={i} className="flex-1 bg-white" style={{ height: `${h}%` }} />
         ))}
