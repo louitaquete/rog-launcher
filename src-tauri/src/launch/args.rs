@@ -70,7 +70,8 @@ pub fn classpath(version: &VersionJson, root: &Path, os: &str) -> Vec<PathBuf> {
             }
         }
     }
-    out.push(root.join("versions").join(&version.id).join(format!("{}.jar", version.id)));
+    let jar = if version.jar_id.is_empty() { &version.id } else { &version.jar_id };
+    out.push(root.join("versions").join(jar).join(format!("{jar}.jar")));
     out
 }
 

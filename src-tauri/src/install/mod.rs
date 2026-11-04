@@ -5,6 +5,7 @@
 //! `runtime/`, `versions/<id>/`, `libraries/`, `assets/`. Rodar de novo só baixa o que falta.
 
 pub mod download;
+pub mod loaders;
 pub mod mojang;
 
 use std::collections::HashMap;
@@ -25,6 +26,7 @@ pub enum Stage {
     Version,
     Libraries,
     Assets,
+    Loader,
     Done,
     Cancelled,
     Error,
@@ -116,12 +118,14 @@ pub struct Job {
     pub root: PathBuf,
     pub instance_id: String,
     pub mc_version: String,
+    pub loader: crate::store::instances::LoaderType,
+    pub loader_version: Option<String>,
     pub concurrency: usize,
     pub cancel: Arc<AtomicBool>,
 }
 
 /// Instala tudo. `emit` recebe o progresso (chamado várias vezes por segundo).
-pub async fn install(job: Job, emit: impl Fn(Progress) + Send + Sync + 'static) -> Result<(), String> {
+pub async fn install(job: Job, emit: impl Fn(Progress) + Send + Sync + 'static) -> Result<Option<loaders::Installed>, String> {
     let counters = Arc::new(Counters::default());
     let stage = Arc::new(Mutex::new(Stage::Java));
     let emit = Arc::new(emit);
@@ -157,7 +161,7 @@ pub async fn install(job: Job, emit: impl Fn(Progress) + Send + Sync + 'static) 
     ticker.abort();
 
     let (final_stage, error) = match &result {
-        Ok(()) => (Stage::Done, None),
+        Ok(_) => (Stage::Done, None),
         Err(DlError::Cancelled) => (Stage::Cancelled, None),
         Err(e) => (Stage::Error, Some(e.to_string())),
     };
@@ -171,12 +175,13 @@ pub async fn install(job: Job, emit: impl Fn(Progress) + Send + Sync + 'static) 
         error: error.clone(),
     });
     match result {
-        Ok(()) | Err(DlError::Cancelled) => Ok(()),
+        Ok(installed) => Ok(installed),
+        Err(DlError::Cancelled) => Ok(None),
         Err(e) => Err(e.to_string()),
     }
 }
 
-async fn run(job: &Job, counters: &Arc<Counters>, stage: &Arc<Mutex<Stage>>) -> Result<(), DlError> {
+async fn run(job: &Job, counters: &Arc<Counters>, stage: &Arc<Mutex<Stage>>) -> Result<Option<loaders::Installed>, DlError> {
     let client = download::client();
     let root = &job.root;
     let set = |s: Stage| *stage.lock().unwrap() = s;
@@ -236,6 +241,41 @@ async fn run(job: &Job, counters: &Arc<Counters>, stage: &Arc<Mutex<Stage>>) -> 
     let index: AssetIndex = serde_json::from_slice(&ibytes).map_err(fail)?;
     batch(asset_tasks(&index)).await?;
 
+    // 5. Loader (Fabric, Quilt, Forge, NeoForge)
+    let mut installed = None;
+    if !matches!(job.loader, crate::store::instances::LoaderType::Vanilla | crate::store::instances::LoaderType::OptiFine) {
+        set(Stage::Loader);
+        counters.files_done.store(0, Ordering::Relaxed);
+        counters.files_total.store(0, Ordering::Relaxed);
+        *counters.current.lock().unwrap() = format!("{:?}", job.loader);
+        let java = console_java(root, &component);
+        let log = |line: String| *counters.current.lock().unwrap() = line;
+        let inst = loaders::install(&client, root, &version.id, job.loader, job.loader_version.as_deref(), &java, &log)
+            .await
+            .map_err(DlError::Failed)?;
+        if let Some(i) = &inst {
+            // Bibliotecas do loader (Fabric/Quilt trazem só o nome Maven; o instalador do Forge já baixou as dele).
+            let profile_path = root.join("versions").join(&i.version_id).join(format!("{}.json", i.version_id));
+            let raw = tokio::fs::read(&profile_path).await.map_err(fail)?;
+            let profile: LoaderProfile = serde_json::from_slice(&raw).map_err(fail)?;
+            let merged = merge(version.clone(), profile);
+            batch(library_tasks(&merged, os_name())).await?;
+        }
+        installed = inst;
+    }
+
     set(Stage::Done);
-    Ok(())
+    Ok(installed)
+}
+
+/// Java com console (para rodar instaladores e capturar a saída).
+fn console_java(root: &Path, component: &str) -> PathBuf {
+    let base = root.join("runtime").join(component);
+    if cfg!(windows) {
+        base.join("bin").join("java.exe")
+    } else if cfg!(target_os = "macos") {
+        base.join("jre.bundle/Contents/Home/bin/java")
+    } else {
+        base.join("bin").join("java")
+    }
 }

@@ -85,14 +85,29 @@ async fn install_instance(app: tauri::AppHandle, store: State<'_, Store>, instal
     let inst = store.get_instance(&id).map_err(err)?;
     let concurrency = store.load_settings().map(|s| s.downloads.concurrent as usize).unwrap_or(8);
     let cancel = installs.start(&id).ok_or("essa instância já está sendo instalada")?;
-    let job = install::Job { root: store.root().to_path_buf(), instance_id: id.clone(), mc_version: inst.mc_version, concurrency, cancel };
+    let job = install::Job {
+        root: store.root().to_path_buf(),
+        instance_id: id.clone(),
+        mc_version: inst.mc_version.clone(),
+        loader: inst.loader.kind,
+        loader_version: inst.loader.version.clone(),
+        concurrency,
+        cancel,
+    };
     let emitter = app.clone();
     let result = install::install(job, move |p| {
         let _ = emitter.emit("install-progress", p);
     })
     .await;
     installs.finish(&id);
-    result
+    // Guarda qual versão do loader foi instalada e qual pasta abrir.
+    if let Ok(Some(done)) = &result {
+        let mut inst = store.get_instance(&id).map_err(err)?;
+        inst.launch_version = Some(done.version_id.clone());
+        inst.loader.version = Some(done.loader_version.clone());
+        store.update_instance(inst).map_err(err)?;
+    }
+    result.map(|_| ())
 }
 
 /// Indica se este build abre o jogo sem conta (só builds de desenvolvedor).

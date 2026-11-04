@@ -11,7 +11,7 @@ use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::sync::oneshot;
 
-use crate::install::mojang::{os_name, VersionJson};
+use crate::install::mojang::{merge, os_name, LoaderProfile, VersionJson};
 use crate::store::instances::Instance;
 use crate::store::settings::Settings;
 use args::{Account, Options, Paths};
@@ -123,9 +123,17 @@ pub struct Prepared {
 pub fn prepare(root: &Path, game_dir: &Path, inst: &Instance, settings: &Settings, account: &Account) -> Result<Prepared, String> {
     let vjson_path = root.join("versions").join(&inst.mc_version).join(format!("{}.json", inst.mc_version));
     let bytes = std::fs::read(&vjson_path).map_err(|_| "os arquivos do jogo ainda não foram baixados".to_string())?;
-    let version: VersionJson = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    let mut version: VersionJson = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    if let Some(lv) = inst.launch_version.as_deref().filter(|v| *v != inst.mc_version) {
+        let ppath = root.join("versions").join(lv).join(format!("{lv}.json"));
+        let raw = std::fs::read(&ppath).map_err(|_| "o loader ainda não foi instalado".to_string())?;
+        let profile: LoaderProfile = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
+        version = merge(version, profile);
+    }
+    // Natives e jar continuam na pasta do vanilla.
+    let natives_version = inst.mc_version.clone();
 
-    let natives_dir = root.join("versions").join(&version.id).join("natives");
+    let natives_dir = root.join("versions").join(&natives_version).join("natives");
     extract_natives(&args::native_jars(&version, root, os_name()), &natives_dir)?;
 
     let (opts, custom_java) = resolve_options(settings, inst);

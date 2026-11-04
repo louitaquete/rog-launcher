@@ -89,8 +89,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       update({ instanceId: id, stage: "java", filesDone: 0, filesTotal: 0, bytesPerSec: 0, current: "", error: null });
       installApi
         .install(id, update)
-        .then(() => {
-          if (last.stage === "done") return gameApi.launch(id);
+        .then(async () => {
+          if (last.stage !== "done") return;
+          await refresh(); // mostra a versão do loader que foi instalada
+          return gameApi.launch(id);
         })
         .catch((e) => {
           const msg = String(e);
@@ -102,7 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         })
         .finally(() => busy.current.delete(id));
     },
-    [],
+    [refresh],
   );
 
   const cancelInstall = useCallback((id: string) => {

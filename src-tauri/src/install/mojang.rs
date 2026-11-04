@@ -42,6 +42,9 @@ pub struct VersionEntry {
 #[serde(rename_all = "camelCase")]
 pub struct VersionJson {
     pub id: String,
+    /// Versão dona do .jar do jogo (o vanilla, quando há loader). Vazio = a própria `id`.
+    #[serde(skip)]
+    pub jar_id: String,
     #[serde(default)]
     pub main_class: String,
     #[serde(default, rename = "type")]
@@ -120,6 +123,13 @@ pub struct Artifact {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Library {
     pub name: String,
+    /// Bibliotecas de loaders (Fabric/Quilt) trazem só o repositório Maven, sem `downloads`.
+    #[serde(default)]
+    pub url: Option<String>,
+    #[serde(default)]
+    pub sha1: Option<String>,
+    #[serde(default)]
+    pub size: Option<u64>,
     #[serde(default)]
     pub downloads: Option<LibraryDownloads>,
     #[serde(default)]
@@ -184,6 +194,65 @@ pub struct AssetIndex {
 pub struct AssetObject {
     pub hash: String,
     pub size: u64,
+}
+
+// ---------------------------------------------------------------- perfis de loader
+
+/// Perfil de um loader (Fabric, Quilt, Forge…): herda de uma versão vanilla e acrescenta coisas.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LoaderProfile {
+    pub id: String,
+    /// Versão vanilla de base. Hoje a base vem da instância; fica para validar no futuro.
+    #[serde(default)]
+    #[allow(dead_code)]
+    pub inherits_from: Option<String>,
+    #[serde(default)]
+    pub main_class: Option<String>,
+    #[serde(default)]
+    pub arguments: Option<Arguments>,
+    #[serde(default)]
+    pub minecraft_arguments: Option<String>,
+    #[serde(default)]
+    pub libraries: Vec<Library>,
+}
+
+/// "grupo:artefato[:classifier]" sem a versão, para não ter duas versões da mesma biblioteca.
+fn library_key(name: &str) -> String {
+    let parts: Vec<&str> = name.split(':').collect();
+    match parts.as_slice() {
+        [g, a, _v, c, ..] => format!("{g}:{a}:{c}"),
+        [g, a, ..] => format!("{g}:{a}"),
+        _ => name.to_string(),
+    }
+}
+
+/// Junta o vanilla com o perfil do loader. O loader vence em classe principal e bibliotecas repetidas.
+pub fn merge(mut base: VersionJson, profile: LoaderProfile) -> VersionJson {
+    if base.jar_id.is_empty() {
+        base.jar_id = base.id.clone();
+    }
+    base.id = profile.id;
+    if let Some(mc) = profile.main_class.filter(|m| !m.is_empty()) {
+        base.main_class = mc;
+    }
+    if let Some(args) = profile.minecraft_arguments {
+        base.minecraft_arguments = Some(args);
+    }
+    if let Some(extra) = profile.arguments {
+        let args = base.arguments.get_or_insert_with(Arguments::default);
+        args.game.extend(extra.game);
+        args.jvm.extend(extra.jvm);
+    }
+    let mut seen = std::collections::HashSet::new();
+    let mut libs = Vec::new();
+    for lib in profile.libraries.into_iter().chain(std::mem::take(&mut base.libraries)) {
+        if seen.insert(library_key(&lib.name)) {
+            libs.push(lib);
+        }
+    }
+    base.libraries = libs;
+    base
 }
 
 // ---------------------------------------------------------------- Java (runtime da Mojang)
@@ -316,10 +385,24 @@ pub fn library_tasks(version: &VersionJson, os: &str) -> Vec<FileTask> {
         if !rules_allow(&lib.rules, os) {
             continue;
         }
-        let Some(dl) = &lib.downloads else { continue };
+        let Some(dl) = &lib.downloads else {
+            // Formato Maven puro: repositório + nome.
+            if let Some(p) = maven_path(&lib.name, None) {
+                let base = lib.url.as_deref().unwrap_or("https://libraries.minecraft.net/").trim_end_matches('/');
+                out.push(FileTask {
+                    url: format!("{base}/{p}"),
+                    path: PathBuf::from("libraries").join(&p),
+                    sha1: lib.sha1.clone(),
+                    size: lib.size.unwrap_or(0),
+                    executable: false,
+                });
+            }
+            continue;
+        };
         if let Some(a) = &dl.artifact {
             let path = a.path.clone().or_else(|| maven_path(&lib.name, None));
-            if let Some(p) = path {
+            // URL vazia = arquivo gerado pelo instalador do Forge, não se baixa.
+            if let (Some(p), false) = (path, a.url.is_empty()) {
                 out.push(FileTask::from_artifact(a, PathBuf::from("libraries").join(p)));
             }
         }
@@ -429,6 +512,29 @@ mod tests {
         assert!(n.contains(&"lwjgl-3.3.3-natives-linux.jar".into()));
         assert!(n.contains(&"java-objc-bridge-1.1.jar".into()));
         assert!(!n.iter().any(|x| x.contains("windows")));
+    }
+
+    #[test]
+    fn fabric_profile_merges_over_vanilla() {
+        let v: VersionJson = serde_json::from_str(VERSION).unwrap();
+        let p: LoaderProfile = serde_json::from_str(
+            r#"{"id": "fabric-loader-0.16.9-1.21.4", "inheritsFrom": "1.21.4", "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+                "arguments": {"game": [], "jvm": ["-DFabricMcEmu= net.minecraft.client.main.Main "]},
+                "libraries": [
+                  {"name": "net.fabricmc:fabric-loader:0.16.9", "url": "https://maven.fabricmc.net/", "sha1": "f1", "size": 5},
+                  {"name": "com.mojang:brigadier:1.0.99", "url": "https://maven.fabricmc.net/"}]}"#,
+        )
+        .unwrap();
+        let m = merge(v, p);
+        assert_eq!(m.id, "fabric-loader-0.16.9-1.21.4");
+        assert!(m.main_class.contains("Knot"));
+        assert_eq!(m.libraries.iter().filter(|l| l.name.starts_with("com.mojang:brigadier")).count(), 1);
+        let t = library_tasks(&m, "windows");
+        let fabric = t.iter().find(|x| x.url.contains("fabric-loader")).unwrap();
+        assert_eq!(fabric.url, "https://maven.fabricmc.net/net/fabricmc/fabric-loader/0.16.9/fabric-loader-0.16.9.jar");
+        assert_eq!(fabric.sha1.as_deref(), Some("f1"));
+        assert!(t.iter().any(|x| x.url.ends_with("brigadier-1.0.99.jar")));
+        assert!(!t.iter().any(|x| x.url.ends_with("brigadier-1.0.18.jar")));
     }
 
     #[test]

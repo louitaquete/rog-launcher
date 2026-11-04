@@ -34,6 +34,7 @@ export interface Instance {
   useGlobalSettings: boolean;
   overrides: Overrides;
   skin: { enabled: boolean; skinId: string | null };
+  launchVersion: string | null;
 }
 
 export interface NewInstance {
@@ -71,7 +72,7 @@ const DEFAULT_SETTINGS: Settings = {
 
 const now = () => Math.floor(Date.now() / 1000);
 const blank = (p: Pick<Instance, "id" | "name" | "kind" | "mcVersion" | "loader">): Instance => ({
-  cover: null, createdAt: now(), lastPlayedAt: null, playTimeSecs: 0, useGlobalSettings: true, overrides: {}, skin: { enabled: false, skinId: null }, ...p,
+  cover: null, launchVersion: null, createdAt: now(), lastPlayedAt: null, playTimeSecs: 0, useGlobalSettings: true, overrides: {}, skin: { enabled: false, skinId: null }, ...p,
 });
 
 const mock = {
@@ -150,7 +151,7 @@ export interface VersionInfo {
   latest: boolean;
 }
 
-export type Stage = "java" | "version" | "libraries" | "assets" | "done" | "cancelled" | "error";
+export type Stage = "java" | "version" | "libraries" | "assets" | "loader" | "done" | "cancelled" | "error";
 
 export interface Progress {
   instanceId: string;
@@ -186,7 +187,9 @@ export const installApi = {
 const simCancel: Record<string, boolean> = {};
 async function simulateInstall(id: string, on: (p: Progress) => void) {
   simCancel[id] = false;
+  const inst = mock.instances().find((i) => i.id === id);
   const plan: [Stage, number][] = [["java", 120], ["version", 2], ["libraries", 64], ["assets", 3400]];
+  if (inst && !["Vanilla", "OptiFine"].includes(inst.loader.type)) plan.push(["loader", 12]);
   for (const [stage, total] of plan) {
     for (let done = 0; done <= total; done += Math.ceil(total / 25)) {
       if (simCancel[id]) return on({ instanceId: id, stage: "cancelled", filesDone: done, filesTotal: total, bytesPerSec: 0, current: "", error: null });

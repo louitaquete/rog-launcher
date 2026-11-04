@@ -8,9 +8,11 @@ const STEPS: { stage: Stage; label: (i: Instance) => string }[] = [
   { stage: "version", label: (i) => `Minecraft ${i.mcVersion}` },
   { stage: "libraries", label: () => "Bibliotecas" },
   { stage: "assets", label: () => "Assets (sons e texturas)" },
+  { stage: "loader", label: (i) => `Loader ${i.loader.type}${i.loader.version ? ` ${i.loader.version}` : ""}` },
 ];
-const ORDER: Stage[] = ["java", "version", "libraries", "assets", "done"];
-const RUNNING: Stage[] = ["java", "version", "libraries", "assets"];
+const ORDER: Stage[] = ["java", "version", "libraries", "assets", "loader", "done"];
+const RUNNING: Stage[] = ["java", "version", "libraries", "assets", "loader"];
+const hasLoader = (i: Instance) => !["Vanilla", "OptiFine"].includes(i.loader.type);
 
 const fmtSpeed = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1).replace(".", ",")} MB/s` : `${Math.round(b / 1000)} KB/s`);
 const watermark: Record<Instance["kind"], IconName> = { vanilla: "vanilla", mods: "mods", pvp: "pvp" };
@@ -57,7 +59,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
         <Icon name={watermark[instance.kind]} size={300} className="pointer-events-none absolute -top-10 right-16 opacity-[0.07]" />
         <div className="relative flex flex-col gap-3">
           <div className="flex gap-1.5">
-            {instance.kind === "pvp" ? <Chip>Competitivo</Chip> : (<><Chip>{instance.loader.type}</Chip><Chip>{instance.mcVersion}</Chip></>)}
+            {instance.kind === "pvp" ? <Chip>Competitivo</Chip> : (<><Chip>{instance.loader.type}{instance.loader.version && hasLoader(instance) ? ` ${instance.loader.version}` : ""}</Chip><Chip>{instance.mcVersion}</Chip></>)}
           </div>
           <h1 className="m-0 text-4xl font-semibold">{instance.name}</h1>
           <p className="m-0 text-[13px] text-muted">
@@ -68,10 +70,14 @@ export function PlayTab({ instance }: { instance: Instance }) {
             <div className="mt-1 flex flex-col gap-2.5">
               <div className="flex w-[560px] flex-col gap-2.5 border border-edge bg-[#1a1a1a] px-[18px] py-3.5">
                 <div className="flex items-center text-sm font-semibold">
-                  <span className="flex-1">Baixando {STEPS.find((s) => s.stage === p!.stage)?.label(instance).toLowerCase()}</span>
-                  <span>
-                    {p!.filesDone.toLocaleString("pt-BR")} / {p!.filesTotal.toLocaleString("pt-BR")} {unit(p!.stage)}
+                  <span className="flex-1">
+                    {p!.stage === "loader" ? `Instalando ${instance.loader.type}` : `Baixando ${STEPS.find((s) => s.stage === p!.stage)?.label(instance).toLowerCase()}`}
                   </span>
+                  {p!.filesTotal > 0 && (
+                    <span>
+                      {p!.filesDone.toLocaleString("pt-BR")} / {p!.filesTotal.toLocaleString("pt-BR")} {unit(p!.stage)}
+                    </span>
+                  )}
                 </div>
                 <Bar value={ratio} />
                 <div className="flex text-xs text-muted">
@@ -155,7 +161,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
       {/* Etapas */}
       {p && !["done", "cancelled", "error"].includes(p.stage) && (
         <div className="flex flex-col border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line">
-          {STEPS.map((s, i) => {
+          {STEPS.filter((s) => s.stage !== "loader" || hasLoader(instance)).map((s, i) => {
             const state = i < at || p.stage === "done" ? "done" : i === at && running ? "now" : "wait";
             return (
               <div key={s.stage} className={`flex items-center gap-3.5 px-[18px] py-3 ${state === "now" ? "bg-[#1b1b1b]" : ""}`}>

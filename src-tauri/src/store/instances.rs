@@ -85,6 +85,9 @@ pub struct Instance {
     pub overrides: Overrides,
     #[serde(default)]
     pub skin: InstanceSkin,
+    /// Versão a abrir quando há loader (pasta em `versions/`, ex.: "fabric-loader-0.16.9-1.21.4").
+    #[serde(default)]
+    pub launch_version: Option<String>,
 }
 
 fn yes() -> bool {
@@ -205,6 +208,7 @@ impl Store {
             use_global_settings: true,
             overrides: Overrides::default(),
             skin: InstanceSkin::default(),
+            launch_version: None,
         };
         fs::create_dir_all(self.game_dir(&id)?)?;
         write_json(&self.instance_dir(&id)?.join("instance.json"), &inst)?;
@@ -253,6 +257,7 @@ impl Store {
             use_global_settings: true,
             overrides: Overrides::default(),
             skin: InstanceSkin::default(),
+            launch_version: None,
         };
         fs::create_dir_all(self.game_dir(PVP_ID)?)?;
         write_json(&path, &inst)
