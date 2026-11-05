@@ -343,3 +343,20 @@ export async function openUrl(url: string) {
   const { openUrl } = await import("@tauri-apps/plugin-opener");
   await openUrl(url);
 }
+
+// ---------- Versões de loader ----------
+export interface LoaderVersion {
+  version: string;
+  stable: boolean;
+  recommended: boolean;
+}
+
+export const loaderApi = {
+  versions: async (loader: LoaderType, mc: string): Promise<LoaderVersion[]> => {
+    if (isTauri) return invoke("loader_versions", { loader, mc });
+    await new Promise((r) => setTimeout(r, 300));
+    if (loader === "Vanilla" || loader === "OptiFine") return [];
+    const base = { Fabric: "0.16.", Quilt: "0.27.", Forge: "52.0.", NeoForge: "21.4." }[loader];
+    return Array.from({ length: 8 }, (_, i) => ({ version: `${base}${14 - i}`, stable: i !== 0, recommended: i === 1 }));
+  },
+};

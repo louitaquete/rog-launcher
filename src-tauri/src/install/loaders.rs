@@ -74,8 +74,10 @@ async fn meta_profile(client: &reqwest::Client, root: &Path, base: &str, mc: &st
 /// Versão do NeoForge para um Minecraft: 1.21.4 -> 21.4.x, 1.21 -> 21.0.x, 1.20.6 -> 20.6.x.
 pub fn neoforge_prefix(mc: &str) -> Option<String> {
     let mut parts = mc.split('.');
-    if parts.next()? != "1" {
-        return None;
+    let major = parts.next()?;
+    if major != "1" {
+        // Numeração nova do Minecraft (ex.: 26.3): o NeoForge usa a mesma versão como prefixo.
+        return Some(format!("{mc}."));
     }
     let minor = parts.next()?;
     let patch = parts.next().unwrap_or("0");
@@ -90,6 +92,66 @@ pub fn latest_from_metadata(xml: &str, prefix: &str) -> Option<String> {
         .filter(|v| v.starts_with(prefix) && !is_prerelease(v))
         .last()
         .map(str::to_string)
+}
+
+/// Uma versão de loader para o seletor.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct LoaderVersion {
+    pub version: String,
+    pub stable: bool,
+    pub recommended: bool,
+}
+
+/// Versões disponíveis de um loader para o Minecraft `mc`, da mais nova para a mais antiga.
+pub async fn versions(client: &reqwest::Client, kind: LoaderType, mc: &str) -> Result<Vec<LoaderVersion>, String> {
+    let mut out: Vec<LoaderVersion> = match kind {
+        LoaderType::Vanilla | LoaderType::OptiFine => vec![],
+        LoaderType::Fabric | LoaderType::Quilt => {
+            let base = if kind == LoaderType::Fabric { FABRIC_META } else { QUILT_META };
+            let list: Vec<MetaLoader> = get_json(client, &format!("{base}/versions/loader/{mc}")).await?;
+            list.into_iter()
+                .map(|l| {
+                    let stable = l.loader.stable.unwrap_or_else(|| !is_prerelease(&l.loader.version));
+                    LoaderVersion { version: l.loader.version, stable, recommended: false }
+                })
+                .collect()
+        }
+        LoaderType::Forge => {
+            let xml = String::from_utf8(fetch(client, &format!("{FORGE_MAVEN}/maven-metadata.xml"), None).await?).map_err(|e| e.to_string())?;
+            let p: Option<Promos> = get_json(client, FORGE_PROMOS).await.ok();
+            let rec = p.as_ref().and_then(|p| p.promos.get(&format!("{mc}-recommended")).cloned());
+            let prefix = format!("{mc}-");
+            let mut v: Vec<LoaderVersion> = xml
+                .split("<version>")
+                .skip(1)
+                .filter_map(|s| s.split("</version>").next())
+                .filter_map(|v| v.strip_prefix(&prefix))
+                .map(|v| v.trim_end_matches(&format!("-{mc}")).to_string())
+                .map(|v| LoaderVersion { stable: !is_prerelease(&v), recommended: rec.as_deref() == Some(v.as_str()), version: v })
+                .collect();
+            v.reverse();
+            v
+        }
+        LoaderType::NeoForge => {
+            let prefix = neoforge_prefix(mc).ok_or_else(|| format!("NeoForge não suporta o Minecraft {mc}"))?;
+            let xml = String::from_utf8(fetch(client, &format!("{NEOFORGE_MAVEN}/maven-metadata.xml"), None).await?).map_err(|e| e.to_string())?;
+            let mut v: Vec<LoaderVersion> = xml
+                .split("<version>")
+                .skip(1)
+                .filter_map(|s| s.split("</version>").next())
+                .filter(|v| v.starts_with(&prefix))
+                .map(|v| LoaderVersion { version: v.to_string(), stable: !is_prerelease(v), recommended: false })
+                .collect();
+            v.reverse();
+            v
+        }
+    };
+    // Marca a primeira estável como recomendada quando o loader não diz.
+    if !out.iter().any(|v| v.recommended)
+        && let Some(v) = out.iter_mut().find(|v| v.stable) {
+            v.recommended = true;
+        }
+    Ok(out)
 }
 
 #[derive(Deserialize)]

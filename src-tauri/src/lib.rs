@@ -278,6 +278,11 @@ async fn cf_install(store: State<'_, Store>, id: String, kind: content::Kind, pr
     curseforge::install(&install::download::client(), &game, kind, &inst.mc_version, &loader, project_id).await
 }
 
+#[tauri::command]
+async fn loader_versions(loader: store::instances::LoaderType, mc: String) -> Res<Vec<install::loaders::LoaderVersion>> {
+    install::loaders::versions(&install::download::client(), loader, &mc).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -321,6 +326,7 @@ pub fn run() {
             cf_available,
             cf_search,
             cf_install,
+            loader_versions,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");
