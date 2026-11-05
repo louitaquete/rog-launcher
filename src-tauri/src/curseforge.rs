@@ -176,3 +176,39 @@ pub async fn install(client: &reqwest::Client, game: &Path, kind: Kind, mc: &str
     }
     Ok(out)
 }
+
+/// Baixa arquivos de um modpack (`(projectID, fileID)`) para `mods_dir`.
+/// Devolve os nomes dos que o autor não libera para outros apps.
+pub async fn download_files(client: &reqwest::Client, mods_dir: &Path, ids: &[(u64, u64)]) -> Result<Vec<String>, String> {
+    if ids.is_empty() {
+        return Ok(vec![]);
+    }
+    let key = KEY.filter(|k| !k.is_empty()).ok_or("esse modpack é do CurseForge e este build ainda não tem acesso à API do CurseForge")?;
+    let file_ids: Vec<u64> = ids.iter().map(|(_, f)| *f).collect();
+    let r = client
+        .post(format!("{API}/mods/files"))
+        .header("x-api-key", key)
+        .json(&serde_json::json!({ "fileIds": file_ids }))
+        .send()
+        .await
+        .map_err(|e| format!("sem conexão com o CurseForge: {e}"))?;
+    if !r.status().is_success() {
+        return Err(format!("CurseForge: HTTP {}", r.status()));
+    }
+    let v: Value = r.json().await.map_err(|e| e.to_string())?;
+    let mut blocked = Vec::new();
+    for f in v["data"].as_array().into_iter().flatten() {
+        let name = f["fileName"].as_str().unwrap_or_default();
+        if name.is_empty() || name.contains(['/', '\\']) {
+            continue;
+        }
+        let Some(url) = f["downloadUrl"].as_str() else {
+            blocked.push(f["displayName"].as_str().unwrap_or(name).to_string());
+            continue;
+        };
+        let sha1 = f["hashes"].as_array().and_then(|h| h.iter().find(|x| x["algo"].as_u64() == Some(1))).and_then(|x| x["value"].as_str());
+        let bytes = crate::install::download::fetch(client, url, sha1).await?;
+        crate::install::download::write_atomic(&mods_dir.join(name), &bytes, false).await.map_err(|e| e.to_string())?;
+    }
+    Ok(blocked)
+}

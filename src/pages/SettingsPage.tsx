@@ -14,7 +14,7 @@ const SECTIONS = [
   { slug: "sobre", label: "Sobre", sub: "Informações do launcher" },
 ] as const;
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+export function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex w-[900px] max-w-full flex-col gap-2.5">
       <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">{title}</p>
@@ -23,7 +23,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Row({ title, desc, children }: { title: string; desc?: string; children?: ReactNode }) {
+export function Row({ title, desc, children }: { title: string; desc?: string; children?: ReactNode }) {
   return (
     <div className="flex items-center gap-6 px-5 py-4">
       <div className="flex-1">
@@ -35,7 +35,7 @@ function Row({ title, desc, children }: { title: string; desc?: string; children
   );
 }
 
-function Memory({ value, onChange, min = 1024, max = 16384 }: { value: number; onChange: (mb: number) => void; min?: number; max?: number }) {
+export function Memory({ value, onChange, min = 1024, max = 16384 }: { value: number; onChange: (mb: number) => void; min?: number; max?: number }) {
   return (
     <div className="flex items-center gap-3.5">
       <input
@@ -54,7 +54,7 @@ function Memory({ value, onChange, min = 1024, max = 16384 }: { value: number; o
 }
 
 /** Campo de texto que só grava ao sair dele, para não salvar a cada tecla. */
-function CommitInput({ value, onCommit, className = "w-[260px]", type = "text" }: { value: string; onCommit: (v: string) => void; className?: string; type?: string }) {
+export function CommitInput({ value, onCommit, className = "w-[260px]", type = "text" }: { value: string; onCommit: (v: string) => void; className?: string; type?: string }) {
   const [v, setV] = useState(value);
   useEffect(() => setV(value), [value]);
   return <TextInput type={type} value={v} onChange={(e) => setV(e.target.value)} onBlur={() => v !== value && onCommit(v)} className={className} />;

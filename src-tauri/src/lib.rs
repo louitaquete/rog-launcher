@@ -2,6 +2,8 @@ mod auth;
 mod content;
 mod curseforge;
 mod extras;
+mod importer;
+mod skins;
 mod install;
 mod launch;
 mod store;
@@ -182,6 +184,13 @@ async fn launch_instance(app: tauri::AppHandle, store: State<'_, Store>, running
     }
     let settings = store.load_settings().map_err(err)?;
     let account = account_for(&settings, store.root()).await?;
+    // Skin: a da instância (se ligada) ou a global. Falha não impede de jogar.
+    if account.user_type == "msa" {
+        let inst = store.get_instance(&id).map_err(err)?;
+        let lib = skins::load(store.root());
+        let wanted = if inst.skin.enabled { inst.skin.skin_id.clone() } else { lib.global.clone() };
+        let _ = skins::apply(&install::download::client(), store.root(), &account.access_token, wanted.as_deref()).await;
+    }
     let mut inst = store.get_instance(&id).map_err(err)?;
     let game_dir = store.game_dir(&id).map_err(err)?;
     let prepared = launch::prepare(store.root(), &game_dir, &inst, &settings, &account)?;
@@ -315,6 +324,96 @@ fn open_url(app: tauri::AppHandle, url: String) -> Res<()> {
     app.opener().open_url(url, None::<&str>).map_err(err)
 }
 
+#[tauri::command]
+fn skins_list(store: State<Store>) -> skins::Library {
+    skins::load(store.root())
+}
+
+#[tauri::command]
+fn skin_png(store: State<Store>, id: String) -> Res<Vec<u8>> {
+    skins::png(store.root(), &id)
+}
+
+#[tauri::command]
+fn skin_add(store: State<Store>, path: String, name: String, variant: skins::Variant) -> Res<skins::Skin> {
+    skins::add(store.root(), std::path::Path::new(&path), &name, variant)
+}
+
+#[tauri::command]
+fn skin_update(store: State<Store>, skin: skins::Skin) -> Res<()> {
+    skins::update(store.root(), skin)
+}
+
+#[tauri::command]
+fn skin_remove(store: State<Store>, id: String) -> Res<()> {
+    skins::remove(store.root(), &id)
+}
+
+#[tauri::command]
+fn skin_set_global(store: State<Store>, id: Option<String>) -> Res<()> {
+    let mut lib = skins::load(store.root());
+    lib.global = id;
+    skins::save(store.root(), &lib)
+}
+
+#[tauri::command]
+fn instance_cover(store: State<Store>, id: String) -> Res<Option<Vec<u8>>> {
+    let inst = store.get_instance(&id).map_err(err)?;
+    Ok(inst.cover.and_then(|c| std::fs::read(store.instance_dir(&id).ok()?.join(c)).ok()))
+}
+
+#[tauri::command]
+fn set_instance_cover(store: State<Store>, id: String, path: Option<String>) -> Res<Instance> {
+    let mut inst = store.get_instance(&id).map_err(err)?;
+    let dir = store.instance_dir(&id).map_err(err)?;
+    if let Some(old) = &inst.cover {
+        let _ = std::fs::remove_file(dir.join(old));
+    }
+    inst.cover = match path {
+        Some(p) => {
+            let ext = std::path::Path::new(&p).extension().and_then(|e| e.to_str()).unwrap_or("png").to_ascii_lowercase();
+            if !["png", "jpg", "jpeg", "webp"].contains(&ext.as_str()) {
+                return Err("use uma imagem .png, .jpg ou .webp".into());
+            }
+            let name = format!("cover.{ext}");
+            std::fs::copy(&p, dir.join(&name)).map_err(err)?;
+            Some(name)
+        }
+        None => None,
+    };
+    store.update_instance(inst).map_err(err)
+}
+
+#[tauri::command]
+async fn import_file(store: State<'_, Store>, path: String) -> Res<Instance> {
+    importer::import_file(&install::download::client(), &store, std::path::Path::new(&path)).await
+}
+
+/// Baixa um .mrpack (link do Modrinth já resolvido pelo front) e importa.
+#[tauri::command]
+async fn import_url(store: State<'_, Store>, url: String) -> Res<Instance> {
+    if !url.starts_with("https://cdn.modrinth.com/") {
+        return Err("só links do Modrinth por enquanto".into());
+    }
+    let client = install::download::client();
+    let bytes = install::download::fetch(&client, &url, None).await?;
+    let tmp = std::env::temp_dir().join("rog-import.mrpack");
+    std::fs::write(&tmp, bytes).map_err(err)?;
+    let r = importer::import_file(&client, &store, &tmp).await;
+    let _ = std::fs::remove_file(&tmp);
+    r
+}
+
+#[tauri::command]
+fn scan_launchers() -> Vec<importer::LauncherScan> {
+    importer::scan()
+}
+
+#[tauri::command]
+fn import_found(store: State<Store>, found: importer::Found) -> Res<Instance> {
+    importer::import_found(&store, found)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -365,6 +464,18 @@ pub fn run() {
             import_instance,
             check_update,
             open_url,
+            skins_list,
+            skin_png,
+            skin_add,
+            skin_update,
+            skin_remove,
+            skin_set_global,
+            instance_cover,
+            set_instance_cover,
+            import_file,
+            import_url,
+            scan_launchers,
+            import_found,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

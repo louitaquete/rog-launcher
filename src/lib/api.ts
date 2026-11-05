@@ -383,3 +383,117 @@ export const extrasApi = {
   checkUpdate: (): Promise<{ version: string; url: string } | null> => (isTauri ? invoke("check_update") : Promise.resolve(null)),
   deleteInstance: (id: string): Promise<void> => api.deleteInstance(id),
 };
+
+// ---------- Skins ----------
+export type SkinVariant = "classic" | "slim";
+export interface Skin {
+  id: string;
+  name: string;
+  variant: SkinVariant;
+}
+export interface SkinLibrary {
+  skins: Skin[];
+  global: string | null;
+}
+
+const simSkins = (): SkinLibrary => JSON.parse(localStorage.getItem("rog.skins") ?? '{"skins":[],"global":null}');
+
+async function pickFile(name: string, extensions: string[]): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog");
+  const p = await open({ multiple: false, directory: false, filters: [{ name, extensions }] });
+  return typeof p === "string" ? p : null;
+}
+
+export const skinsApi = {
+  list: (): Promise<SkinLibrary> => (isTauri ? invoke("skins_list") : Promise.resolve(simSkins())),
+  /** PNG da skin como URL de objeto (null no navegador). */
+  url: async (id: string): Promise<string | null> => {
+    if (!isTauri) return null;
+    const bytes = await invoke<number[]>("skin_png", { id });
+    return URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "image/png" }));
+  },
+  /** Pede um .png e adiciona à biblioteca. */
+  add: async (variant: SkinVariant): Promise<Skin | null> => {
+    if (!isTauri) {
+      const lib = simSkins();
+      const s = { id: String(Date.now()), name: `Skin ${lib.skins.length + 1}`, variant };
+      lib.skins.push(s);
+      localStorage.setItem("rog.skins", JSON.stringify(lib));
+      return s;
+    }
+    const path = await pickFile("Skin do Minecraft", ["png"]);
+    if (!path) return null;
+    const name = path.split(/[\\/]/).pop()!.replace(/\.png$/i, "");
+    return invoke("skin_add", { path, name, variant });
+  },
+  update: (skin: Skin): Promise<void> => {
+    if (isTauri) return invoke("skin_update", { skin });
+    const lib = simSkins();
+    lib.skins = lib.skins.map((s) => (s.id === skin.id ? skin : s));
+    localStorage.setItem("rog.skins", JSON.stringify(lib));
+    return Promise.resolve();
+  },
+  remove: (id: string): Promise<void> => {
+    if (isTauri) return invoke("skin_remove", { id });
+    const lib = simSkins();
+    lib.skins = lib.skins.filter((s) => s.id !== id);
+    if (lib.global === id) lib.global = null;
+    localStorage.setItem("rog.skins", JSON.stringify(lib));
+    return Promise.resolve();
+  },
+  setGlobal: (id: string | null): Promise<void> => {
+    if (isTauri) return invoke("skin_set_global", { id });
+    localStorage.setItem("rog.skins", JSON.stringify({ ...simSkins(), global: id }));
+    return Promise.resolve();
+  },
+};
+
+// ---------- Capa da instância ----------
+export const coverApi = {
+  url: async (id: string): Promise<string | null> => {
+    if (!isTauri) return null;
+    const bytes = await invoke<number[] | null>("instance_cover", { id });
+    return bytes ? URL.createObjectURL(new Blob([new Uint8Array(bytes)])) : null;
+  },
+  /** Pede uma imagem (ou remove com `remove = true`). */
+  set: async (id: string, remove = false): Promise<Instance | null> => {
+    if (!isTauri) return null;
+    const path = remove ? null : await pickFile("Imagem", ["png", "jpg", "jpeg", "webp"]);
+    if (!remove && !path) return null;
+    return invoke("set_instance_cover", { id, path });
+  },
+};
+
+// ---------- Importar ----------
+export interface FoundInstance {
+  launcher: string;
+  name: string;
+  path: string;
+  mcVersion: string;
+  loader: LoaderType;
+  loaderVersion: string | null;
+}
+export interface LauncherScan {
+  launcher: string;
+  found: boolean;
+  instances: FoundInstance[];
+}
+
+export const importApi = {
+  pickAndImport: async (): Promise<Instance | null> => {
+    if (!isTauri) return Promise.reject("Importar só funciona no app");
+    const path = await pickFile("Instância ou modpack", ["zip", "mrpack"]);
+    return path ? invoke("import_file", { path }) : null;
+  },
+  file: (path: string): Promise<Instance> => invoke("import_file", { path }),
+  url: (url: string): Promise<Instance> => invoke("import_url", { url }),
+  scan: (): Promise<LauncherScan[]> =>
+    isTauri
+      ? invoke("scan_launchers")
+      : Promise.resolve([
+          { launcher: "Prism Launcher", found: true, instances: [{ launcher: "Prism Launcher", name: "Create Above", path: "x", mcVersion: "1.20.1", loader: "Forge", loaderVersion: "47.2.0" }] },
+          { launcher: "CurseForge", found: false, instances: [] },
+          { launcher: "MultiMC", found: false, instances: [] },
+        ]),
+  found: (found: FoundInstance): Promise<Instance> => invoke("import_found", { found }),
+};

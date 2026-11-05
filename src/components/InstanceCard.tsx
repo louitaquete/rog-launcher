@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api, extrasApi, type Instance } from "../lib/api";
+import { api, coverApi, extrasApi, type Instance } from "../lib/api";
 import { useApp } from "../lib/store";
 import { Button, Chip, Icon, Modal } from "./ui";
 import type { IconName } from "./icons";
@@ -19,6 +19,11 @@ export function InstanceCard({ instance }: { instance: Instance }) {
   const [confirm, setConfirm] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const isPvp = instance.kind === "pvp";
+  const [cover, setCover] = useState<string | null>(null);
+  useEffect(() => {
+    if (instance.cover) coverApi.url(instance.id).then(setCover);
+    else setCover(null);
+  }, [instance.id, instance.cover]);
 
   const item = "block w-full px-3.5 py-2.5 text-left text-[13px] text-[#d0d0d0] hover:bg-active";
 
@@ -28,11 +33,15 @@ export function InstanceCard({ instance }: { instance: Instance }) {
       className="group flex h-[360px] w-[208px] cursor-pointer flex-col border border-line bg-card transition-all duration-150 hover:-translate-y-0.5 hover:border-[#3a3a3a] hover:bg-[#1e1e1e] hover:shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
     >
       <div className="flex h-[208px] items-center justify-center overflow-hidden bg-gradient-to-b from-[#262626] to-[#171717]">
+        {cover ? (
+          <img src={cover} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105" />
+        ) : (
         <Icon
           name={coverIcon[instance.kind]}
           size={72}
           className="opacity-35 transition-transform duration-200 group-hover:scale-110"
         />
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-2.5 p-3.5">
         <p className="m-0 truncate text-sm font-semibold text-ink">{instance.name}</p>

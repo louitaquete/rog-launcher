@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { extrasApi, type Kind } from "../lib/api";
+import type { Kind } from "../lib/api";
 import { useApp } from "../lib/store";
 import { InstanceCard, NewInstanceCard } from "../components/InstanceCard";
 import { NewInstanceModal } from "../components/NewInstanceModal";
+import { ImportModal } from "../components/ImportModal";
 import { Button, Icon, PageHeader, SectionLabel } from "../components/ui";
 
 const copy = {
@@ -19,19 +20,10 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
   const { instances } = useApp();
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
-  const { refresh, setLoginOpen } = useApp();
-  const [importMsg, setImportMsg] = useState<string | null>(null);
-  async function doImport() {
-    setImportMsg(null);
-    try {
-      const inst = await extrasApi.importInstance();
-      if (!inst) return;
-      await refresh();
-      navigate(`/${inst.kind}/${inst.id}/jogar`);
-    } catch (e) {
-      setImportMsg(String(e));
-    }
-  }
+  const { setLoginOpen } = useApp();
+  const [importing, setImporting] = useState(false);
+  const doImport = () => setImporting(true);
+  const importModal = importing && <ImportModal onClose={() => setImporting(false)} />;
   const { title, subtitle } = copy[filter];
 
   const list = (instances ?? []).filter((i) => filter === "all" || i.kind === filter).sort((a, b) => order[a.kind] - order[b.kind]);
@@ -62,8 +54,8 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
             </button>
           ))}
         </div>
-        {importMsg && <p className="m-0 text-xs text-[#9a9a9a]">{importMsg}</p>}
         {modal}
+        {importModal}
       </div>
     );
   }
@@ -75,7 +67,6 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
         subtitle={subtitle}
         actions={
           <>
-            {importMsg && <span className="max-w-[320px] truncate text-xs text-[#9a9a9a]" title={importMsg}>{importMsg}</span>}
             <Button variant="dark" className="border border-edge" onClick={doImport}>Importar</Button>
             <Button variant="primary" onClick={() => setCreating(true)}>+ Nova instância</Button>
           </>
@@ -89,6 +80,7 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
         <NewInstanceCard onClick={() => setCreating(true)} />
       </div>
       {modal}
+      {importModal}
     </div>
   );
 }

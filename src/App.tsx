@@ -1,10 +1,10 @@
+import { SkinGlobalPage } from "./pages/SkinPages";
 import { LoginModal } from "./components/LoginModal";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { TitleBar } from "./components/TitleBar";
 import { Sidebar } from "./components/Sidebar";
 import { InstanceList } from "./pages/InstanceList";
 import { InstancePage } from "./pages/InstancePage";
-import { Placeholder } from "./pages/Placeholder";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AppProvider } from "./lib/store";
 
@@ -28,7 +28,7 @@ export default function App() {
               <Route path="/mods/:id/:tab" element={<InstancePage area="mods" />} />
               <Route path="/pvp" element={<Navigate to="/pvp/jogar" replace />} />
               <Route path="/pvp/:tab" element={<InstancePage area="pvp" />} />
-              <Route path="/skin" element={<Placeholder title="Skin global" />} />
+              <Route path="/skin" element={<SkinGlobalPage />} />
               <Route path="/config" element={<Navigate to="/config/geral" replace />} />
               <Route path="/config/:section" element={<SettingsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

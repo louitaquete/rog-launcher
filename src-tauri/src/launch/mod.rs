@@ -104,10 +104,11 @@ pub fn resolve_options(settings: &Settings, inst: &Instance) -> (Options, Option
         max_memory_mb: pick(o.max_memory_mb, settings.java.max_memory_mb),
         min_memory_mb: settings.java.min_memory_mb,
         jvm_args: jvm,
-        fullscreen: if own { o.fullscreen.unwrap_or(settings.launch.fullscreen) } else { settings.launch.fullscreen },
-        width: pick(o.width, settings.launch.width),
-        height: pick(o.height, settings.launch.height),
-        join_server: if own { o.join_server.clone() } else { None },
+        // Inicialização vale sempre que a instância define (não depende de "usar configurações globais").
+        fullscreen: o.fullscreen.unwrap_or(settings.launch.fullscreen),
+        width: o.width.unwrap_or(settings.launch.width),
+        height: o.height.unwrap_or(settings.launch.height),
+        join_server: o.join_server.clone(),
     };
     let java = if own { o.java_path.clone().or(settings.java.java_path.clone()) } else { settings.java.java_path.clone() };
     (opts, java)
