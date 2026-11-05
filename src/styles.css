@@ -106,14 +106,14 @@ button:not(:disabled):active, a:active {
   pointer-events: none;
   width: 8px;
   height: 8px;
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
   transform: translate(-50%, -50%) scale(1);
-  animation: rog-flash 380ms ease-out forwards;
+  animation: rog-flash 300ms ease-out forwards;
   z-index: 50;
 }
 @keyframes rog-flash {
   to {
-    transform: translate(-50%, -50%) scale(28);
+    transform: translate(-50%, -50%) scale(9);
     opacity: 0;
   }
 }
