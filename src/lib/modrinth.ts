@@ -127,3 +127,18 @@ export async function updateAll(inst: Instance): Promise<number> {
   }
   return n;
 }
+
+/** Busca modpacks no Modrinth. */
+export async function searchModpacks(query: string, offset = 0) {
+  const q = new URLSearchParams({ query, index: "relevance", limit: "20", offset: String(offset), facets: JSON.stringify([["project_type:modpack"]]) });
+  return get<{ hits: Hit[]; total_hits: number }>(`/search?${q}`);
+}
+
+/** URL do .mrpack mais recente (release) de um modpack. */
+export async function modpackFile(projectId: string): Promise<string> {
+  const versions = await get<Version[]>(`/project/${projectId}/version`);
+  const v = versions.find((x) => x.version_type === "release") ?? versions[0];
+  const file = v?.files.find((f) => f.primary) ?? v?.files[0];
+  if (!file) throw new Error("esse modpack não tem arquivo para baixar");
+  return file.url;
+}

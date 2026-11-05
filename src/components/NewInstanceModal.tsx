@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, installApi, loaderApi, type LoaderType, type LoaderVersion, type VersionInfo } from "../lib/api";
 import { useApp } from "../lib/store";
 import { LoaderIcon } from "./LoaderIcon";
+import { ModpackSearch } from "./ModpackSearch";
 import { Button, Field, Modal, Select, TextInput } from "./ui";
 
 const LOADERS: LoaderType[] = ["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"];
@@ -19,6 +20,7 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
   const [loaderVersion, setLoaderVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"scratch" | "modpacks">("scratch");
 
   useEffect(() => {
     installApi
@@ -79,7 +81,9 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
     <Modal
       title="Nova instância"
       onClose={onClose}
+      width={720}
       footer={
+        tab === "modpacks" ? undefined : (
         <>
           <span className="flex-1 text-[11px] text-faint">{error ?? ""}</span>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
@@ -87,8 +91,33 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
             {busy ? "Criando…" : "Criar instância"}
           </Button>
         </>
+        )
       }
     >
+      <div className="-mt-1 mb-5 flex border-b border-line">
+        {([
+          ["scratch", "Do zero"],
+          ["modpacks", "Modpacks"],
+        ] as const).map(([v, l]) => (
+          <button
+            key={v}
+            onClick={() => setTab(v)}
+            className={`relative -mb-px px-4 py-2.5 text-[13px] font-medium ${tab === v ? "text-ink" : "text-muted hover:text-soft"}`}
+          >
+            {l}
+            {tab === v && <span className="absolute right-0 bottom-0 left-0 h-0.5 bg-[#9a9a9a]" />}
+          </button>
+        ))}
+      </div>
+      {tab === "modpacks" ? (
+        <ModpackSearch
+          onDone={async (inst) => {
+            await refresh();
+            onClose();
+            navigate(`/${inst.kind}/${inst.id}/jogar`);
+          }}
+        />
+      ) : (
       <div className="flex flex-col gap-6">
         <Field label="Nome">
           <TextInput autoFocus value={name} maxLength={64} placeholder={placeholder} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && create()} />
@@ -144,6 +173,7 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
           </Field>
         )}
       </div>
+      )}
     </Modal>
   );
 }

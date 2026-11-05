@@ -497,3 +497,11 @@ export const importApi = {
         ]),
   found: (found: FoundInstance): Promise<Instance> => invoke("import_found", { found }),
 };
+
+export const cfModpackApi = {
+  search: (query: string, offset: number) =>
+    isTauri
+      ? invoke<{ hits: (import("./modrinth").Hit & { url: string | null })[]; total_hits: number }>("cf_search_modpacks", { query, offset })
+      : Promise.reject("CurseForge só funciona no app"),
+  install: (projectId: number): Promise<Instance> => invoke("cf_import_modpack", { projectId }),
+};

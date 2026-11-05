@@ -414,6 +414,21 @@ fn import_found(store: State<Store>, found: importer::Found) -> Res<Instance> {
     importer::import_found(&store, found)
 }
 
+#[tauri::command]
+async fn cf_search_modpacks(query: String, offset: u32) -> Res<curseforge::Page> {
+    curseforge::search_modpacks(&install::download::client(), &query, offset).await
+}
+
+#[tauri::command]
+async fn cf_import_modpack(store: State<'_, Store>, project_id: u64) -> Res<Instance> {
+    let client = install::download::client();
+    let tmp = std::env::temp_dir().join("rog-import-cf.zip");
+    curseforge::download_modpack(&client, project_id, &tmp).await?;
+    let r = importer::import_file(&client, &store, &tmp).await;
+    let _ = std::fs::remove_file(&tmp);
+    r
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -476,6 +491,8 @@ pub fn run() {
             import_url,
             scan_launchers,
             import_found,
+            cf_search_modpacks,
+            cf_import_modpack,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

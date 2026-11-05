@@ -212,3 +212,29 @@ pub async fn download_files(client: &reqwest::Client, mods_dir: &Path, ids: &[(u
     }
     Ok(blocked)
 }
+
+/// Busca modpacks (classId 4471) para a aba Modpacks.
+pub async fn search_modpacks(client: &reqwest::Client, query: &str, offset: u32) -> Result<Page, String> {
+    let q = vec![
+        ("gameId", MINECRAFT.to_string()),
+        ("classId", "4471".into()),
+        ("searchFilter", query.to_string()),
+        ("sortField", "2".into()),
+        ("sortOrder", "desc".into()),
+        ("pageSize", "20".into()),
+        ("index", offset.to_string()),
+    ];
+    let v = get(client, "/mods/search", &q).await?;
+    let hits = v["data"].as_array().map(|a| a.iter().map(hit).collect()).unwrap_or_default();
+    Ok(Page { hits, total_hits: v["pagination"]["totalCount"].as_u64().unwrap_or(0).min(10_000) })
+}
+
+/// Baixa o .zip mais recente (release) de um modpack para `dest`.
+pub async fn download_modpack(client: &reqwest::Client, project_id: u64, dest: &Path) -> Result<(), String> {
+    let files = get(client, &format!("/mods/{project_id}/files"), &[("pageSize", "20".into())]).await?;
+    let list = files["data"].as_array().cloned().unwrap_or_default();
+    let file = list.iter().find(|f| f["releaseType"].as_u64() == Some(1)).or(list.first()).ok_or("esse modpack não tem arquivo")?;
+    let url = file["downloadUrl"].as_str().ok_or("o autor desse modpack não libera download por outros apps")?;
+    let bytes = crate::install::download::fetch(client, url, None).await?;
+    std::fs::write(dest, bytes).map_err(|e| e.to_string())
+}
