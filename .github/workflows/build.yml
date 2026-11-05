@@ -2,7 +2,7 @@ name: Build (Windows)
 
 on:
   push:
-    branches: [main]
+    branches: [main, "exp/**"]
   workflow_dispatch:
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
       - run: npm run tauri build -- ${{ matrix.args }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.name }}${{ github.ref_name != 'main' && '-EXPERIMENTAL' || '' }}
           retention-days: ${{ matrix.args == '' && 30 || 3 }}
           path: |
             src-tauri/target/release/bundle/nsis/*.exe

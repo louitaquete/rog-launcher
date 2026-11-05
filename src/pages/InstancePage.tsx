@@ -50,7 +50,7 @@ export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
             key={t.slug}
             to={`${base}/${t.slug}`}
             className={({ isActive }) =>
-              `group relative flex h-11 w-[180px] items-center gap-2.5 border-r border-line px-[18px] text-[13px] font-medium no-underline transition-colors ${
+              `rog-tab ${isActive || (t.slug === current.slug && !tab) ? "active" : ""} group relative flex h-11 w-[180px] items-center gap-2.5 border-r border-line px-[18px] text-[13px] font-medium no-underline transition-colors ${
                 isActive || (t.slug === current.slug && !tab) ? "bg-bg text-ink" : "text-[#7a7a7a] hover:bg-[#1a1a1a] hover:text-soft"
               }`
             }

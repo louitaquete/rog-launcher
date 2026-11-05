@@ -11,7 +11,7 @@ function NavItem({ to, icon, label, end }: { to: string; icon: IconName; label: 
     <NavLink to={to} end={end} aria-label={label} className="group relative block">
       {({ isActive }) => (
         <span
-          className={`flex h-16 w-16 items-center justify-center transition-colors ${isActive ? "bg-active" : "hover:bg-raised"}`}
+          className={`relative flex h-16 w-16 items-center justify-center transition-colors ${isActive ? "bg-active" : "hover:bg-raised"}`}
         >
           {isActive && <span className="absolute top-0 left-0 h-16 w-[3px] bg-[#e6e6e6]" />}
           <Icon

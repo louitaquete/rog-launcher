@@ -76,3 +76,85 @@ body {
 select option {
   background: #1c1c1c;
 }
+
+/* ===== EXPERIMENTAL: "feeling" de clique ===== */
+/* Tudo que é clicável mostra a mãozinha; desabilitado mostra o bloqueio. */
+button, a, select, summary, [role="button"], label:has(input[type="checkbox"]) {
+  cursor: pointer;
+}
+button:disabled, select:disabled {
+  cursor: not-allowed;
+}
+
+/* Afundar ao pressionar: resposta física imediata. */
+button:not(:disabled), a {
+  transition: transform 90ms ease-out, background-color 120ms, color 120ms, border-color 120ms, opacity 120ms, box-shadow 120ms;
+}
+button:not(:disabled):active, a:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* Teclado: contorno quadrado bem visível. */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* Clarão quadrado no ponto do clique (adicionado por feel.ts). */
+.rog-flash {
+  position: absolute;
+  pointer-events: none;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translate(-50%, -50%) scale(1);
+  animation: rog-flash 300ms ease-out forwards;
+  z-index: 50;
+}
+@keyframes rog-flash {
+  to {
+    transform: translate(-50%, -50%) scale(9);
+    opacity: 0;
+  }
+}
+
+/* Barra lateral e abas: prévia do indicador ao passar o mouse. */
+nav a:not(.active) > span::before,
+.rog-tab:not(.active)::before {
+  content: "";
+  position: absolute;
+  background: #e6e6e6;
+  opacity: 0;
+  transition: opacity 120ms, transform 160ms ease-out;
+}
+nav a:not(.active) > span::before {
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  transform: scaleY(0.3);
+}
+nav a:not(.active):hover > span::before {
+  opacity: 0.35;
+  transform: scaleY(0.6);
+}
+.rog-tab:not(.active)::before {
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  transform: scaleX(0.2);
+}
+.rog-tab:not(.active):hover::before {
+  opacity: 0.35;
+  transform: scaleX(1);
+}
+
+/* Cards e tiles: levantam um pouco ao passar o mouse. */
+.group.relative.aspect-\[400\/190\] {
+  transition: transform 160ms ease-out, border-color 120ms, box-shadow 160ms;
+}
+.group.relative.aspect-\[400\/190\]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+}
