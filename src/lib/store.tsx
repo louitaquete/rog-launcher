@@ -1,6 +1,6 @@
 // Estado global: instâncias, configurações, downloads e jogos abertos.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { api, gameApi, installApi, type GameState, type Instance, type Progress, type Settings } from "./api";
+import { accountApi, api, gameApi, type Account, installApi, type GameState, type Instance, type Progress, type Settings } from "./api";
 
 const MAX_LOG_LINES = 3000;
 
@@ -22,6 +22,11 @@ interface AppState {
   launchErrors: Record<string, string>;
   kill: (id: string) => void;
   devOffline: boolean;
+  account: Account | null;
+  setAccount: (a: Account | null) => void;
+  /** Abre a janela de login. */
+  loginOpen: boolean;
+  setLoginOpen: (v: boolean) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -35,6 +40,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [logs, setLogs] = useState<Record<string, string[]>>({});
   const [launchErrors, setLaunchErrors] = useState<Record<string, string>>({});
   const [devOffline, setDevOffline] = useState(false);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
   const timer = useRef<number | undefined>(undefined);
   const busy = useRef(new Set<string>());
 
@@ -50,6 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refresh();
     api.getSettings().then(setSettings).catch((e) => setError(String(e)));
     gameApi.devOffline().then(setDevOffline);
+    accountApi.get().then(setAccount);
     let stop: (() => void) | undefined;
     gameApi
       .listen(
@@ -100,6 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             setInstalls((prev) => ({ ...prev, [id]: { ...prev[id], stage: "error", error: msg } }));
           } else {
             setLaunchErrors((m) => ({ ...m, [id]: msg }));
+            if (msg.includes("NEEDS_ACCOUNT")) setLoginOpen(true);
           }
         })
         .finally(() => busy.current.delete(id));
@@ -115,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ instances, settings, refresh, updateSettings, error, installs, cancelInstall, play, games, logs, launchErrors, kill, devOffline }}>
+    <Ctx.Provider value={{ instances, settings, refresh, updateSettings, error, installs, cancelInstall, play, games, logs, launchErrors, kill, devOffline, account, setAccount, loginOpen, setLoginOpen }}>
       {children}
     </Ctx.Provider>
   );

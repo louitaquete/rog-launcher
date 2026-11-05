@@ -255,3 +255,32 @@ async function simulateGame(id: string) {
   }
   simHandlers?.onState({ instanceId: id, state: "exited", exitCode: simKill[id] ? -1 : 0, killed: !!simKill[id], startedAt });
 }
+
+// ---------- Conta Microsoft ----------
+export interface Account {
+  name: string;
+  uuid: string;
+}
+export interface DeviceCode {
+  userCode: string;
+  verificationUri: string;
+  expiresIn: number;
+}
+
+export const accountApi = {
+  get: (): Promise<Account | null> =>
+    isTauri ? invoke("account_get") : Promise.resolve(JSON.parse(localStorage.getItem("rog.account") ?? "null")),
+  /** Pede o código e abre microsoft.com/link. */
+  start: (): Promise<DeviceCode> =>
+    isTauri ? invoke("login_start") : Promise.resolve({ userCode: "AB12-CD34", verificationUri: "https://www.microsoft.com/link", expiresIn: 900 }),
+  /** Resolve quando o usuário confirma o código. */
+  wait: async (): Promise<Account> => {
+    if (isTauri) return invoke("login_wait");
+    await new Promise((r) => setTimeout(r, 2500));
+    const a = { name: "Jogador", uuid: "b50ad385829d3141a2167e7d7539ba7f" };
+    localStorage.setItem("rog.account", JSON.stringify(a));
+    return a;
+  },
+  cancel: (): Promise<void> => (isTauri ? invoke("login_cancel") : Promise.resolve()),
+  logout: (): Promise<void> => (isTauri ? invoke("logout") : Promise.resolve(localStorage.removeItem("rog.account"))),
+};

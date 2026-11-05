@@ -1,3 +1,4 @@
+mod auth;
 mod install;
 mod launch;
 mod store;
@@ -116,15 +117,54 @@ fn dev_offline() -> bool {
     cfg!(feature = "dev-offline")
 }
 
-fn account_for(settings: &store::settings::Settings) -> Res<launch::args::Account> {
-    if cfg!(feature = "dev-offline") {
+async fn account_for(settings: &store::settings::Settings, root: &std::path::Path) -> Res<launch::args::Account> {
+    if cfg!(feature = "dev-offline") && auth::load(root).is_none() {
         let nick = settings.general.dev_nickname.trim();
         let nick = if nick.is_empty() { "Jogador" } else { nick };
         return Ok(launch::args::Account::offline(nick));
     }
-    let _ = settings;
-    // Login Microsoft entra aqui quando a Mojang aprovar o app.
-    Err("NEEDS_ACCOUNT: conecte sua conta Microsoft para jogar".into())
+    let a = auth::ensure(&install::download::client(), root).await?;
+    Ok(launch::args::Account { name: a.name, uuid: a.uuid, access_token: a.mc_token, xuid: a.xuid, user_type: "msa".into() })
+}
+
+/// Login em andamento (código de dispositivo) e pedido de cancelamento.
+#[derive(Default)]
+struct Login {
+    code: std::sync::Mutex<Option<auth::DeviceCode>>,
+    cancel: std::sync::atomic::AtomicBool,
+}
+
+#[tauri::command]
+fn account_get(store: State<Store>) -> Option<auth::Public> {
+    auth::load(store.root()).as_ref().map(Into::into)
+}
+
+/// Pede um código à Microsoft e abre microsoft.com/link no navegador.
+#[tauri::command]
+async fn login_start(app: tauri::AppHandle, login: State<'_, Login>) -> Res<auth::DeviceCode> {
+    let code = auth::start(&install::download::client()).await?;
+    *login.code.lock().unwrap() = Some(code.clone());
+    login.cancel.store(false, std::sync::atomic::Ordering::SeqCst);
+    let _ = app.opener().open_url(&code.verification_uri, None::<&str>);
+    Ok(code)
+}
+
+/// Espera o usuário confirmar o código e termina o login.
+#[tauri::command]
+async fn login_wait(store: State<'_, Store>, login: State<'_, Login>) -> Res<auth::Public> {
+    let code = login.code.lock().unwrap().clone().ok_or("nenhum login em andamento")?;
+    let s = auth::finish(&install::download::client(), store.root(), &code, || login.cancel.load(std::sync::atomic::Ordering::SeqCst)).await?;
+    Ok((&s).into())
+}
+
+#[tauri::command]
+fn login_cancel(login: State<Login>) {
+    login.cancel.store(true, std::sync::atomic::Ordering::SeqCst);
+}
+
+#[tauri::command]
+fn logout(store: State<Store>) {
+    auth::logout(store.root());
 }
 
 /// Abre o jogo. Logs chegam pelo evento `game-log`; início e fim, por `game-state`.
@@ -134,7 +174,7 @@ async fn launch_instance(app: tauri::AppHandle, store: State<'_, Store>, running
         return Err("o jogo já está aberto".into());
     }
     let settings = store.load_settings().map_err(err)?;
-    let account = account_for(&settings)?;
+    let account = account_for(&settings, store.root()).await?;
     let mut inst = store.get_instance(&id).map_err(err)?;
     let game_dir = store.game_dir(&id).map_err(err)?;
     let prepared = launch::prepare(store.root(), &game_dir, &inst, &settings, &account)?;
@@ -208,6 +248,7 @@ pub fn run() {
             app.manage(store);
             app.manage(install::Installs::default());
             app.manage(launch::Running::default());
+            app.manage(Login::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -227,6 +268,11 @@ pub fn run() {
             launch_instance,
             kill_game,
             dev_offline,
+            account_get,
+            login_start,
+            login_wait,
+            login_cancel,
+            logout,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

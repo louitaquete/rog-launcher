@@ -42,7 +42,7 @@ function unit(stage: Stage) {
 }
 
 export function PlayTab({ instance }: { instance: Instance }) {
-  const { installs, play, cancelInstall, games, logs, launchErrors } = useApp();
+  const { installs, play, cancelInstall, games, logs, launchErrors, setLoginOpen } = useApp();
   const p: Progress | undefined = installs[instance.id];
   const game = games[instance.id];
   const inGame = game?.state === "running";
@@ -117,15 +117,18 @@ export function PlayTab({ instance }: { instance: Instance }) {
             {launchError.includes("NEEDS_ACCOUNT") ? (
               <>
                 <p className="m-0 text-[13px] font-semibold">Conecte sua conta Microsoft para jogar</p>
-                <p className="m-0 mt-0.5 text-xs text-[#9a9a9a]">O login chega assim que a Mojang aprovar o app. Os arquivos já estão baixados.</p>
+                <p className="m-0 mt-0.5 text-xs text-[#9a9a9a]">Os arquivos já estão baixados. É só entrar e jogar.</p>
               </>
             ) : (
               <>
                 <p className="m-0 text-[13px] font-semibold">Não deu para abrir o jogo</p>
-                <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{launchError}</p>
+                <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{launchError.replace(/^NO_GAME: /, "")}</p>
               </>
             )}
           </div>
+          {launchError.includes("NEEDS_ACCOUNT") && (
+            <button onClick={() => setLoginOpen(true)} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white">Entrar</button>
+          )}
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import { LoginModal } from "./components/LoginModal";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { TitleBar } from "./components/TitleBar";
 import { Sidebar } from "./components/Sidebar";
@@ -13,6 +14,7 @@ export default function App() {
     <HashRouter>
       <div className="flex h-full flex-col">
         <TitleBar />
+        <LoginModal />
         <div className="flex min-h-0 flex-1">
           <Sidebar />
           <main className="min-w-0 flex-1 bg-bg">

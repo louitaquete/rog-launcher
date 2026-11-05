@@ -89,7 +89,7 @@ function SubPicker({ subs, value, disabled, onPick }: { subs: string[]; value: s
 const label = "font-brand text-[11px] font-bold tracking-[0.14em]";
 
 export function PvpPlay({ instance }: { instance: Instance }) {
-  const { play, installs, games, launchErrors, cancelInstall, refresh } = useApp();
+  const { play, installs, games, launchErrors, cancelInstall, refresh, setLoginOpen } = useApp();
   const [inst, setInst] = useState(instance);
   const savedBase = baseOf(instance.mcVersion);
   const [base, setBase] = useState(savedBase);
@@ -198,7 +198,14 @@ export function PvpPlay({ instance }: { instance: Instance }) {
           </div>
         )}
 
-        {err && <p className="m-0 border-l-2 border-ink bg-[#1a1a1a] px-3 py-2 text-xs break-all text-[#9a9a9a]">{String(err).replace("NEEDS_ACCOUNT: ", "")}</p>}
+        {err && (
+          <div className="flex items-center gap-3 border-l-2 border-ink bg-[#1a1a1a] px-3 py-2">
+            <p className="m-0 flex-1 text-xs break-all text-[#9a9a9a]">{String(err).replace(/^(NEEDS_ACCOUNT|NO_GAME): /, "")}</p>
+            {String(err).includes("NEEDS_ACCOUNT") && (
+              <button onClick={() => setLoginOpen(true)} className="bg-ink px-3 py-1.5 text-xs font-semibold text-[#111] hover:bg-white">Entrar</button>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
