@@ -63,7 +63,7 @@ export const isTauri = "__TAURI_INTERNALS__" in window;
 
 // ---------- Armazenamento falso para o navegador ----------
 const DEFAULT_SETTINGS: Settings = {
-  general: { language: "pt-BR", onLaunch: "minimize", startWithSystem: false, autoUpdate: true, killWarningDismissed: false, devNickname: "Jogador" },
+  general: { language: "pt-BR", onLaunch: "keepOpen", startWithSystem: false, autoUpdate: true, killWarningDismissed: false, devNickname: "Jogador" },
   java: { maxMemoryMb: 6144, minMemoryMb: 2048, javaPath: null, jvmArgs: "-XX:+UseG1GC -XX:MaxGCPauseMillis=50" },
   launch: { skipMojangIntro: true, fullscreen: false, width: 1920, height: 1080 },
   downloads: { concurrent: 8, modSource: "modrinth", autoUpdateMods: false, speedLimitMbps: 0 },

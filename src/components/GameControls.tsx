@@ -43,7 +43,7 @@ export function GameBar({ id, consoleOpen, onToggleConsole }: { id: string; cons
         <button onClick={onToggleConsole} className={`flex items-center gap-2 border border-edge px-3 py-1.5 text-[13px] font-medium text-[#d0d0d0] hover:bg-raised ${consoleOpen ? "bg-[#2a2a2a]" : ""}`}>
           {termIcon} Console
         </button>
-        <button onClick={onKill} className="flex items-center gap-2 border border-edge px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-ink hover:text-[#111]">
+        <button onClick={onKill} className="flex items-center gap-2 border border-[#7a2a2a] px-3 py-1.5 text-[13px] font-medium text-[#e5484d] hover:border-[#e5484d] hover:bg-[#e5484d] hover:text-[#111]">
           {powerIcon} Kill game
         </button>
       </div>

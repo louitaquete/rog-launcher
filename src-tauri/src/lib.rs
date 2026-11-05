@@ -185,7 +185,6 @@ async fn launch_instance(app: tauri::AppHandle, store: State<'_, Store>, running
     running.0.lock().unwrap().insert(id.clone(), tx);
 
     let (log_app, state_app) = (app.clone(), app.clone());
-    let minimize = settings.general.on_launch != store::settings::OnLaunch::KeepOpen;
     let result = launch::run(
         prepared,
         id.clone(),
@@ -194,14 +193,11 @@ async fn launch_instance(app: tauri::AppHandle, store: State<'_, Store>, running
             let _ = log_app.emit("game-log", l);
         },
         move |s| {
-            if let Some(w) = state_app.get_webview_window("main") {
-                if s.state == "running" && minimize {
-                    let _ = w.minimize();
-                } else if s.state == "exited" {
+            if let Some(w) = state_app.get_webview_window("main")
+                && s.state == "exited" {
                     let _ = w.unminimize();
                     let _ = w.set_focus();
                 }
-            }
             let _ = state_app.emit("game-state", s);
         },
     )

@@ -109,9 +109,6 @@ export function SettingsPage() {
             <Row title="Idioma" desc="Idioma da interface do launcher">
               <Select value={general.language} onChange={(v) => set("general", { language: v })} options={[{ value: "pt-BR", label: "Português (Brasil)" }, { value: "en", label: "English (em breve)", disabled: true }]} className="w-[260px]" />
             </Row>
-            <Row title="Ao abrir o jogo" desc="O que o launcher faz quando o Minecraft inicia">
-              <Select value={general.onLaunch} onChange={(v) => set("general", { onLaunch: v as Settings["general"]["onLaunch"] })} options={[{ value: "minimize", label: "Minimizar o launcher" }, { value: "keepOpen", label: "Deixar aberto" }, { value: "close", label: "Fechar o launcher" }]} className="w-[260px]" />
-            </Row>
             <Row title="Iniciar com o Windows" desc="Abre o launcher junto com o sistema">
               <Toggle on={general.startWithSystem} onChange={(v) => set("general", { startWithSystem: v })} />
             </Row>

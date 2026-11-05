@@ -89,7 +89,7 @@ pub struct Appearance {
 
 impl Default for General {
     fn default() -> Self {
-        Self { language: "pt-BR".into(), on_launch: OnLaunch::Minimize, start_with_system: false, auto_update: true, kill_warning_dismissed: false, dev_nickname: "Jogador".into() }
+        Self { language: "pt-BR".into(), on_launch: OnLaunch::KeepOpen, start_with_system: false, auto_update: true, kill_warning_dismissed: false, dev_nickname: "Jogador".into() }
     }
 }
 impl Default for Java {
