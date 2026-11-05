@@ -7,6 +7,7 @@ import type { IconName } from "../components/icons";
 import { Placeholder } from "./Placeholder";
 import { PlayTab } from "./PlayTab";
 import { PvpPlay } from "./PvpPlay";
+import { ModsTab } from "./ModsTab";
 
 const allTabs: { slug: string; label: string; icon: IconName }[] = [
   { slug: "jogar", label: "Jogar", icon: "play" },
@@ -66,7 +67,7 @@ export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
         ))}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {current.slug === "jogar" ? (area === "pvp" ? <PvpPlay key={inst.id} instance={inst} /> : <PlayTab instance={inst} />) : <Placeholder title={`${inst.name} · ${current.label}`} />}
+        {current.slug === "jogar" ? (area === "pvp" ? <PvpPlay key={inst.id} instance={inst} /> : <PlayTab instance={inst} />) : current.slug === "mods" ? <ModsTab key={inst.id} instance={inst} /> : <Placeholder title={`${inst.name} · ${current.label}`} />}
       </div>
       {consoleOpen && <ConsolePanel id={inst.id} onClose={() => setConsoleOpen(false)} />}
     </div>

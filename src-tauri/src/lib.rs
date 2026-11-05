@@ -1,4 +1,5 @@
 mod auth;
+mod content;
 mod install;
 mod launch;
 mod store;
@@ -237,6 +238,27 @@ fn open_folder(app: tauri::AppHandle, store: State<Store>, id: Option<String>) -
     app.opener().open_path(path.display().to_string(), None::<&str>).map_err(err)
 }
 
+#[tauri::command]
+fn content_list(store: State<Store>, id: String) -> Res<Vec<content::Item>> {
+    Ok(content::list(&store.game_dir(&id).map_err(err)?))
+}
+
+#[tauri::command]
+async fn content_install(store: State<'_, Store>, id: String, req: content::InstallReq) -> Res<()> {
+    let game = store.game_dir(&id).map_err(err)?;
+    content::install(&install::download::client(), &game, req).await
+}
+
+#[tauri::command]
+fn content_remove(store: State<Store>, id: String, kind: content::Kind, file: String) -> Res<()> {
+    content::remove(&store.game_dir(&id).map_err(err)?, kind, &file)
+}
+
+#[tauri::command]
+fn content_toggle(store: State<Store>, id: String, kind: content::Kind, file: String, enabled: bool) -> Res<()> {
+    content::toggle(&store.game_dir(&id).map_err(err)?, kind, &file, enabled)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -273,6 +295,10 @@ pub fn run() {
             login_wait,
             login_cancel,
             logout,
+            content_list,
+            content_install,
+            content_remove,
+            content_toggle,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

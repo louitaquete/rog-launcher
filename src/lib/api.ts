@@ -284,3 +284,45 @@ export const accountApi = {
   cancel: (): Promise<void> => (isTauri ? invoke("login_cancel") : Promise.resolve()),
   logout: (): Promise<void> => (isTauri ? invoke("logout") : Promise.resolve(localStorage.removeItem("rog.account"))),
 };
+
+// ---------- Conteúdo (mods, resource packs, shaders) ----------
+export type ContentKind = "mod" | "resourcepack" | "shader";
+
+export interface ContentMeta {
+  kind: ContentKind;
+  file: string;
+  source: string;
+  projectId: string;
+  versionId: string;
+  versionNumber: string;
+  title: string;
+  iconUrl: string | null;
+}
+
+export interface ContentItem {
+  kind: ContentKind;
+  file: string;
+  enabled: boolean;
+  size: number;
+  meta: ContentMeta | null;
+}
+
+const simContent = (id: string): ContentItem[] => JSON.parse(localStorage.getItem(`rog.content.${id}`) ?? "[]");
+const saveSim = (id: string, l: ContentItem[]) => localStorage.setItem(`rog.content.${id}`, JSON.stringify(l));
+
+export const contentApi = {
+  list: (id: string): Promise<ContentItem[]> => (isTauri ? invoke("content_list", { id }) : Promise.resolve(simContent(id))),
+  install: async (id: string, req: { url: string; sha1: string | null; meta: ContentMeta }): Promise<void> => {
+    if (isTauri) return invoke("content_install", { id, req });
+    await new Promise((r) => setTimeout(r, 700));
+    const l = simContent(id).filter((i) => i.meta?.projectId !== req.meta.projectId);
+    l.push({ kind: req.meta.kind, file: req.meta.file, enabled: true, size: 1_200_000, meta: req.meta });
+    saveSim(id, l);
+  },
+  remove: (id: string, kind: ContentKind, file: string): Promise<void> =>
+    isTauri ? invoke("content_remove", { id, kind, file }) : Promise.resolve(saveSim(id, simContent(id).filter((i) => i.file !== file))),
+  toggle: (id: string, kind: ContentKind, file: string, enabled: boolean): Promise<void> =>
+    isTauri
+      ? invoke("content_toggle", { id, kind, file, enabled })
+      : Promise.resolve(saveSim(id, simContent(id).map((i) => (i.file === file ? { ...i, enabled } : i)))),
+};
