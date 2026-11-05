@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, contentApi, type ContentItem, type ContentKind, type Instance } from "../lib/api";
+import { api, cfApi, contentApi, openUrl, type ContentItem, type ContentKind, type Instance } from "../lib/api";
 import { fmtCount, install, kindsFor, search, type Hit, type Sort } from "../lib/modrinth";
 import { Segmented, Select, Toggle } from "../components/ui";
 
@@ -104,6 +104,11 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<Record<string, "installing" | string>>({});
+  const [source, setSource] = useState<"modrinth" | "curseforge">("modrinth");
+  const [cf, setCf] = useState(false);
+  useEffect(() => {
+    cfApi.available().then(setCf);
+  }, []);
   const seq = useRef(0);
 
   const load = useCallback(
@@ -112,7 +117,10 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
       setLoading(true);
       setError(null);
       try {
-        const r = await search(instance, kind, query, sort, offset);
+        const r =
+          source === "curseforge"
+            ? await cfApi.search(kind, instance.mcVersion, instance.loader.type, query, sort, offset)
+            : await search(instance, kind, query, sort, offset);
         if (n !== seq.current) return;
         setHits((h) => (offset ? [...h, ...r.hits] : r.hits));
         setTotal(r.total_hits);
@@ -122,7 +130,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         if (n === seq.current) setLoading(false);
       }
     },
-    [instance, kind, query, sort],
+    [instance, kind, query, sort, source],
   );
 
   useEffect(() => {
@@ -135,7 +143,8 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
   async function add(h: Hit) {
     setBusy((b) => ({ ...b, [h.project_id]: "installing" }));
     try {
-      await install(instance, kind, h.project_id);
+      if (source === "curseforge") await cfApi.install(instance.id, kind, Number(h.project_id));
+      else await install(instance, kind, h.project_id);
       setBusy(({ [h.project_id]: _, ...rest }) => rest);
     } catch (e) {
       setBusy((b) => ({ ...b, [h.project_id]: String(e).replace(/^Error: /, "") }));
@@ -146,6 +155,19 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex gap-3">
+        {cf && (
+          <Segmented
+            value={source}
+            onChange={(v) => {
+              setHits([]);
+              setSource(v);
+            }}
+            options={[
+              { value: "modrinth", label: "Modrinth" },
+              { value: "curseforge", label: "CurseForge" },
+            ]}
+          />
+        )}
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -165,7 +187,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         />
       </div>
 
-      {error && <p className="m-0 text-[13px] text-[#9a9a9a]">Não deu para falar com o Modrinth: {error}</p>}
+      {error && <p className="m-0 text-[13px] text-[#9a9a9a]">Não deu para buscar: {error}</p>}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-3">
         {hits.map((h) => {
@@ -184,7 +206,13 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
                   <span className="text-[11px] text-muted">↓ {fmtCount(h.downloads)}</span>
                   <span className="text-[11px] text-muted">♥ {fmtCount(h.follows)}</span>
                   <span className="flex-1" />
-                  {state && state !== "installing" && <span className="max-w-[180px] truncate text-[11px] text-[#9a9a9a]" title={state}>{state}</span>}
+                  {state?.includes("BLOCKED:") ? (
+                    <button onClick={() => openUrl(state.slice(state.indexOf("BLOCKED:") + 8))} className="text-[11px] text-[#9a9a9a] underline hover:text-ink" title="O autor não libera download por outros apps">
+                      Baixar no site
+                    </button>
+                  ) : (
+                    state && state !== "installing" && <span className="max-w-[180px] truncate text-[11px] text-[#9a9a9a]" title={state}>{state}</span>
+                  )}
                   <button
                     disabled={has || state === "installing"}
                     onClick={() => add(h)}
@@ -206,7 +234,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
           Carregar mais
         </button>
       )}
-      <p className="m-0 pb-2 text-[11px] text-[#555]">Conteúdo do Modrinth.</p>
+      <p className="m-0 pb-2 text-[11px] text-[#555]">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
     </div>
   );
 }

@@ -12,8 +12,9 @@ export interface Hit {
   downloads: number;
   follows: number;
   icon_url: string | null;
-  categories: string[];
-  date_modified: string;
+  categories?: string[];
+  date_modified?: string;
+  url?: string | null;
 }
 
 interface Version {

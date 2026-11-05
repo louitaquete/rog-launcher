@@ -1,5 +1,6 @@
 mod auth;
 mod content;
+mod curseforge;
 mod install;
 mod launch;
 mod store;
@@ -259,6 +260,24 @@ fn content_toggle(store: State<Store>, id: String, kind: content::Kind, file: St
     content::toggle(&store.game_dir(&id).map_err(err)?, kind, &file, enabled)
 }
 
+#[tauri::command]
+fn cf_available() -> bool {
+    curseforge::available()
+}
+
+#[tauri::command]
+async fn cf_search(kind: content::Kind, mc: String, loader: String, query: String, sort: String, offset: u32) -> Res<curseforge::Page> {
+    curseforge::search(&install::download::client(), kind, &mc, &loader, &query, &sort, offset).await
+}
+
+#[tauri::command]
+async fn cf_install(store: State<'_, Store>, id: String, kind: content::Kind, project_id: u64) -> Res<Vec<String>> {
+    let inst = store.get_instance(&id).map_err(err)?;
+    let game = store.game_dir(&id).map_err(err)?;
+    let loader = format!("{:?}", inst.loader.kind);
+    curseforge::install(&install::download::client(), &game, kind, &inst.mc_version, &loader, project_id).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -299,6 +318,9 @@ pub fn run() {
             content_install,
             content_remove,
             content_toggle,
+            cf_available,
+            cf_search,
+            cf_install,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

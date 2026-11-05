@@ -30,6 +30,8 @@ jobs:
           key: ${{ matrix.name }}
       - run: npm ci
       - run: npm run tauri build -- ${{ matrix.args }}
+        env:
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}${{ github.ref_name != 'main' && '-EXPERIMENTAL' || '' }}

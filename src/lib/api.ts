@@ -326,3 +326,20 @@ export const contentApi = {
       ? invoke("content_toggle", { id, kind, file, enabled })
       : Promise.resolve(saveSim(id, simContent(id).map((i) => (i.file === file ? { ...i, enabled } : i)))),
 };
+
+// ---------- CurseForge ----------
+export const cfApi = {
+  available: (): Promise<boolean> => (isTauri ? invoke("cf_available") : Promise.resolve(true)),
+  search: (kind: ContentKind, mc: string, loader: string, query: string, sort: string, offset: number) =>
+    isTauri
+      ? invoke<{ hits: (import("./modrinth").Hit & { url: string | null })[]; total_hits: number }>("cf_search", { kind, mc, loader, query, sort, offset })
+      : Promise.reject("CurseForge só funciona no app"),
+  install: (id: string, kind: ContentKind, projectId: number): Promise<string[]> =>
+    isTauri ? invoke("cf_install", { id, kind, projectId }) : Promise.reject("CurseForge só funciona no app"),
+};
+
+export async function openUrl(url: string) {
+  if (!isTauri) return void window.open(url, "_blank");
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  await openUrl(url);
+}
