@@ -1,6 +1,7 @@
 mod auth;
 mod content;
 mod curseforge;
+mod extras;
 mod install;
 mod launch;
 mod store;
@@ -35,6 +36,10 @@ fn get_settings(store: State<Store>) -> Res<Settings> {
 
 #[tauri::command]
 fn save_settings(store: State<Store>, settings: Settings) -> Res<Settings> {
+    let before = store.load_settings().ok().map(|s| s.general.start_with_system);
+    if before != Some(settings.general.start_with_system) {
+        extras::set_autostart(settings.general.start_with_system)?;
+    }
     store.save_settings(settings).map_err(err)
 }
 
@@ -279,10 +284,42 @@ async fn loader_versions(loader: store::instances::LoaderType, mc: String) -> Re
     install::loaders::versions(&install::download::client(), loader, &mc).await
 }
 
+#[tauri::command]
+fn change_loader(store: State<Store>, id: String, loader: store::instances::Loader) -> Res<Instance> {
+    store.change_loader(&id, loader).map_err(err)
+}
+
+/// Exporta para Downloads e abre a pasta com o arquivo selecionado.
+#[tauri::command]
+fn export_instance(app: tauri::AppHandle, store: State<Store>, id: String) -> Res<String> {
+    let path = extras::export(&store, &id)?;
+    let _ = app.opener().reveal_item_in_dir(&path);
+    Ok(path.display().to_string())
+}
+
+#[tauri::command]
+fn import_instance(store: State<Store>, path: String) -> Res<Instance> {
+    extras::import(&store, std::path::Path::new(&path))
+}
+
+#[tauri::command]
+async fn check_update() -> Res<Option<extras::Update>> {
+    extras::check_update(&install::download::client()).await
+}
+
+#[tauri::command]
+fn open_url(app: tauri::AppHandle, url: String) -> Res<()> {
+    if !url.starts_with("https://") {
+        return Err("link inválido".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(err)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let store = Store::default_location()?;
             store.load_settings()?;
@@ -323,6 +360,11 @@ pub fn run() {
             cf_search,
             cf_install,
             loader_versions,
+            change_loader,
+            export_instance,
+            import_instance,
+            check_update,
+            open_url,
         ])
         .run(tauri::generate_context!())
         .expect("erro ao iniciar o Rog Launcher");

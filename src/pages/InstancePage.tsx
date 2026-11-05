@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { updateAll } from "../lib/modrinth";
 import { NavLink, Navigate, useParams, Link } from "react-router-dom";
 import { ConsolePanel, GameBar } from "../components/GameControls";
 import { useApp } from "../lib/store";
@@ -19,8 +20,17 @@ const allTabs: { slug: string; label: string; icon: IconName }[] = [
 // Página de instância: breadcrumb + abas estilo navegador. PVP não tem aba Mods.
 export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
   const { id = "pvp", tab = "jogar" } = useParams();
-  const { instances, games } = useApp();
+  const { instances, games, settings } = useApp();
   const [consoleOpen, setConsoleOpen] = useState(false);
+  const [modsVersion, setModsVersion] = useState(0);
+  const autoChecked = useRef<string | null>(null);
+  const found = instances?.find((i) => i.id === id);
+  // "Atualizar mods automaticamente": confere uma vez ao abrir a instância.
+  useEffect(() => {
+    if (!found || found.kind === "pvp" || !settings?.downloads.autoUpdateMods || autoChecked.current === found.id) return;
+    autoChecked.current = found.id;
+    updateAll(found).then((n) => n && setModsVersion((v) => v + 1));
+  }, [found, settings]);
   if (instances === null) return null;
   const inst = instances.find((i) => i.id === id);
   if (!inst) return <Navigate to={area === "pvp" ? "/" : `/${area}`} replace />;
@@ -67,7 +77,7 @@ export function InstancePage({ area }: { area: "vanilla" | "mods" | "pvp" }) {
         ))}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {current.slug === "jogar" ? (area === "pvp" ? <PvpPlay key={inst.id} instance={inst} /> : <PlayTab instance={inst} />) : current.slug === "mods" ? <ModsTab key={inst.id} instance={inst} /> : <Placeholder title={`${inst.name} · ${current.label}`} />}
+        {current.slug === "jogar" ? (area === "pvp" ? <PvpPlay key={inst.id} instance={inst} /> : <PlayTab instance={inst} />) : current.slug === "mods" ? <ModsTab key={`${inst.id}-${modsVersion}`} instance={inst} /> : <Placeholder title={`${inst.name} · ${current.label}`} />}
       </div>
       {consoleOpen && <ConsolePanel id={inst.id} onClose={() => setConsoleOpen(false)} />}
     </div>

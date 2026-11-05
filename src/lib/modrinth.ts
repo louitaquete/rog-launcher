@@ -108,3 +108,22 @@ export async function install(inst: Instance, kind: ContentKind, projectId: stri
 
 export const fmtCount = (n: number) =>
   n >= 1e6 ? `${(n / 1e6).toFixed(1).replace(".0", "")} mi` : n >= 1e3 ? `${Math.round(n / 1e3)} mil` : String(n);
+
+/** Atualiza o que veio do Modrinth para a versão mais nova compatível. Devolve quantos mudaram. */
+export async function updateAll(inst: Instance): Promise<number> {
+  const items = await contentApi.list(inst.id);
+  let n = 0;
+  for (const i of items) {
+    if (i.meta?.source !== "modrinth") continue;
+    try {
+      const v = await bestVersion(inst, i.kind, i.meta.projectId);
+      if (v && v.id !== i.meta.versionId) {
+        await install(inst, i.kind, i.meta.projectId);
+        n++;
+      }
+    } catch {
+      /* sem internet ou projeto removido: segue com os outros */
+    }
+  }
+  return n;
+}

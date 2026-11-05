@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { LoaderIcon } from "../components/LoaderIcon";
+import { useApp } from "../lib/store";
+import { extrasApi, loaderApi, type LoaderType, type LoaderVersion } from "../lib/api";
 import { api, cfApi, contentApi, openUrl, type ContentItem, type ContentKind, type Instance } from "../lib/api";
 import { fmtCount, install, kindsFor, search, type Hit, type Sort } from "../lib/modrinth";
 import { Segmented, Select, Toggle } from "../components/ui";
@@ -46,11 +50,7 @@ export function ModsTab({ instance }: { instance: Instance }) {
         </button>
       </div>
 
-      {instance.loader.type === "Vanilla" && (
-        <p className="m-0 border-l-2 border-edge bg-[#151515] px-4 py-3 text-[13px] text-[#9a9a9a]">
-          Instâncias Vanilla não rodam mods, só resource packs. Para mods, crie uma instância na aba Mods com Fabric, Forge, NeoForge ou Quilt.
-        </p>
-      )}
+      {instance.loader.type === "Vanilla" && <AddLoader instance={instance} />}
 
       {view === "installed" ? (
         <Installed instance={instance} items={ofKind} kind={kind} reload={reload} onExplore={() => setView("explore")} />
@@ -241,6 +241,83 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         </button>
       )}
       <p className="m-0 pb-2 text-[11px] text-[#555]">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
+    </div>
+  );
+}
+
+const MOD_LOADERS: LoaderType[] = ["Fabric", "Forge", "NeoForge", "Quilt"];
+
+/** Instância Vanilla: escolher um loader para poder usar mods. */
+function AddLoader({ instance }: { instance: Instance }) {
+  const { refresh } = useApp();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [loader, setLoader] = useState<LoaderType>("Fabric");
+  const [versions, setVersions] = useState<LoaderVersion[] | null>(null);
+  const [version, setVersion] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setVersions(null);
+    loaderApi
+      .versions(loader, instance.mcVersion)
+      .then((l) => {
+        if (!live) return;
+        setVersions(l);
+        setVersion((l.find((v) => v.recommended) ?? l[0])?.version ?? "");
+      })
+      .catch(() => live && setVersions([]));
+    return () => {
+      live = false;
+    };
+  }, [open, loader, instance.mcVersion]);
+
+  async function apply() {
+    setBusy(true);
+    await extrasApi.changeLoader(instance.id, { type: loader, version });
+    await refresh();
+    navigate(`/mods/${instance.id}/mods`);
+  }
+
+  if (!open)
+    return (
+      <div className="flex items-center gap-4 border border-line bg-[#151515] px-4 py-3">
+        <p className="m-0 flex-1 text-[13px] text-[#9a9a9a]">Instâncias Vanilla não rodam mods, só resource packs. Adicione um loader para usar mods aqui.</p>
+        <button onClick={() => setOpen(true)} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white">Adicionar loader</button>
+      </div>
+    );
+
+  return (
+    <div className="flex flex-col gap-4 border border-line bg-[#151515] p-5">
+      <p className="m-0 text-[13px] text-[#9a9a9a]">Escolha o loader. A instância passa para a aba Mods e o loader é baixado no próximo Jogar.</p>
+      <div className="grid max-w-[560px] grid-cols-4 gap-2">
+        {MOD_LOADERS.map((l) => (
+          <button
+            key={l}
+            onClick={() => setLoader(l)}
+            className={`flex flex-col items-center gap-2 border px-2 pt-3 pb-2.5 ${l === loader ? "border-[#454545] bg-active" : "border-edge bg-[#121212] hover:border-[#4a4a4a]"}`}
+          >
+            <span className={l === loader ? "" : "opacity-60"}><LoaderIcon loader={l} size={34} /></span>
+            <span className={`text-xs font-medium ${l === loader ? "text-ink" : "text-[#9a9a9a]"}`}>{l}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-3">
+        {versions === null ? (
+          <span className="text-[13px] text-muted">Buscando versões…</span>
+        ) : versions.length === 0 ? (
+          <span className="text-[13px] text-[#9a9a9a]">O {loader} ainda não tem versão para o Minecraft {instance.mcVersion}.</span>
+        ) : (
+          <Select value={version} onChange={setVersion} className="w-64" options={versions.map((v) => ({ value: v.version, label: `${v.version}${v.recommended ? " (recomendada)" : v.stable ? "" : " · beta"}` }))} />
+        )}
+        <span className="flex-1" />
+        <button onClick={() => setOpen(false)} className="px-3 py-2 text-[13px] text-muted hover:text-ink">Cancelar</button>
+        <button disabled={busy || !version} onClick={apply} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white disabled:opacity-40">
+          {busy ? "Aplicando…" : `Usar ${loader}`}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { windowControls } from "../lib/window";
 import { Icon } from "./ui";
 import { useApp } from "../lib/store";
+import { openUrl } from "../lib/api";
 
 function WinButton({ label, onClick, children, danger }: { label: string; onClick: () => void; children: React.ReactNode; danger?: boolean }) {
   return (
@@ -15,7 +16,7 @@ function WinButton({ label, onClick, children, danger }: { label: string; onClic
 }
 
 export function TitleBar() {
-  const { devOffline } = useApp();
+  const { devOffline, update } = useApp();
   return (
     <header
       data-tauri-drag-region
@@ -27,6 +28,16 @@ export function TitleBar() {
       </span>
       {devOffline && <span className="border border-edge px-1.5 py-px font-brand text-[9px] tracking-[0.14em] text-muted">DEV · OFFLINE</span>}
       <div data-tauri-drag-region className="flex-1 self-stretch" />
+      {update && (
+        <button
+          onClick={() => openUrl(update.url)}
+          className="mr-2 flex items-center gap-2 border border-edge bg-raised px-3 py-1 text-xs text-ink hover:bg-active"
+          title="Abrir a página da nova versão"
+        >
+          <span className="h-1.5 w-1.5 bg-ink" />
+          Versão {update.version} disponível
+        </button>
+      )}
       <WinButton label="Minimizar" onClick={windowControls.minimize}>
         <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 6h10" stroke="currentColor" strokeWidth="1.2" /></svg>
       </WinButton>

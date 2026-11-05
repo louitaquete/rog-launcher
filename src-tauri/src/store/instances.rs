@@ -227,6 +227,19 @@ impl Store {
         Ok(inst)
     }
 
+    /// Troca o loader (Vanilla vira Mods e vice-versa). A versão instalada é refeita no próximo Jogar.
+    pub fn change_loader(&self, id: &str, loader: Loader) -> io::Result<Instance> {
+        let mut inst = self.get_instance(id)?;
+        if inst.kind == Kind::Pvp {
+            return Err(invalid("o loader do PVP é escolhido na aba Jogar"));
+        }
+        inst.kind = if loader.kind == LoaderType::Vanilla { Kind::Vanilla } else { Kind::Mods };
+        inst.loader = loader;
+        inst.launch_version = None;
+        write_json(&self.instance_dir(id)?.join("instance.json"), &inst)?;
+        Ok(inst)
+    }
+
     pub fn delete_instance(&self, id: &str) -> io::Result<()> {
         if id == PVP_ID {
             return Err(invalid("a instância PVP não pode ser excluída"));

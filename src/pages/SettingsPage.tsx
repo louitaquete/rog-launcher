@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Navigate, useParams } from "react-router-dom";
-import { api, type Settings } from "../lib/api";
+import { accountApi, api, type Settings } from "../lib/api";
+import { PlayerHead } from "../components/Avatar";
 import { useApp } from "../lib/store";
 import { Button, Icon, Segmented, Select, TextInput, Toggle } from "../components/ui";
 
@@ -61,7 +62,7 @@ function CommitInput({ value, onCommit, className = "w-[260px]", type = "text" }
 
 export function SettingsPage() {
   const { section = "geral" } = useParams();
-  const { settings, updateSettings, devOffline } = useApp();
+  const { settings, updateSettings, devOffline, account, setAccount, setLoginOpen } = useApp();
   const [dataDir, setDataDir] = useState("");
   const [version, setVersion] = useState("");
   useEffect(() => {
@@ -183,7 +184,18 @@ export function SettingsPage() {
 
         {section === "conta" && (
           <Group title="Contas">
-            <Row title="Nenhuma conta conectada" desc="O login com a Microsoft chega quando a Mojang aprovar o app" />
+            {account ? (
+              <Row title={account.name} desc="Conta Microsoft · Minecraft: Java Edition">
+                <div className="flex items-center gap-3">
+                  <PlayerHead uuid={account.uuid} size={32} />
+                  <Button variant="outline" onClick={async () => { await accountApi.logout(); setAccount(null); }}>Sair da conta</Button>
+                </div>
+              </Row>
+            ) : (
+              <Row title="Nenhuma conta conectada" desc="Entre com a conta Microsoft que tem o Minecraft: Java Edition">
+                <Button variant="primary" onClick={() => setLoginOpen(true)}>Entrar com a Microsoft</Button>
+              </Row>
+            )}
           </Group>
         )}
 

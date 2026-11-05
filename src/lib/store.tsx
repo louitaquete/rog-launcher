@@ -1,6 +1,6 @@
 // Estado global: instâncias, configurações, downloads e jogos abertos.
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { accountApi, api, gameApi, type Account, installApi, type GameState, type Instance, type Progress, type Settings } from "./api";
+import { accountApi, api, extrasApi, gameApi, type Account, installApi, type GameState, type Instance, type Progress, type Settings } from "./api";
 
 const MAX_LOG_LINES = 3000;
 
@@ -25,6 +25,8 @@ interface AppState {
   account: Account | null;
   setAccount: (a: Account | null) => void;
   /** Abre a janela de login. */
+  /** Versão nova do launcher no GitHub. */
+  update: { version: string; url: string } | null;
   loginOpen: boolean;
   setLoginOpen: (v: boolean) => void;
 }
@@ -42,6 +44,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [devOffline, setDevOffline] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [update, setUpdate] = useState<{ version: string; url: string } | null>(null);
+  const checked = useRef(false);
+  useEffect(() => {
+    if (!settings || checked.current || !settings.general.autoUpdate) return;
+    checked.current = true;
+    extrasApi.checkUpdate().then(setUpdate).catch(() => {});
+  }, [settings]);
   const timer = useRef<number | undefined>(undefined);
   const busy = useRef(new Set<string>());
 
@@ -124,7 +133,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <Ctx.Provider value={{ instances, settings, refresh, updateSettings, error, installs, cancelInstall, play, games, logs, launchErrors, kill, devOffline, account, setAccount, loginOpen, setLoginOpen }}>
+    <Ctx.Provider value={{ instances, settings, refresh, updateSettings, error, installs, cancelInstall, play, games, logs, launchErrors, kill, devOffline, account, setAccount, update, loginOpen, setLoginOpen }}>
       {children}
     </Ctx.Provider>
   );

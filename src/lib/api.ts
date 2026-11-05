@@ -360,3 +360,26 @@ export const loaderApi = {
     return Array.from({ length: 8 }, (_, i) => ({ version: `${base}${14 - i}`, stable: i !== 0, recommended: i === 1 }));
   },
 };
+
+// ---------- Instância: loader, exportar, importar; atualização ----------
+export const extrasApi = {
+  changeLoader: (id: string, loader: Loader): Promise<Instance> => {
+    if (isTauri) return invoke("change_loader", { id, loader });
+    const list = mock.instances();
+    const i = list.findIndex((x) => x.id === id);
+    list[i] = { ...list[i], loader, kind: loader.type === "Vanilla" ? "vanilla" : "mods", launchVersion: null };
+    mock.write("instances", list);
+    return Promise.resolve(list[i]);
+  },
+  exportInstance: (id: string): Promise<string> => (isTauri ? invoke("export_instance", { id }) : Promise.resolve(`Downloads/${id}.rog.zip`)),
+  /** Pede o arquivo e importa. `null` se o usuário cancelar. */
+  importInstance: async (): Promise<Instance | null> => {
+    if (!isTauri) return Promise.reject("Importar só funciona no app");
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const path = await open({ multiple: false, directory: false, filters: [{ name: "Instância do Rog", extensions: ["zip"] }] });
+    if (!path) return null;
+    return invoke("import_instance", { path });
+  },
+  checkUpdate: (): Promise<{ version: string; url: string } | null> => (isTauri ? invoke("check_update") : Promise.resolve(null)),
+  deleteInstance: (id: string): Promise<void> => api.deleteInstance(id),
+};
