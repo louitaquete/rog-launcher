@@ -113,7 +113,7 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
                   key={l}
                   type="button"
                   onClick={() => setLoader(l)}
-                  className={`flex flex-col items-center gap-2.5 border px-2 pt-4 pb-3 ${on ? "border-ink bg-raised" : "border-edge bg-[#151515] hover:border-[#4a4a4a] hover:bg-[#1a1a1a]"}`}
+                  className={`flex flex-col items-center gap-2.5 border px-2 pt-4 pb-3 ${on ? "border-[#454545] bg-active" : "border-edge bg-[#151515] hover:border-[#4a4a4a] hover:bg-[#1a1a1a]"}`}
                 >
                   <span className={on ? "" : "opacity-60"}>
                     <LoaderIcon loader={l} size={40} />

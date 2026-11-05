@@ -126,7 +126,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
                   setBase(b.base);
                   save(b.subs[0], module);
                 }}
-                className={`group relative aspect-[400/190] overflow-hidden border text-left transition-colors ${sel ? "border-ink" : "border-edge hover:border-[#555]"}`}
+                className={`group relative aspect-[400/190] overflow-hidden border text-left transition-colors ${sel ? "border-[#5a5a5a]" : "border-edge hover:border-[#555]"}`}
               >
                 <VersionArt base={b.base} dim={!sel} />
                 {sel && <span className={`${label} absolute top-3 left-3 bg-ink px-2 py-0.5 text-[9px] text-[#111]`}>PADRÃO</span>}
@@ -163,7 +163,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
                   title={m.ok ? undefined : "Disponível a partir da 1.16"}
                   disabled={!m.ok || inGame}
                   onClick={() => save(sub, m.id)}
-                  className={`h-11 font-brand text-sm font-bold tracking-[0.06em] transition-colors ${on ? "bg-raised text-ink shadow-[inset_0_-2px_0_#ededed]" : "text-muted hover:bg-[#181818] hover:text-ink"} disabled:cursor-not-allowed disabled:text-[#444] disabled:hover:bg-transparent`}
+                  className={`h-11 font-brand text-sm font-bold tracking-[0.06em] transition-colors ${on ? "bg-raised text-ink shadow-[inset_0_-2px_0_#6a6a6a]" : "text-muted hover:bg-[#181818] hover:text-ink"} disabled:cursor-not-allowed disabled:text-[#444] disabled:hover:bg-transparent`}
                 >
                   {m.id}
                 </button>
@@ -199,7 +199,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
         )}
 
         {err && (
-          <div className="flex items-center gap-3 border-l-2 border-ink bg-[#1a1a1a] px-3 py-2">
+          <div className="flex items-center gap-3 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-3 py-2">
             <p className="m-0 flex-1 text-xs break-all text-[#9a9a9a]">{String(err).replace(/^(NEEDS_ACCOUNT|NO_GAME): /, "")}</p>
             {String(err).includes("NEEDS_ACCOUNT") && (
               <button onClick={() => setLoginOpen(true)} className="bg-ink px-3 py-1.5 text-xs font-semibold text-[#111] hover:bg-white">Entrar</button>

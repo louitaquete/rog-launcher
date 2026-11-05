@@ -73,7 +73,7 @@ export function GameBar({ id, consoleOpen, onToggleConsole }: { id: string; cons
             <p className="m-0 text-[13px] leading-relaxed text-[#9a9a9a]">
               O Minecraft será encerrado na hora, como puxar da tomada. Tudo o que não foi salvo — progresso no mundo, inventário, configurações alteradas — pode ser perdido, e o mundo pode até corromper.
             </p>
-            <p className="m-0 border-l-2 border-ink bg-[#1a1a1a] px-3 py-2.5 text-xs text-[#8a8a8a]">
+            <p className="m-0 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-3 py-2.5 text-xs text-[#8a8a8a]">
               Dica: se o jogo ainda responde, prefira sair pelo menu "Salvar e sair".
             </p>
             <label className="flex items-center gap-2.5 text-[13px] text-[#d0d0d0]">

@@ -112,7 +112,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
       </div>
 
       {launchError && !inGame && (
-        <div className="flex items-center gap-4 border-l-2 border-ink bg-[#1a1a1a] px-4 py-3">
+        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-4 py-3">
           <div className="flex-1">
             {launchError.includes("NEEDS_ACCOUNT") ? (
               <>
@@ -152,7 +152,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
       )}
 
       {p?.stage === "error" && (
-        <div className="flex items-center gap-4 border-l-2 border-ink bg-[#1a1a1a] px-4 py-3">
+        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-4 py-3">
           <div className="flex-1">
             <p className="m-0 text-[13px] font-semibold">Não deu para baixar os arquivos</p>
             <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{p.error}</p>

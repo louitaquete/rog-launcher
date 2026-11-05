@@ -111,7 +111,7 @@ export function Segmented<T extends string>({ value, onChange, options, full }: 
           type="button"
           disabled={o.disabled}
           onClick={() => onChange(o.value)}
-          className={`h-10 px-4 text-[13px] font-medium disabled:opacity-35 ${full ? "flex-1" : ""} ${o.value === value ? "bg-ink text-[#111]" : "bg-[#171717] text-[#9a9a9a] hover:text-soft"}`}
+          className={`h-10 px-4 text-[13px] font-medium disabled:opacity-35 ${full ? "flex-1" : ""} ${o.value === value ? "bg-active text-ink" : "bg-[#171717] text-[#9a9a9a] hover:text-soft"}`}
         >
           {o.label}
         </button>
