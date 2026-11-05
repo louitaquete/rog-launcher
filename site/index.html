@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rog Launcher — launcher de Minecraft: Java Edition</title>
+  <meta name="description" content="Rog Launcher: um launcher leve, rápido e minimalista para Minecraft: Java Edition. Vanilla, mods, modpacks e PVP num lugar só." />
+  <meta property="og:title" content="Rog Launcher" />
+  <meta property="og:description" content="Launcher leve e minimalista para Minecraft: Java Edition." />
+  <meta property="og:image" content="assets/inicio.webp" />
+  <link rel="icon" href="assets/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:ital,wght@0,400;0,500;0,600;1,900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --bar: #121212;
+      --surface: #151515;
+      --raised: #1c1c1c;
+      --line: #222;
+      --edge: #2e2e2e;
+      --ink: #ededed;
+      --soft: #c8c8c8;
+      --muted: #7a7a7a;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Poppins, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap { width: min(1120px, 100% - 48px); margin: 0 auto; }
+
+    /* Barra */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(13, 13, 13, 0.85); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+    nav .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: Orbitron, sans-serif; font-weight: 700; letter-spacing: .04em; font-size: 15px; }
+    .brand img { width: 28px; height: 28px; }
+    nav .links { margin-left: auto; display: flex; gap: 24px; font-size: 14px; }
+    nav .links a { text-decoration: none; color: var(--muted); }
+    nav .links a:hover { color: var(--ink); }
+
+    /* Botões */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 22px; font-weight: 600; font-size: 15px; text-decoration: none;
+      border: 1px solid var(--edge); transition: background .12s, color .12s, transform .09s;
+    }
+    .btn:active { transform: translateY(1px) scale(.98); }
+    .btn.primary { background: var(--ink); color: #111; border-color: var(--ink); }
+    .btn.primary:hover { background: #fff; }
+    .btn.ghost:hover { background: var(--raised); }
+    .btn.off { background: var(--raised); color: var(--muted); border-color: var(--edge); cursor: default; pointer-events: none; }
+
+    /* Topo */
+    header.hero { padding: 88px 0 56px; text-align: center; }
+    .tag {
+      display: inline-block; border: 1px solid var(--edge); color: var(--muted);
+      font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .16em; padding: 4px 10px; margin-bottom: 26px;
+    }
+    h1 { font-size: clamp(38px, 6vw, 64px); line-height: 1.05; margin: 0 0 18px; font-weight: 900; font-style: italic; letter-spacing: -.01em; }
+    .lead { color: var(--soft); font-size: 18px; max-width: 620px; margin: 0 auto 34px; line-height: 1.6; }
+    .cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .meta { margin-top: 16px; color: var(--muted); font-size: 13px; }
+    .shot { margin: 56px auto 0; border: 1px solid var(--edge); box-shadow: 0 30px 80px rgba(0,0,0,.6); display: block; width: 100%; height: auto; }
+
+    /* Recursos */
+    section { padding: 72px 0; border-top: 1px solid var(--line); }
+    h2 { font-size: 30px; margin: 0 0 10px; font-weight: 900; font-style: italic; }
+    .sub { color: var(--muted); margin: 0 0 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .card { background: var(--surface); border: 1px solid var(--line); padding: 22px; }
+    .card h3 { margin: 0 0 8px; font-size: 16px; }
+    .card p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .split img { width: 100%; border: 1px solid var(--edge); display: block; }
+    .split figcaption { color: var(--muted); font-size: 13px; margin-top: 10px; }
+    figure { margin: 0; }
+
+    /* Download */
+    .dl { text-align: center; }
+    .steps { text-align: left; max-width: 640px; margin: 32px auto 0; color: var(--soft); font-size: 14px; line-height: 1.7; }
+    .steps li { margin-bottom: 6px; }
+    .note { margin: 22px auto 0; max-width: 640px; border-left: 2px solid var(--edge); background: var(--surface); padding: 14px 18px; text-align: left; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+    footer { border-top: 1px solid var(--line); padding: 32px 0 48px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    footer .wrap { display: flex; gap: 24px; justify-content: space-between; flex-wrap: wrap; }
+
+    @media (max-width: 760px) {
+      nav .links { display: none; }
+      .split { grid-template-columns: 1fr; }
+      header.hero { padding-top: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#"><img src="assets/logo.svg" alt="" />Rog Launcher</a>
+      <div class="links">
+        <a href="#recursos">Recursos</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/louitaquete/rog-launcher">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="tag">PRÉ-ALPHA</span>
+      <h1>Seu Minecraft,<br />sem enrolação.</h1>
+      <p class="lead">Um launcher leve e minimalista para Minecraft: Java Edition. Vanilla, mods, modpacks e PVP num lugar só, com login Microsoft oficial.</p>
+      <div class="cta">
+        <a class="btn primary off" id="dl-btn" aria-disabled="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7 1h2v8l3-3 1.4 1.4L8 12.8 2.6 7.4 4 6l3 3z" /><path d="M2 14h12v2H2z" /></svg>
+          <span id="dl-label">Download em breve</span>
+        </a>
+        <a class="btn ghost" href="https://github.com/louitaquete/rog-launcher">Ver no GitHub</a>
+      </div>
+      <p class="meta" id="dl-meta">Windows 10 e 11 · grátis e open source (MIT) · a primeira versão sai em breve</p>
+      <img class="shot" src="assets/inicio.webp" width="1440" height="860" alt="Tela inicial do Rog Launcher com instâncias Vanilla, PVP e com mods" />
+    </div>
+  </header>
+
+  <section id="recursos">
+    <div class="wrap">
+      <h2>O que ele faz</h2>
+      <p class="sub">Feito em Rust com Tauri: abre rápido e usa pouca memória.</p>
+      <div class="grid">
+        <div class="card"><h3>Instâncias separadas</h3><p>Vanilla, Fabric, Forge, NeoForge ou Quilt, cada uma com seus mundos, mods e configurações.</p></div>
+        <div class="card"><h3>Mods e modpacks</h3><p>Busca e instala mods, resource packs, shaders e modpacks do Modrinth, com as dependências.</p></div>
+        <div class="card"><h3>Modo PVP</h3><p>Escolha a versão de combate (1.8 até 1.21) e jogue com um clique.</p></div>
+        <div class="card"><h3>Skins</h3><p>Biblioteca de skins, skin global e skin própria por instância, trocada sozinha ao jogar.</p></div>
+        <div class="card"><h3>Importar</h3><p>Traga instâncias do Prism, CurseForge e MultiMC, ou arquivos .mrpack e .zip.</p></div>
+        <div class="card"><h3>Login oficial</h3><p>Entra com a sua conta Microsoft e confere se você tem o jogo, como manda a Mojang.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap split">
+      <figure><img src="assets/pvp.webp" width="1440" height="860" alt="Tela PVP com seleção de versões" loading="lazy" /><figcaption>PVP: escolha a versão e jogue.</figcaption></figure>
+      <figure><img src="assets/mods.webp" width="1440" height="860" alt="Busca de mods do Modrinth" loading="lazy" /><figcaption>Mods: busca filtrada pela versão e pelo loader da instância.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="download" class="dl">
+    <div class="wrap">
+      <h2>Download</h2>
+      <p class="sub" id="dl-version">A pré-alpha para Windows está quase pronta. Acompanhe pelo GitHub.</p>
+      <a class="btn primary off" id="dl-btn-2" aria-disabled="true">Download em breve</a>
+      <ol class="steps">
+        <li>Baixe e abra o instalador (<code>Rog Launcher_x64-setup.exe</code>).</li>
+        <li>Clique em <b>Entrar com a Microsoft</b> e use a conta que tem o Minecraft: Java Edition.</li>
+        <li>Crie uma instância (ou abra o PVP) e clique em <b>Jogar</b>. O launcher baixa o Java e o jogo sozinho.</li>
+      </ol>
+      <p class="note">
+        <b>Aviso do Windows:</b> o instalador ainda não tem assinatura digital, então o navegador ou o SmartScreen podem avisar que é um arquivo desconhecido. Para continuar, escolha <i>Manter</i> no download e <i>Mais informações → Executar assim mesmo</i> no Windows. O código é aberto no GitHub.
+      </p>
+      <p class="note">
+        <b>Pré-alpha:</b> espere bugs. Encontrou algum? Abra uma <a href="https://github.com/louitaquete/rog-launcher/issues">issue no GitHub</a>.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>Rog Launcher · open source (MIT) · <a href="https://github.com/louitaquete/rog-launcher">GitHub</a></span>
+      <span>NÃO É UM PRODUTO OFICIAL DO MINECRAFT. NÃO É APROVADO NEM ASSOCIADO À MOJANG OU À MICROSOFT.</span>
+    </div>
+  </footer>
+
+  <script>
+    // Link direto para o instalador da release mais recente (inclui pré-lançamentos).
+    (async () => {
+      try {
+        const r = await fetch("https://api.github.com/repos/louitaquete/rog-launcher/releases?per_page=5");
+        if (!r.ok) return;
+        const rel = (await r.json()).find((x) => !x.draft);
+        if (!rel) return;
+        const exe = rel.assets.find((a) => a.name.endsWith(".exe"));
+        if (!exe) return;
+        const mb = (exe.size / 1048576).toFixed(1).replace(".", ",");
+        for (const id of ["dl-btn", "dl-btn-2"]) {
+          const a = document.getElementById(id);
+          a.href = exe.browser_download_url;
+          a.classList.remove("off");
+          a.removeAttribute("aria-disabled");
+        }
+        document.getElementById("dl-btn-2").textContent = "Baixar o instalador";
+        const v = rel.tag_name.replace(/^v/, "");
+        document.getElementById("dl-label").textContent = `Baixar ${v} para Windows`;
+        document.getElementById("dl-meta").textContent = `Windows 10 e 11 · ${mb} MB · grátis e open source (MIT)`;
+        document.getElementById("dl-version").textContent = `Versão ${v}${rel.prerelease ? " (pré-lançamento)" : ""} · ${new Date(rel.published_at).toLocaleDateString("pt-BR")}`;
+      } catch {
+        /* sem internet: fica o link para a página de releases */
+      }
+    })();
+  </script>
+</body>
+</html>

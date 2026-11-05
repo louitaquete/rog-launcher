@@ -123,7 +123,8 @@ fn parse(v: &str) -> Vec<u64> {
 /// Última release no GitHub, se for mais nova que esta versão.
 pub async fn check_update(client: &reqwest::Client) -> Result<Option<Update>, String> {
     let r = client
-        .get("https://api.github.com/repos/louitaquete/rog-launcher/releases/latest")
+        // Inclui pré-lançamentos (alpha/beta), que o /releases/latest ignora.
+        .get("https://api.github.com/repos/louitaquete/rog-launcher/releases?per_page=5")
         .header("User-Agent", "rog-launcher")
         .header("Accept", "application/vnd.github+json")
         .send()
@@ -132,7 +133,8 @@ pub async fn check_update(client: &reqwest::Client) -> Result<Option<Update>, St
     if r.status().as_u16() == 404 {
         return Ok(None);
     }
-    let v: serde_json::Value = r.json().await.map_err(|e| e.to_string())?;
+    let list: serde_json::Value = r.json().await.map_err(|e| e.to_string())?;
+    let Some(v) = list.as_array().and_then(|a| a.iter().find(|r| r["draft"] != true)) else { return Ok(None) };
     let tag = v["tag_name"].as_str().unwrap_or_default();
     if parse(tag) > parse(env!("CARGO_PKG_VERSION")) {
         return Ok(Some(Update { version: tag.trim_start_matches('v').into(), url: v["html_url"].as_str().unwrap_or_default().into() }));
