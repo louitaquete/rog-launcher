@@ -125,7 +125,13 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         setHits((h) => (offset ? [...h, ...r.hits] : r.hits));
         setTotal(r.total_hits);
       } catch (e) {
-        if (n === seq.current) setError(String(e));
+        if (n === seq.current) {
+          setError(String(e));
+          if (!offset) {
+            setHits([]);
+            setTotal(0);
+          }
+        }
       } finally {
         if (n === seq.current) setLoading(false);
       }
@@ -187,7 +193,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         />
       </div>
 
-      {error && <p className="m-0 text-[13px] text-[#9a9a9a]">Não deu para buscar: {error}</p>}
+      {error && <p className="m-0 text-[13px] text-[#9a9a9a]">{error.includes("403") ? "O CurseForge recusou a chave (403). A chave ainda não foi liberada para apps de terceiros." : `Não deu para buscar: ${error}`}</p>}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-3">
         {hits.map((h) => {
@@ -229,7 +235,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
 
       {!loading && !error && hits.length === 0 && <p className="m-0 text-[13px] text-muted">Nada encontrado para {instance.mcVersion}.</p>}
       {loading && <p className="m-0 text-[13px] text-muted">Carregando…</p>}
-      {!loading && hits.length < total && (
+      {!loading && !error && hits.length < total && (
         <button onClick={() => load(hits.length)} className="self-center border border-edge px-5 py-2 text-[13px] text-[#d0d0d0] hover:bg-raised">
           Carregar mais
         </button>
