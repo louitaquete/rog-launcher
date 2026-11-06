@@ -45,7 +45,9 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
       const v = versions.find((x) => x.version_type === "release") ?? versions[0];
       const file = v?.files.find((f) => f.primary) ?? v?.files[0];
       if (!file) throw new Error("esse modpack não tem arquivo para baixar");
-      return importApi.url(file.url);
+      const p = await fetch(`https://api.modrinth.com/v2/project/${m[1]}`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+      const cover = p?.gallery?.find((g: { featured: boolean }) => g.featured)?.url ?? p?.icon_url ?? null;
+      return importApi.url(file.url, cover);
     });
   }
 

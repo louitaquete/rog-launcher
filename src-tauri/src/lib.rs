@@ -390,8 +390,22 @@ async fn import_file(store: State<'_, Store>, path: String) -> Res<Instance> {
 }
 
 /// Baixa um .mrpack (link do Modrinth já resolvido pelo front) e importa.
+/// Baixa a imagem do modpack e usa como capa da instância (se falhar, fica sem capa).
+async fn save_cover(client: &reqwest::Client, store: &Store, mut inst: Instance, url: Option<String>) -> Instance {
+    let Some(url) = url.filter(|u| u.starts_with("https://")) else { return inst };
+    let Ok(bytes) = install::download::fetch(client, &url, None).await else { return inst };
+    let ext = if bytes.starts_with(b"\x89PNG") { "png" } else if bytes.starts_with(b"RIFF") { "webp" } else if bytes.starts_with(&[0xff, 0xd8]) { "jpg" } else if bytes.starts_with(b"GIF") { "gif" } else { return inst };
+    let Ok(dir) = store.instance_dir(&inst.id) else { return inst };
+    let name = format!("cover.{ext}");
+    if std::fs::write(dir.join(&name), bytes).is_err() {
+        return inst;
+    }
+    inst.cover = Some(name);
+    store.update_instance(inst.clone()).unwrap_or(inst)
+}
+
 #[tauri::command]
-async fn import_url(store: State<'_, Store>, url: String) -> Res<Instance> {
+async fn import_url(store: State<'_, Store>, url: String, cover: Option<String>) -> Res<Instance> {
     if !url.starts_with("https://cdn.modrinth.com/") {
         return Err("só links do Modrinth por enquanto".into());
     }
@@ -401,7 +415,8 @@ async fn import_url(store: State<'_, Store>, url: String) -> Res<Instance> {
     std::fs::write(&tmp, bytes).map_err(err)?;
     let r = importer::import_file(&client, &store, &tmp).await;
     let _ = std::fs::remove_file(&tmp);
-    r
+    let inst = r?;
+    Ok(save_cover(&client, &store, inst, cover).await)
 }
 
 #[tauri::command]
@@ -420,13 +435,14 @@ async fn cf_search_modpacks(query: String, offset: u32) -> Res<curseforge::Page>
 }
 
 #[tauri::command]
-async fn cf_import_modpack(store: State<'_, Store>, project_id: u64) -> Res<Instance> {
+async fn cf_import_modpack(store: State<'_, Store>, project_id: u64, cover: Option<String>) -> Res<Instance> {
     let client = install::download::client();
     let tmp = std::env::temp_dir().join("rog-import-cf.zip");
     curseforge::download_modpack(&client, project_id, &tmp).await?;
     let r = importer::import_file(&client, &store, &tmp).await;
     let _ = std::fs::remove_file(&tmp);
-    r
+    let inst = r?;
+    Ok(save_cover(&client, &store, inst, cover).await)
 }
 
 /// Skin da conta Microsoft (a do minecraft.net) para a prévia.

@@ -509,7 +509,7 @@ export const importApi = {
     return path ? invoke("import_file", { path }) : null;
   },
   file: (path: string): Promise<Instance> => invoke("import_file", { path }),
-  url: (url: string): Promise<Instance> => invoke("import_url", { url }),
+  url: (url: string, cover?: string | null): Promise<Instance> => invoke("import_url", { url, cover: cover ?? null }),
   scan: (): Promise<LauncherScan[]> =>
     isTauri
       ? invoke("scan_launchers")
@@ -526,5 +526,5 @@ export const cfModpackApi = {
     isTauri
       ? invoke<{ hits: (import("./modrinth").Hit & { url: string | null })[]; total_hits: number }>("cf_search_modpacks", { query, offset })
       : Promise.reject("CurseForge só funciona no app"),
-  install: (projectId: number): Promise<Instance> => invoke("cf_import_modpack", { projectId }),
+  install: (projectId: number, cover?: string | null): Promise<Instance> => invoke("cf_import_modpack", { projectId, cover: cover ?? null }),
 };

@@ -53,7 +53,8 @@ export function ModpackSearch({ onDone }: { onDone: (inst: Instance) => void }) 
     setBusy(h.project_id);
     setError(null);
     try {
-      const inst = source === "curseforge" ? await cfModpackApi.install(Number(h.project_id)) : await importApi.url(await modpackFile(h.project_id));
+      const cover = h.featured_gallery || h.icon_url;
+      const inst = source === "curseforge" ? await cfModpackApi.install(Number(h.project_id), cover) : await importApi.url(await modpackFile(h.project_id), cover);
       onDone(inst);
     } catch (e) {
       setError(String(e).replace(/^Error: /, ""));

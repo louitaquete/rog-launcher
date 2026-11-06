@@ -15,6 +15,7 @@ export interface Hit {
   categories?: string[];
   date_modified?: string;
   url?: string | null;
+  featured_gallery?: string | null;
 }
 
 interface Version {

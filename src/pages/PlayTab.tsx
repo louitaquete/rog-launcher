@@ -1,7 +1,7 @@
+import { InstanceCover } from "../components/InstanceCover";
 import { api, type Instance, type Progress, type Stage } from "../lib/api";
 import { useApp } from "../lib/store";
-import { Button, Chip, Icon } from "../components/ui";
-import type { IconName } from "../components/icons";
+import { Button, Chip } from "../components/ui";
 
 const STEPS: { stage: Stage; label: (i: Instance) => string }[] = [
   { stage: "java", label: () => "Java" },
@@ -15,7 +15,6 @@ const RUNNING: Stage[] = ["java", "version", "libraries", "assets", "loader"];
 const hasLoader = (i: Instance) => !["Vanilla", "OptiFine"].includes(i.loader.type);
 
 const fmtSpeed = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1).replace(".", ",")} MB/s` : `${Math.round(b / 1000)} KB/s`);
-const watermark: Record<Instance["kind"], IconName> = { vanilla: "vanilla", mods: "mods", pvp: "pvp" };
 
 function Bar({ value }: { value: number }) {
   return (
@@ -56,7 +55,8 @@ export function PlayTab({ instance }: { instance: Instance }) {
     <div className="flex flex-col gap-6 px-12 py-8">
       {/* Destaque */}
       <div className="relative flex min-h-[230px] items-end overflow-hidden border border-line bg-gradient-to-r from-[#212121] to-[#121212] px-10 py-9">
-        <Icon name={watermark[instance.kind]} size={300} className="pointer-events-none absolute -top-10 right-16 opacity-[0.07]" />
+        <InstanceCover instance={instance} mode="hero" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent" />
         <div className="relative flex flex-col gap-3">
           <div className="flex gap-1.5">
             {instance.kind === "pvp" ? <Chip>Competitivo</Chip> : (<><Chip>{instance.loader.type}{instance.loader.version && hasLoader(instance) ? ` ${instance.loader.version}` : ""}</Chip><Chip>{instance.mcVersion}</Chip></>)}
