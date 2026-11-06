@@ -444,6 +444,26 @@ async fn apply_update(app: tauri::AppHandle, url: String) -> Res<()> {
     Ok(())
 }
 
+async fn token(store: &Store) -> Res<String> {
+    auth::ensure(&install::download::client(), store.root()).await.map(|a| a.mc_token)
+}
+
+#[tauri::command]
+async fn account_capes(store: State<'_, Store>) -> Res<Vec<skins::Cape>> {
+    skins::capes(&install::download::client(), &token(&store).await?).await
+}
+
+#[tauri::command]
+async fn set_cape(store: State<'_, Store>, id: Option<String>) -> Res<()> {
+    skins::set_cape(&install::download::client(), &token(&store).await?, id.as_deref()).await
+}
+
+/// Aplica a skin na conta agora (botão Aplicar da Skin global).
+#[tauri::command]
+async fn apply_skin_now(store: State<'_, Store>, id: Option<String>) -> Res<()> {
+    skins::apply(&install::download::client(), store.root(), &token(&store).await?, id.as_deref()).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -502,6 +522,9 @@ pub fn run() {
             skin_set_global,
             account_skin,
             apply_update,
+            account_capes,
+            set_cape,
+            apply_skin_now,
             instance_cover,
             set_instance_cover,
             import_file,

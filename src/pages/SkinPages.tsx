@@ -19,10 +19,11 @@ export function SkinGlobalPage() {
       <PageHeader title="Skin global" subtitle="Usada em todas as instâncias, exceto nas que têm skin própria ativada" />
       <SkinPicker
         selected={global}
-        previewLabel="Skin global atual"
-        onSelect={(id) => {
+        applyLabel="Aplicar"
+        onApply={async (id) => {
+          await skinsApi.setGlobal(id);
           setGlobal(id);
-          skinsApi.setGlobal(id);
+          await skinsApi.applyNow(id);
         }}
       />
       <p className="m-0 max-w-[760px] text-xs leading-relaxed text-muted">Instâncias com a opção "Skin própria" ligada na aba Skins sobrepõem a skin global. {note}</p>
@@ -55,7 +56,12 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
       </div>
 
       {inst.skin.enabled ? (
-        <SkinPicker selected={inst.skin.skinId} previewLabel="Skin desta instância" onSelect={(id) => save({ ...inst, skin: { enabled: true, skinId: id } })} />
+        <SkinPicker
+          selected={inst.skin.skinId}
+          applyLabel="Usar nesta instância"
+          note="A skin é trocada na sua conta quando você clicar em Jogar nesta instância."
+          onApply={async (id) => save({ ...inst, skin: { enabled: true, skinId: id } })}
+        />
       ) : (
         <div className="flex flex-col items-start gap-3">
           <p className="m-0 max-w-[620px] text-[13px] leading-relaxed text-[#9a9a9a]">

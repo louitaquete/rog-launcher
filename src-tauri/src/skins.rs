@@ -190,3 +190,51 @@ pub async fn apply(client: &reqwest::Client, root: &Path, token: &str, wanted: O
         }
     }
 }
+
+
+/// Capa da conta (textura vem junto, porque o servidor de texturas não libera CORS para o WebView).
+#[derive(Debug, Clone, Serialize)]
+pub struct Cape {
+    pub id: String,
+    pub alias: String,
+    pub active: bool,
+    pub png: Vec<u8>,
+}
+
+/// Capas da conta, com as texturas.
+pub async fn capes(client: &reqwest::Client, token: &str) -> Result<Vec<Cape>, String> {
+    let r = client.get("https://api.minecraftservices.com/minecraft/profile").bearer_auth(token).send().await.map_err(|e| e.to_string())?;
+    if !r.status().is_success() {
+        return Err(format!("perfil: HTTP {}", r.status()));
+    }
+    let v: serde_json::Value = r.json().await.map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    for c in v["capes"].as_array().into_iter().flatten() {
+        let url = c["url"].as_str().unwrap_or_default().replacen("http://", "https://", 1);
+        let png = match client.get(&url).send().await {
+            Ok(r) => r.bytes().await.map(|b| b.to_vec()).unwrap_or_default(),
+            Err(_) => Vec::new(),
+        };
+        out.push(Cape {
+            id: c["id"].as_str().unwrap_or_default().into(),
+            alias: c["alias"].as_str().unwrap_or("Capa").into(),
+            active: c["state"] == "ACTIVE",
+            png,
+        });
+    }
+    Ok(out)
+}
+
+/// Mostra uma capa (`Some(id)`) ou esconde (`None`).
+pub async fn set_cape(client: &reqwest::Client, token: &str, id: Option<&str>) -> Result<(), String> {
+    let api = "https://api.minecraftservices.com/minecraft/profile/capes/active";
+    let r = match id {
+        Some(id) => client.put(api).bearer_auth(token).json(&serde_json::json!({ "capeId": id })).send().await,
+        None => client.delete(api).bearer_auth(token).send().await,
+    }
+    .map_err(|e| e.to_string())?;
+    if !r.status().is_success() {
+        return Err(format!("a Mojang recusou a capa (HTTP {})", r.status()));
+    }
+    Ok(())
+}

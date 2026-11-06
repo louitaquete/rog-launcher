@@ -406,7 +406,22 @@ async function pickFile(name: string, extensions: string[]): Promise<string | nu
   return typeof p === "string" ? p : null;
 }
 
+export interface Cape {
+  id: string;
+  alias: string;
+  active: boolean;
+  url: string | null;
+}
+
 export const skinsApi = {
+  capes: async (): Promise<Cape[]> => {
+    if (!isTauri) return [];
+    const list = await invoke<{ id: string; alias: string; active: boolean; png: number[] }[]>("account_capes");
+    return list.map((c) => ({ id: c.id, alias: c.alias, active: c.active, url: c.png.length ? URL.createObjectURL(new Blob([new Uint8Array(c.png)], { type: "image/png" })) : null }));
+  },
+  setCape: (id: string | null): Promise<void> => (isTauri ? invoke("set_cape", { id }) : Promise.resolve()),
+  /** Troca a skin da conta agora. `null` = volta para a skin da conta. */
+  applyNow: (id: string | null): Promise<void> => (isTauri ? invoke("apply_skin_now", { id }) : new Promise((r) => setTimeout(r, 600))),
   /** Skin da conta Microsoft (minecraft.net) como URL de objeto. */
   account: async (): Promise<{ url: string; variant: SkinVariant } | null> => {
     if (!isTauri) return null;
