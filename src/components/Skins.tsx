@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SkinViewer, IdleAnimation } from "skinview3d";
 import { skinsApi, type Skin, type SkinVariant } from "../lib/api";
 
 /** Desenha a frente do personagem a partir do PNG da skin (64×64 ou 64×32). */
@@ -63,6 +64,44 @@ export function SkinPreview({ url, variant, scale = 8 }: { url: string | null; v
   return <canvas ref={ref} width={16 * scale} height={32 * scale} className="[image-rendering:pixelated]" />;
 }
 
+/** Prévia 3D (skinview3d): gira com o mouse e anima parado. */
+export function Skin3D({ url, variant, width = 220, height = 320 }: { url: string | null; variant: SkinVariant; width?: number; height?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const viewer = useRef<SkinViewer | null>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const v = new SkinViewer({ canvas: ref.current, width, height });
+    v.background = null;
+    v.zoom = 0.85;
+    v.fov = 40;
+    v.autoRotate = true;
+    v.autoRotateSpeed = 0.6;
+    v.animation = new IdleAnimation();
+    v.controls.enableZoom = false;
+    viewer.current = v;
+    return () => {
+      v.dispose();
+      viewer.current = null;
+    };
+  }, [width, height]);
+  useEffect(() => {
+    const v = viewer.current;
+    if (!v) return;
+    if (url) v.loadSkin(url, { model: variant === "slim" ? "slim" : "default" }).catch(() => {});
+    else v.resetSkin();
+  }, [url, variant]);
+  return <canvas ref={ref} className="cursor-grab active:cursor-grabbing" />;
+}
+
+/** Skin da conta (minecraft.net). */
+export function useAccountSkin() {
+  const [acc, setAcc] = useState<{ url: string; variant: SkinVariant } | null | undefined>(undefined);
+  useEffect(() => {
+    skinsApi.account().then(setAcc).catch(() => setAcc(null));
+  }, []);
+  return acc;
+}
+
 /** Carrega a URL do PNG de cada skin (cache por id). */
 export function useSkinUrls(skins: Skin[]) {
   const [urls, setUrls] = useState<Record<string, string | null>>({});
@@ -84,6 +123,7 @@ export function SkinPicker({ selected, onSelect, previewLabel, disabled }: { sel
   const [skins, setSkins] = useState<Skin[]>([]);
   const [error, setError] = useState<string | null>(null);
   const urls = useSkinUrls(skins);
+  const account = useAccountSkin();
   const reload = () => skinsApi.list().then((l) => setSkins(l.skins));
   useEffect(() => {
     reload();
@@ -112,10 +152,14 @@ export function SkinPicker({ selected, onSelect, previewLabel, disabled }: { sel
 
   return (
     <div className={`flex gap-8 ${disabled ? "pointer-events-none opacity-40" : ""}`}>
-      <div className="flex w-[260px] shrink-0 flex-col items-center gap-4 border border-line bg-[#141414] px-6 py-8">
-        <SkinPreview url={current ? urls[current.id] ?? null : null} variant={current?.variant ?? "classic"} scale={9} />
+      <div className="flex w-[260px] shrink-0 flex-col items-center gap-4 bg-[#141414] px-4 py-6">
+        {current || account ? (
+          <Skin3D url={current ? urls[current.id] ?? null : account!.url} variant={current?.variant ?? account!.variant} />
+        ) : (
+          <div className="flex h-[320px] items-center"><SkinPreview url={null} variant="classic" scale={9} /></div>
+        )}
         <div className="text-center">
-          <p className="m-0 text-sm font-semibold">{current?.name ?? "Padrão"}</p>
+          <p className="m-0 text-sm font-semibold">{current?.name ?? "Sua skin"}</p>
           <p className="m-0 mt-0.5 text-xs text-muted">{previewLabel}</p>
         </div>
         {current && (
@@ -132,7 +176,7 @@ export function SkinPicker({ selected, onSelect, previewLabel, disabled }: { sel
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <p className="m-0 font-brand text-[11px] font-bold tracking-[0.14em] text-[#9a9a9a]">SUAS SKINS</p>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3">
-          <SkinTile name="Padrão" url={null} variant="classic" on={selected === null} onClick={() => onSelect(null)} />
+          <SkinTile name="Sua skin" url={account?.url ?? null} variant={account?.variant ?? "classic"} on={selected === null} onClick={() => onSelect(null)} />
           {skins.map((s) => (
             <SkinTile
               key={s.id}

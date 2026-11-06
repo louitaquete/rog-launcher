@@ -1,7 +1,8 @@
 import { windowControls } from "../lib/window";
 import { Icon } from "./ui";
 import { useApp } from "../lib/store";
-import { openUrl } from "../lib/api";
+import { useState } from "react";
+import { extrasApi, openUrl } from "../lib/api";
 
 function WinButton({ label, onClick, children, danger }: { label: string; onClick: () => void; children: React.ReactNode; danger?: boolean }) {
   return (
@@ -17,6 +18,7 @@ function WinButton({ label, onClick, children, danger }: { label: string; onClic
 
 export function TitleBar() {
   const { devOffline, update } = useApp();
+  const [updating, setUpdating] = useState<string | null>(null);
   return (
     <header
       data-tauri-drag-region
@@ -30,12 +32,21 @@ export function TitleBar() {
       <div data-tauri-drag-region className="flex-1 self-stretch" />
       {update && (
         <button
-          onClick={() => openUrl(update.url)}
-          className="mr-2 flex items-center gap-2 border border-edge bg-raised px-3 py-1 text-xs text-ink hover:bg-active"
-          title="Abrir a página da nova versão"
+          disabled={updating === "busy"}
+          onClick={async () => {
+            if (!update.download) return openUrl(update.url);
+            setUpdating("busy");
+            try {
+              await extrasApi.applyUpdate(update.download);
+            } catch (e) {
+              setUpdating(String(e));
+            }
+          }}
+          className="mr-2 flex h-7 items-center gap-2 bg-ink px-3 text-xs font-semibold text-[#111] hover:bg-white disabled:bg-raised disabled:text-muted"
+          title={updating && updating !== "busy" ? updating : `Baixa e instala a ${update.version} e abre o launcher de novo`}
         >
-          <span className="h-1.5 w-1.5 bg-ink" />
-          Versão {update.version} disponível
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M7 1h2v8l3-3 1.4 1.4L8 12.8 2.6 7.4 4 6l3 3z" /><path d="M2 14h12v2H2z" /></svg>
+          {updating === "busy" ? "Atualizando…" : updating ? "Falhou, tentar de novo" : `Atualizar para ${update.version.replace(/-.*$/, "")}`}
         </button>
       )}
       <WinButton label="Minimizar" onClick={windowControls.minimize}>

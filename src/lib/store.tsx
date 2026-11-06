@@ -26,7 +26,7 @@ interface AppState {
   setAccount: (a: Account | null) => void;
   /** Abre a janela de login. */
   /** Versão nova do launcher no GitHub. */
-  update: { version: string; url: string } | null;
+  update: { version: string; url: string; download: string | null } | null;
   loginOpen: boolean;
   setLoginOpen: (v: boolean) => void;
 }
@@ -44,10 +44,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [devOffline, setDevOffline] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
-  const [update, setUpdate] = useState<{ version: string; url: string } | null>(null);
+  const [update, setUpdate] = useState<{ version: string; url: string; download: string | null } | null>(null);
   const checked = useRef(false);
   useEffect(() => {
-    if (!settings || checked.current || !settings.general.autoUpdate) return;
+    if (!settings || checked.current) return;
     checked.current = true;
     extrasApi.checkUpdate().then(setUpdate).catch(() => {});
   }, [settings]);

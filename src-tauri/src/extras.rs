@@ -114,6 +114,8 @@ pub fn import(store: &Store, path: &Path) -> Result<Instance, String> {
 pub struct Update {
     pub version: String,
     pub url: String,
+    /// Setup do launcher (…-setup.exe) da release, para atualizar pelo botão.
+    pub download: Option<String>,
 }
 
 fn parse(v: &str) -> Vec<u64> {
@@ -137,7 +139,14 @@ pub async fn check_update(client: &reqwest::Client) -> Result<Option<Update>, St
     let Some(v) = list.as_array().and_then(|a| a.iter().find(|r| r["draft"] != true)) else { return Ok(None) };
     let tag = v["tag_name"].as_str().unwrap_or_default();
     if parse(tag) > parse(env!("CARGO_PKG_VERSION")) {
-        return Ok(Some(Update { version: tag.trim_start_matches('v').into(), url: v["html_url"].as_str().unwrap_or_default().into() }));
+        let download = v["assets"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|a| a["name"].as_str().is_some_and(|n| n.ends_with("-setup.exe")))
+            .and_then(|a| a["browser_download_url"].as_str())
+            .map(String::from);
+        return Ok(Some(Update { version: tag.trim_start_matches('v').into(), url: v["html_url"].as_str().unwrap_or_default().into(), download }));
     }
     Ok(None)
 }
@@ -149,4 +158,26 @@ mod tests {
         assert!(super::parse("v0.2.0") > super::parse("0.1.9"));
         assert!(super::parse("v0.1.0") == super::parse("0.1.0"));
     }
+}
+
+/// Baixa o setup da versão nova, instala em silêncio e abre o launcher de novo.
+pub async fn apply_update(client: &reqwest::Client, url: &str) -> Result<(), String> {
+    if !url.starts_with("https://github.com/louitaquete/rog-launcher/releases/download/") {
+        return Err("link de atualização inválido".into());
+    }
+    let bytes = crate::install::download::fetch(client, url, None).await?;
+    let setup = std::env::temp_dir().join("rog-launcher-update.exe");
+    std::fs::write(&setup, bytes).map_err(|e| e.to_string())?;
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    // O cmd espera o setup terminar (o launcher já fechou) e abre o launcher de novo.
+    let script = format!("timeout /t 2 /nobreak >nul & \"{}\" /S & start \"\" \"{}\"", setup.display(), exe.display());
+    let mut cmd = std::process::Command::new("cmd");
+    cmd.args(["/C", &script]);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000); // sem janela
+    }
+    cmd.spawn().map_err(|e| format!("não deu para rodar o instalador ({e})"))?;
+    Ok(())
 }

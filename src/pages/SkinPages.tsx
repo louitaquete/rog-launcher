@@ -5,7 +5,7 @@ import { useApp } from "../lib/store";
 import { SkinPicker } from "../components/Skins";
 import { PageHeader, Toggle } from "../components/ui";
 
-const note = "Ao clicar em Jogar, o launcher troca a skin da sua conta automaticamente (precisa estar conectado com a Microsoft).";
+const note = "\"Sua skin\" é a da sua conta no minecraft.net. Ao clicar em Jogar com outra skin escolhida, o launcher troca a skin da conta e guarda uma cópia da sua para poder voltar.";
 
 /** Skin global: usada em todas as instâncias sem skin própria. */
 export function SkinGlobalPage() {

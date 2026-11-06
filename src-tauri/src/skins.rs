@@ -23,10 +23,12 @@ pub struct Skin {
 #[serde(rename_all = "camelCase", default)]
 pub struct Library {
     pub skins: Vec<Skin>,
-    /// Skin global. `None` = skin padrão do jogo.
+    /// Skin global. `None` = a skin da própria conta (minecraft.net).
     pub global: Option<String>,
-    /// Última skin enviada para a conta ("default" ou "<id>:<variant>"), para não reenviar à toa.
+    /// Última skin enviada pelo launcher ("account" = a da própria conta, ou "<id>:<variant>").
     pub last_applied: Option<String>,
+    /// Modelo da cópia da skin da conta (`account.png`).
+    pub account_variant: Option<Variant>,
 }
 
 fn dir(root: &Path) -> PathBuf {
@@ -96,32 +98,95 @@ pub fn update(root: &Path, skin: Skin) -> Result<(), String> {
     save(root, &lib)
 }
 
-/// Envia a skin desejada para a conta se for diferente da última enviada.
-/// `wanted = None` volta para a skin padrão do jogo.
-pub async fn apply(client: &reqwest::Client, root: &Path, token: &str, wanted: Option<&str>) -> Result<(), String> {
+/// Skin atual da conta (a do minecraft.net): PNG e modelo.
+#[derive(Debug, Clone, Serialize)]
+pub struct AccountSkin {
+    pub png: Vec<u8>,
+    pub variant: Variant,
+}
+
+/// Baixa a skin ativa do perfil e guarda como `account.png` (cópia para poder voltar a ela).
+async fn fetch_account(client: &reqwest::Client, root: &Path, token: &str) -> Result<AccountSkin, String> {
+    let r = client.get("https://api.minecraftservices.com/minecraft/profile").bearer_auth(token).send().await.map_err(|e| e.to_string())?;
+    if !r.status().is_success() {
+        return Err(format!("perfil: HTTP {}", r.status()));
+    }
+    let v: serde_json::Value = r.json().await.map_err(|e| e.to_string())?;
+    let skin = v["skins"].as_array().and_then(|a| a.iter().find(|s| s["state"] == "ACTIVE").or(a.first())).ok_or("a conta não tem skin")?;
+    let url = skin["url"].as_str().ok_or("skin sem url")?.replacen("http://", "https://", 1);
+    let variant = if skin["variant"].as_str() == Some("SLIM") { Variant::Slim } else { Variant::Classic };
+    let png = client.get(&url).send().await.map_err(|e| e.to_string())?.bytes().await.map_err(|e| e.to_string())?.to_vec();
+    if png_size(&png).is_none() {
+        return Err("a skin da conta não veio como PNG".into());
+    }
+    std::fs::create_dir_all(dir(root)).map_err(|e| e.to_string())?;
+    std::fs::write(dir(root).join("account.png"), &png).map_err(|e| e.to_string())?;
     let mut lib = load(root);
-    let skin = wanted.and_then(|id| lib.skins.iter().find(|s| s.id == id).cloned());
-    let key = match &skin {
-        Some(s) => format!("{}:{:?}", s.id, s.variant),
-        None => "default".into(),
-    };
-    if lib.last_applied.as_deref() == Some(key.as_str()) {
-        return Ok(());
+    lib.account_variant = Some(variant);
+    save(root, &lib)?;
+    Ok(AccountSkin { png, variant })
+}
+
+fn account_backup(root: &Path) -> Option<AccountSkin> {
+    let png = std::fs::read(dir(root).join("account.png")).ok()?;
+    Some(AccountSkin { png, variant: load(root).account_variant.unwrap_or(Variant::Classic) })
+}
+
+/// A conta está com a própria skin (nada do launcher aplicado)?
+fn using_own(lib: &Library) -> bool {
+    matches!(lib.last_applied.as_deref(), None | Some("account"))
+}
+
+/// Skin da conta para a prévia: a atual (se o launcher não trocou) ou a cópia guardada.
+pub async fn account_skin(client: &reqwest::Client, root: &Path, token: Option<&str>) -> Option<AccountSkin> {
+    let lib = load(root);
+    if using_own(&lib)
+        && let Some(t) = token
+            && let Ok(s) = fetch_account(client, root, t).await {
+                return Some(s);
+            }
+    account_backup(root)
+}
+
+async fn upload(client: &reqwest::Client, token: &str, png: Vec<u8>, variant: Variant) -> Result<(), String> {
+    let part = reqwest::multipart::Part::bytes(png).file_name("skin.png").mime_str("image/png").map_err(|e| e.to_string())?;
+    let v = if variant == Variant::Slim { "slim" } else { "classic" };
+    let form = reqwest::multipart::Form::new().text("variant", v).part("file", part);
+    let r = client.post("https://api.minecraftservices.com/minecraft/profile/skins").bearer_auth(token).multipart(form).send().await.map_err(|e| e.to_string())?;
+    if !r.status().is_success() {
+        return Err(format!("a Mojang recusou a skin (HTTP {})", r.status()));
     }
-    let api = "https://api.minecraftservices.com/minecraft/profile/skins";
-    let resp = match &skin {
+    Ok(())
+}
+
+/// Deixa a conta com a skin desejada antes de jogar.
+/// `wanted = None` = a skin da própria conta (minecraft.net): nunca apaga nada.
+pub async fn apply(client: &reqwest::Client, root: &Path, token: &str, wanted: Option<&str>) -> Result<(), String> {
+    let lib = load(root);
+    match wanted.and_then(|id| lib.skins.iter().find(|s| s.id == id).cloned()) {
         Some(s) => {
-            let part = reqwest::multipart::Part::bytes(png(root, &s.id)?).file_name("skin.png").mime_str("image/png").map_err(|e| e.to_string())?;
-            let variant = if s.variant == Variant::Slim { "slim" } else { "classic" };
-            let form = reqwest::multipart::Form::new().text("variant", variant).part("file", part);
-            client.post(api).bearer_auth(token).multipart(form).send().await
+            let key = format!("{}:{:?}", s.id, s.variant);
+            if lib.last_applied.as_deref() == Some(key.as_str()) {
+                return Ok(());
+            }
+            // Antes da primeira troca, guarda a skin da conta para poder voltar.
+            if using_own(&lib) {
+                fetch_account(client, root, token).await.map_err(|e| format!("não deu para guardar a skin da conta antes de trocar ({e})"))?;
+            }
+            upload(client, token, png(root, &s.id)?, s.variant).await?;
+            let mut lib = load(root);
+            lib.last_applied = Some(key);
+            save(root, &lib)
         }
-        None => client.delete(format!("{api}/active")).bearer_auth(token).send().await,
+        None => {
+            if using_own(&lib) {
+                return Ok(());
+            }
+            let Some(b) = account_backup(root) else { return Ok(()) };
+            upload(client, token, b.png, b.variant).await?;
+            let mut lib = load(root);
+            lib.last_applied = Some("account".into());
+            save(root, &lib)
+        }
     }
-    .map_err(|e| e.to_string())?;
-    if !resp.status().is_success() {
-        return Err(format!("a Mojang recusou a skin (HTTP {})", resp.status()));
-    }
-    lib.last_applied = Some(key);
-    save(root, &lib)
 }

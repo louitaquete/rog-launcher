@@ -380,7 +380,9 @@ export const extrasApi = {
     if (!path) return null;
     return invoke("import_instance", { path });
   },
-  checkUpdate: (): Promise<{ version: string; url: string } | null> => (isTauri ? invoke("check_update") : Promise.resolve(null)),
+  checkUpdate: (): Promise<{ version: string; url: string; download: string | null } | null> =>
+    isTauri ? invoke("check_update") : Promise.resolve(null),
+  applyUpdate: (url: string): Promise<void> => invoke("apply_update", { url }),
   deleteInstance: (id: string): Promise<void> => api.deleteInstance(id),
 };
 
@@ -405,6 +407,12 @@ async function pickFile(name: string, extensions: string[]): Promise<string | nu
 }
 
 export const skinsApi = {
+  /** Skin da conta Microsoft (minecraft.net) como URL de objeto. */
+  account: async (): Promise<{ url: string; variant: SkinVariant } | null> => {
+    if (!isTauri) return null;
+    const r = await invoke<{ png: number[]; variant: SkinVariant } | null>("account_skin");
+    return r ? { url: URL.createObjectURL(new Blob([new Uint8Array(r.png)], { type: "image/png" })), variant: r.variant } : null;
+  },
   list: (): Promise<SkinLibrary> => (isTauri ? invoke("skins_list") : Promise.resolve(simSkins())),
   /** PNG da skin como URL de objeto (null no navegador). */
   url: async (id: string): Promise<string | null> => {

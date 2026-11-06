@@ -429,6 +429,21 @@ async fn cf_import_modpack(store: State<'_, Store>, project_id: u64) -> Res<Inst
     r
 }
 
+/// Skin da conta Microsoft (a do minecraft.net) para a prévia.
+#[tauri::command]
+async fn account_skin(store: State<'_, Store>) -> Res<Option<skins::AccountSkin>> {
+    let client = install::download::client();
+    let token = auth::ensure(&client, store.root()).await.ok().map(|a| a.mc_token);
+    Ok(skins::account_skin(&client, store.root(), token.as_deref()).await)
+}
+
+#[tauri::command]
+async fn apply_update(app: tauri::AppHandle, url: String) -> Res<()> {
+    extras::apply_update(&install::download::client(), &url).await?;
+    app.exit(0);
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -485,6 +500,8 @@ pub fn run() {
             skin_update,
             skin_remove,
             skin_set_global,
+            account_skin,
+            apply_update,
             instance_cover,
             set_instance_cover,
             import_file,
