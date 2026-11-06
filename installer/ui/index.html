@@ -124,11 +124,14 @@
   function welcome() {
     $("win").classList.remove("dim");
     if (current) {
-      const newer = release && release.version !== current.version;
-      chip(newer ? `${current.version} instalada · ${release.version} disponível` : `${current.version} instalada`);
+      // Compara só os números (0.1.0-prealpha = 0.1.0, que é como o Windows registra a versão).
+      const num = (v) => v.replace(/^v/, "").split("-")[0].split(".").map(Number);
+      const gt = (a, b) => { const x = num(a), y = num(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+      const newer = release && gt(release.version, current.version);
+      chip(newer ? `${current.version} instalada · ${release.version.replace(/-.*$/, "")} disponível` : `${current.version} instalada · versão mais recente`);
       bar(`<button class="link danger" id="un">Desinstalar</button><span class="sp"></span>
            <button class="link" id="repair">${newer ? "Abrir" : "Reparar"}</button>
-           <button class="primary" id="go">${newer ? `Atualizar para ${release.version}` : "Abrir o Rog Launcher"}</button>`);
+           <button class="primary" id="go">${newer ? `Atualizar para ${release.version.replace(/-.*$/, "")}` : "Abrir o Rog Launcher"}</button>`);
       on("un", uninstall);
       on("repair", newer ? openLauncher : () => install());
       on("go", newer ? () => install() : openLauncher);
