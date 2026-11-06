@@ -232,7 +232,8 @@
       try {
         const r = await fetch("https://api.github.com/repos/louitaquete/rog-launcher/releases?per_page=5");
         const rel = r.ok && (await r.json()).find((x) => !x.draft);
-        const exe = rel && rel.assets.find((a) => a.name.endsWith(".exe"));
+        // Prefere o instalador próprio; se não tiver, o setup do launcher.
+        const exe = rel && (rel.assets.find((a) => /installer/i.test(a.name) && a.name.endsWith(".exe")) || rel.assets.find((a) => a.name.endsWith(".exe")));
         if (!exe) return;
         document.querySelectorAll(".dl").forEach((a) => { a.href = exe.browser_download_url; a.classList.remove("off"); });
         document.querySelectorAll(".dl-text").forEach((s) => (s.textContent = "Baixar para Windows"));

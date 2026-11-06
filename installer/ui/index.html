@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Instalador do Rog Launcher</title>
+<style>
+  @font-face { font-family: Poppins; font-weight: 400; src: url(fonts/poppins-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 500; src: url(fonts/poppins-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: Poppins; font-weight: 600; src: url(fonts/poppins-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: Orbitron; font-weight: 700; src: url(fonts/orbitron-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: Orbitron; font-weight: 900; src: url(fonts/orbitron-latin-900-normal.woff2) format("woff2"); }
+  * { box-sizing: border-box; margin: 0; user-select: none; }
+  html, body { height: 100%; overflow: hidden; background: #0d0d0d; color: #ededed; font-family: Poppins, "Segoe UI", system-ui, sans-serif; font-size: 13px; }
+  button { font: inherit; border: 0; cursor: pointer; }
+  .win { position: relative; height: 100%; display: flex; flex-direction: column; }
+  .art { position: absolute; inset: 0 0 76px 0; background: url(assets/hero.webp) center 45% / cover; transition: filter .4s; }
+  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(13,13,13,.55), rgba(13,13,13,.25) 35%, rgba(13,13,13,.92)); transition: background .4s; }
+  .win.dim .art::after { background: rgba(13,13,13,.92); }
+
+  .title { position: relative; z-index: 2; height: 36px; display: flex; align-items: center; padding-left: 14px; gap: 8px; background: rgba(13,13,13,.6); }
+  .title img { width: 16px; }
+  .title b { font-family: Orbitron, "Segoe UI", sans-serif; font-size: 11px; letter-spacing: .04em; font-weight: 700; }
+  .title i { font-style: normal; color: #7a7a7a; font-size: 12px; }
+  .title .sp { flex: 1; align-self: stretch; }
+  .ctl { width: 44px; height: 36px; background: none; color: #9a9a9a; font-size: 12px; }
+  .ctl:hover { background: rgba(255,255,255,.08); color: #ededed; }
+  .ctl.x:hover { background: #c42b1c; color: #fff; }
+
+  .main { position: relative; z-index: 1; flex: 1; display: flex; align-items: flex-end; padding: 0 36px 28px; }
+  .brand { display: flex; align-items: center; gap: 16px; width: 100%; }
+  .brand img { width: 44px; }
+  .brand h1 { font-family: Orbitron, "Segoe UI", sans-serif; font-weight: 900; font-size: 30px; letter-spacing: .02em; line-height: 1; }
+  .brand p { color: #c4c4c4; margin-top: 6px; }
+  .chip { margin-left: auto; align-self: flex-end; font-size: 11px; padding: 5px 10px; background: rgba(255,255,255,.1); color: #d0d0d0; }
+  .chip.ok { background: #ededed; color: #111; font-weight: 600; }
+
+  .opts { position: absolute; inset: 36px 36px 76px 36px; padding-top: 24px; z-index: 1; display: none; }
+  .win.dim .opts { display: block; }
+  .win.dim .main { visibility: hidden; }
+  .opts h2 { font-size: 18px; font-weight: 600; margin-bottom: 14px; }
+  .row { display: flex; align-items: center; gap: 16px; padding: 12px 0; }
+  .row > div:first-child { flex: 1; }
+  .row b { display: block; font-weight: 500; }
+  .row span { display: block; font-size: 11px; color: #7a7a7a; margin-top: 2px; }
+  .path { font-size: 11px; color: #a8a8a8; background: #151515; padding: 8px 12px; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ghost { background: #1c1c1c; color: #d0d0d0; font-size: 12px; padding: 8px 14px; }
+  .ghost:hover { background: #262626; }
+  .tog { width: 36px; height: 20px; background: #2a2a2a; position: relative; transition: background .15s; }
+  .tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: #7a7a7a; transition: left .15s, background .15s; }
+  .tog.on { background: #ededed; }
+  .tog.on::after { left: 19px; background: #111; }
+
+  .bar { position: relative; z-index: 1; height: 76px; background: #121212; display: flex; align-items: center; gap: 18px; padding: 0 24px 0 36px; }
+  .bar .sp { flex: 1; }
+  .muted { font-size: 12px; color: #7a7a7a; }
+  .muted b { color: #a8a8a8; font-weight: 500; }
+  .link { background: none; color: #9a9a9a; font-size: 13px; padding: 6px 4px; }
+  .link:hover { color: #ededed; }
+  .link.danger { color: #e5484d; }
+  .primary { background: #ededed; color: #111; font-size: 14px; font-weight: 600; padding: 12px 26px; transition: background .12s, transform .08s; }
+  .primary:hover { background: #fff; }
+  .primary:active, .ghost:active { transform: translateY(1px); }
+  .primary:disabled { background: #2a2a2a; color: #7a7a7a; cursor: default; }
+  .prog { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .pl { display: flex; justify-content: space-between; font-size: 12px; }
+  .pl b { font-weight: 500; }
+  .pl span { color: #7a7a7a; }
+  .track { height: 4px; background: #242424; overflow: hidden; }
+  .fill { height: 100%; width: 0; background: #ededed; transition: width .2s; }
+  .fill.indet { width: 30%; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+  .err { display: flex; flex-direction: column; gap: 2px; font-size: 12px; max-width: 380px; }
+  .err b { font-weight: 600; font-size: 13px; }
+  .err span { color: #7a7a7a; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="win" id="win">
+  <div class="art"></div>
+  <div class="title" data-tauri-drag-region>
+    <img src="assets/logo.svg" alt="" data-tauri-drag-region /><b data-tauri-drag-region>Rog Launcher</b><i data-tauri-drag-region>Instalador</i>
+    <span class="sp" data-tauri-drag-region></span>
+    <button class="ctl" id="min" title="Minimizar">&#8212;</button><button class="ctl x" id="close" title="Fechar">&#10005;</button>
+  </div>
+
+  <div class="main">
+    <div class="brand"><img src="assets/logo.svg" alt="" /><div><h1>ROG LAUNCHER</h1><p>Launcher de Minecraft: Java Edition</p></div><span class="chip" id="chip">Procurando a versão…</span></div>
+  </div>
+
+  <div class="opts">
+    <h2>Opções de instalação</h2>
+    <div class="row"><div><b>Pasta</b><span>Onde o launcher fica instalado</span></div><div class="path" id="dir"></div><button class="ghost" id="pick">Alterar</button></div>
+    <div class="row"><div><b>Atalho na área de trabalho</b><span>Cria um atalho do Rog Launcher</span></div><button class="tog on" id="t-desktop" aria-label="Atalho na área de trabalho"></button></div>
+    <div class="row"><div><b>Iniciar com o Windows</b><span>Abre o launcher junto com o sistema</span></div><button class="tog" id="t-auto" aria-label="Iniciar com o Windows"></button></div>
+  </div>
+
+  <div class="bar" id="bar"></div>
+</div>
+
+<script>
+  const T = window.__TAURI__;
+  const invoke = T.core.invoke;
+  const win = T.window.getCurrentWindow();
+  const $ = (id) => document.getElementById(id);
+  $("min").onclick = () => win.minimize();
+  $("close").onclick = () => win.close();
+
+  let release = null, current = null, busy = false;
+  const opts = { dir: "", desktop: true, autostart: false };
+  const mb = (b) => (b / 1048576).toFixed(1).replace(".", ",");
+  const chip = (text, ok) => { $("chip").textContent = text; $("chip").className = "chip" + (ok ? " ok" : ""); };
+  const bar = (html) => ($("bar").innerHTML = html);
+  const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+
+  for (const [id, key] of [["t-desktop", "desktop"], ["t-auto", "autostart"]]) {
+    $(id).onclick = () => { opts[key] = !opts[key]; $(id).classList.toggle("on", opts[key]); };
+  }
+  $("pick").onclick = async () => {
+    const d = await T.dialog.open({ directory: true, title: "Pasta do Rog Launcher" });
+    if (typeof d === "string") { opts.dir = d.replace(/[\\/]$/, "") + (/rog launcher$/i.test(d) ? "" : "\\Rog Launcher"); $("dir").textContent = opts.dir; }
+  };
+
+  function welcome() {
+    $("win").classList.remove("dim");
+    if (current) {
+      const newer = release && release.version !== current.version;
+      chip(newer ? `${current.version} instalada · ${release.version} disponível` : `${current.version} instalada`);
+      bar(`<button class="link danger" id="un">Desinstalar</button><span class="sp"></span>
+           <button class="link" id="repair">${newer ? "Abrir" : "Reparar"}</button>
+           <button class="primary" id="go">${newer ? `Atualizar para ${release.version}` : "Abrir o Rog Launcher"}</button>`);
+      on("un", uninstall);
+      on("repair", newer ? openLauncher : () => install());
+      on("go", newer ? () => install() : openLauncher);
+      return;
+    }
+    chip(release ? `${release.version.replace(/-.*$/, "")}${release.prerelease ? " · pré-alpha" : ""}` : "");
+    bar(`<span class="muted">Instala em <b>${opts.dir.replace(/^.*\\AppData\\Local/i, "%LOCALAPPDATA%")}</b></span><span class="sp"></span>
+         <button class="link" id="op">Opções</button><button class="primary" id="go" ${release ? "" : "disabled"}>Instalar</button>`);
+    on("op", options);
+    on("go", () => install());
+  }
+
+  function options() {
+    $("win").classList.add("dim");
+    $("dir").textContent = opts.dir;
+    bar(`<button class="link" id="back">Voltar</button><span class="sp"></span><button class="primary" id="go">Instalar</button>`);
+    on("back", welcome);
+    on("go", () => install());
+  }
+
+  function error(title, msg, retry) {
+    $("win").classList.remove("dim");
+    bar(`<div class="err"><b>${title}</b><span>${msg}</span></div><span class="sp"></span>
+         <button class="link" id="cl">Fechar</button><button class="primary" id="re">Tentar de novo</button>`);
+    on("cl", () => win.close());
+    on("re", retry);
+  }
+
+  async function install() {
+    if (busy) return;
+    busy = true;
+    $("win").classList.remove("dim");
+    bar(`<div class="prog"><div class="pl"><b id="pt">Baixando o Rog Launcher…</b><span id="ps"></span></div><div class="track"><div class="fill" id="pf"></div></div></div>`);
+    try {
+      await invoke("install", { url: release.url, opts: { dir: opts.dir, desktop: opts.desktop, autostart: opts.autostart } });
+      busy = false;
+      current = await invoke("installed");
+      chip("Instalado", true);
+      bar(`<span class="muted">Tudo pronto. Entre com a sua conta Microsoft e jogue.</span><span class="sp"></span>
+           <button class="link" id="cl">Fechar</button><button class="primary" id="op">Abrir o Rog Launcher</button>`);
+      on("cl", () => win.close());
+      on("op", openLauncher);
+    } catch (e) {
+      busy = false;
+      error("Não deu para instalar o launcher", String(e), () => install());
+    }
+  }
+
+  async function uninstall() {
+    bar(`<div class="prog"><div class="pl"><b>Desinstalando…</b><span></span></div><div class="track"><div class="fill indet"></div></div></div>`);
+    try {
+      await invoke("uninstall");
+      current = null;
+      welcome();
+      chip("Desinstalado");
+    } catch (e) {
+      error("Não deu para desinstalar", String(e), uninstall);
+    }
+  }
+
+  async function openLauncher() {
+    try { await invoke("open_launcher"); } catch (e) { error("Não deu para abrir o launcher", String(e), openLauncher); }
+  }
+
+  T.event.listen("progress", ({ payload: p }) => {
+    const pf = $("pf");
+    if (!pf) return;
+    if (p.stage === "install") {
+      $("pt").textContent = "Instalando…";
+      $("ps").textContent = "";
+      pf.classList.add("indet");
+      return;
+    }
+    const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+    pf.style.width = pct + "%";
+    $("ps").textContent = p.total ? `${mb(p.done)} de ${mb(p.total)} MB · ${pct}%` : `${mb(p.done)} MB`;
+  });
+
+  async function start() {
+    opts.dir = await invoke("default_install_dir");
+    current = await invoke("installed");
+    try {
+      release = await invoke("latest");
+      welcome();
+    } catch (e) {
+      if (current) return welcome();
+      chip("");
+      error("Não deu para baixar o launcher", `${e}. Confira a internet ou o proxy e tente de novo.`, start);
+    }
+  }
+  welcome();
+  start();
+</script>
+</body>
+</html>
