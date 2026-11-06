@@ -47,6 +47,19 @@ Rog Launcher signs players in only to verify game ownership and launch Minecraft
 
 Rog Launcher is not an official Minecraft product and is not approved by or associated with Mojang or Microsoft. Minecraft is a trademark of Mojang Synergies AB.
 
+## Download
+
+Get the latest version at **[louitaquete.github.io/rog-launcher](https://louitaquete.github.io/rog-launcher/)** or on [GitHub Releases](https://github.com/louitaquete/rog-launcher/releases).
+
+## Code signing policy
+
+Windows releases are built exclusively by GitHub Actions from this public repository.
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+- Committers and approvers: [louitaquete](https://github.com/louitaquete)
+- Privacy: this program does not transfer any information to other networked systems unless specifically requested by the user (login, downloads, mods and updates). See the [privacy policy](https://louitaquete.github.io/rog-launcher/privacy.html).
+
 ## License
 
 [MIT](LICENSE)
