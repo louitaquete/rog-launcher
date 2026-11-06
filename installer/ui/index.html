@@ -216,7 +216,9 @@
     } catch (e) {
       if (current) return welcome();
       chip("");
-      error("Não deu para baixar o launcher", `${e}. Confira a internet ou o proxy e tente de novo.`, start);
+      const msg = String(e);
+      if (msg.includes("ainda não há")) error("O launcher ainda não foi publicado", "A primeira versão sai em breve. Tente de novo mais tarde.", start);
+      else error("Não deu para falar com o GitHub", `${msg.charAt(0).toUpperCase() + msg.slice(1)}. Confira a internet ou o proxy e tente de novo.`, start);
     }
   }
   welcome();
