@@ -178,7 +178,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Buscar ${kindLabel[kind].toLowerCase()} para ${instance.mcVersion}…`}
-          className="h-10 flex-1 border border-edge bg-[#171717] px-4 text-[13px] text-ink outline-none placeholder:text-[#5a5a5a] focus:border-[#555]"
+          className="h-10 flex-1 border border-edge bg-[#171717] px-4 text-[13px] text-ink outline-none placeholder:text-[#6f6f6f] focus:border-[#555]"
         />
         <Select
           value={sort}
@@ -240,7 +240,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
           Carregar mais
         </button>
       )}
-      <p className="m-0 pb-2 text-[11px] text-[#555]">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
+      <p className="m-0 pb-2 text-[11px] text-[#7a7a7a]">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
     </div>
   );
 }

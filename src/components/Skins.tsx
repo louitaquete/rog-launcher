@@ -279,7 +279,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
           {capeMenu && (
             <div className="absolute bottom-full left-4 z-20 mb-1 w-56 bg-[#1c1c1c] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" onMouseLeave={() => setCapeMenu(false)}>
               <button onClick={() => chooseCape(null)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-active ${!activeCape ? "text-ink" : "text-[#9a9a9a]"}`}>
-                <span className="flex h-6 w-[15px] items-center justify-center bg-raised text-[10px]">—</span>
+                <span className="flex h-6 w-[15px] items-center justify-center bg-raised text-[11px]">—</span>
                 Sem capa
               </button>
               {capes.map((c) => (

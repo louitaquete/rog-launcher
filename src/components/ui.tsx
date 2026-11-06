@@ -133,5 +133,5 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">{children}</p>;
+  return <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">{children}</p>;
 }

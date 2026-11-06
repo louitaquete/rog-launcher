@@ -65,14 +65,14 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">Ou cole um link</p>
+          <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">Ou cole um link</p>
           <div className="flex gap-2">
             <input
               value={link}
               onChange={(e) => setLink(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fromLink()}
               placeholder="https://modrinth.com/modpack/..."
-              className="h-10 flex-1 border border-edge bg-[#141414] px-3 text-[13px] text-ink outline-none placeholder:text-[#5a5a5a] focus:border-[#5a5a5a]"
+              className="h-10 flex-1 border border-edge bg-[#141414] px-3 text-[13px] text-ink outline-none placeholder:text-[#6f6f6f] focus:border-[#5a5a5a]"
             />
             <Button variant="outline" disabled={!!busy || !link.trim()} onClick={fromLink}>
               Buscar
@@ -81,7 +81,7 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">De outros launchers neste PC</p>
+          <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">De outros launchers neste PC</p>
           <div className="flex flex-col border border-line">
             {scan === null && <p className="m-0 px-4 py-3 text-[13px] text-muted">Procurando…</p>}
             {scan?.map((l) => (

@@ -169,7 +169,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
             return (
               <div key={s.stage} className={`flex items-center gap-3.5 px-[18px] py-3 ${state === "now" ? "bg-[#1b1b1b]" : ""}`}>
                 <StepIcon state={state} />
-                <span className={`flex-1 text-[13px] font-medium ${state === "wait" ? "text-[#6a6a6a]" : ""}`}>{s.label(instance)}</span>
+                <span className={`flex-1 text-[13px] font-medium ${state === "wait" ? "text-[#8a8a8a]" : ""}`}>{s.label(instance)}</span>
                 {state === "now" && (
                   <div className="w-[220px]">
                     <Bar value={ratio} />

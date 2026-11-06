@@ -82,7 +82,7 @@ export function ModpackSearch({ onDone }: { onDone: (inst: Instance) => void }) 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar modpacks…"
-          className="h-10 flex-1 border border-edge bg-[#141414] px-3 text-[13px] text-ink outline-none placeholder:text-[#5a5a5a] focus:border-[#5a5a5a]"
+          className="h-10 flex-1 border border-edge bg-[#141414] px-3 text-[13px] text-ink outline-none placeholder:text-[#6f6f6f] focus:border-[#5a5a5a]"
         />
       </div>
 

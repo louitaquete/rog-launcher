@@ -17,7 +17,7 @@ const SECTIONS = [
 export function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex w-[900px] max-w-full flex-col gap-2.5">
-      <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">{title}</p>
+      <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">{title}</p>
       <div className="flex flex-col border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line">{children}</div>
     </section>
   );
@@ -80,7 +80,7 @@ export function SettingsPage() {
   return (
     <div className="flex h-full">
       <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-[#111] py-7">
-        <p className="m-0 px-6 pb-3 text-[11px] font-medium tracking-[0.08em] text-[#6a6a6a] uppercase">Configurações</p>
+        <p className="m-0 px-6 pb-3 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">Configurações</p>
         {SECTIONS.map((s) => (
           <NavLink
             key={s.slug}

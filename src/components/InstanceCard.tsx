@@ -150,7 +150,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
 
 export function NewInstanceCard({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 border border-dashed border-edge text-[#6a6a6a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
+    <button onClick={onClick} className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 border border-dashed border-edge text-[#8a8a8a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
       <span className="text-[32px] leading-none">+</span>
       <span className="text-[13px] font-medium">Nova instância</span>
     </button>
