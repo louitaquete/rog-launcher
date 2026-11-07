@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { icons, type IconName } from "./icons";
 
 export function Icon({ name, size = 24, className = "" }: { name: IconName; size?: number; className?: string }) {
@@ -49,7 +50,8 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
 }
 
 export function Modal({ title, subtitle, onClose, children, footer, width = 640 }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; footer?: ReactNode; width?: number }) {
-  return (
+  // Portal: renderiza no <body>. Dentro de um card com transform (hover), o "fixed" ficava preso ao card e piscava.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onMouseDown={onClose}>
       <div
         role="dialog"
@@ -70,7 +72,8 @@ export function Modal({ title, subtitle, onClose, children, footer, width = 640 
         <div className="overflow-y-auto px-7 py-6">{children}</div>
         {footer && <div className="flex items-center gap-2 border-t border-line px-7 py-4">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
