@@ -5,7 +5,6 @@ import { useApp } from "../lib/store";
 import { SkinPicker } from "../components/Skins";
 import { PageHeader, Toggle } from "../components/ui";
 
-const note = "A skin global é a skin da sua conta. Ao aplicar outra, a anterior fica guardada aqui no catálogo.";
 
 /** Skin global: usada em todas as instâncias sem skin própria. */
 export function SkinGlobalPage() {
@@ -27,7 +26,6 @@ export function SkinGlobalPage() {
           setGlobal(null);
         }}
       />
-      <p className="m-0 max-w-[760px] text-xs leading-relaxed text-muted">Instâncias com a opção "Skin própria" ligada na aba Skins sobrepõem a skin global. {note}</p>
     </div>
   );
 }
@@ -73,7 +71,6 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
           </button>
         </div>
       )}
-      <p className="m-0 text-xs text-muted">{note}</p>
     </div>
   );
 }

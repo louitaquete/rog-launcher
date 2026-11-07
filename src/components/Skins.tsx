@@ -111,15 +111,48 @@ export function Skin3D({ url, variant, cape, paused, width = 340, height = 560, 
   return <canvas ref={ref} className="cursor-grab active:cursor-grabbing" />;
 }
 
+/** Slim ou clássica pelo próprio PNG: na slim, a coluna de pixels 54 do braço direito (y 20–31) é transparente. */
+export function detectVariant(url: string): Promise<SkinVariant | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (img.height < 64) return resolve("classic");
+      const c = document.createElement("canvas");
+      c.width = 64;
+      c.height = 64;
+      const g = c.getContext("2d")!;
+      g.drawImage(img, 0, 0, 64, 64);
+      try {
+        const px = g.getImageData(54, 20, 2, 12).data;
+        let transparent = true;
+        for (let i = 3; i < px.length; i += 4) if (px[i] !== 0) transparent = false;
+        resolve(transparent ? "slim" : "classic");
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 /** Skin da conta (minecraft.net). Sem acesso à Mojang, tenta o mc-heads. */
 export function useAccountSkin(refresh = 0) {
   const { account } = useApp();
   const [acc, setAcc] = useState<{ url: string; variant: SkinVariant } | null | undefined>(undefined);
   useEffect(() => {
+    const fallback = account ? { url: `https://mc-heads.net/skin/${account.uuid}`, variant: "classic" as SkinVariant } : null;
     skinsApi
       .account()
-      .then((a) => setAcc(a ?? (account ? { url: `https://mc-heads.net/skin/${account.uuid}`, variant: "classic" } : null)))
-      .catch(() => setAcc(account ? { url: `https://mc-heads.net/skin/${account.uuid}`, variant: "classic" } : null));
+      .catch(() => null)
+      .then(async (a) => {
+        const r = a ?? fallback;
+        if (!r) return setAcc(null);
+        // Escolha manual (botão Clássico/Slim) > o que o PNG indica > o que a Mojang disse.
+        const manual = account ? (localStorage.getItem(`rog.accVariant.${account.uuid}`) as SkinVariant | null) : null;
+        setAcc({ ...r, variant: manual ?? (await detectVariant(r.url)) ?? r.variant });
+      });
   }, [account, refresh]);
   return acc;
 }
@@ -180,6 +213,8 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
   const [busy, setBusy] = useState(false);
   const urls = useSkinUrls(skins);
   const accSkin = useAccountSkin(refresh);
+  const [accVariantState, setAccVariant] = useState<SkinVariant | null>(null);
+  const accVariant = accVariantState ?? accSkin?.variant ?? "classic";
   const capeRef = useDismiss<HTMLDivElement>(capeMenu, useCallback(() => setCapeMenu(false), []));
   const reload = () => skinsApi.list().then((l) => setSkins(l.skins));
   useEffect(() => {
@@ -223,7 +258,12 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
   }
 
   async function setVariant(v: SkinVariant) {
-    if (!current) return;
+    if (!current) {
+      // Skin da conta: guarda a escolha só para a prévia.
+      if (account) localStorage.setItem(`rog.accVariant.${account.uuid}`, v);
+      setAccVariant(v);
+      return;
+    }
     await skinsApi.update({ ...current, variant: v });
     reload();
   }
@@ -267,7 +307,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
           <span>Role para zoom</span>
         </div>
         <div className="relative flex flex-1 justify-center" style={{ backgroundImage: "linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)", backgroundSize: "28px 28px", backgroundPosition: "center" }}>
-          <Skin3D url={current ? urls[current.id] ?? null : accSkin?.url ?? null} variant={current?.variant ?? accSkin?.variant ?? "classic"} cape={activeCape?.url} paused={paused} resetKey={resetKey} width={360} height={470} />
+          <Skin3D url={current ? urls[current.id] ?? null : accSkin?.url ?? null} variant={current?.variant ?? accVariant} cape={activeCape?.url} paused={paused} resetKey={resetKey} width={360} height={470} />
         </div>
         <div ref={capeRef} className="relative flex items-center gap-1.5 px-4 py-3">
           {account && (
@@ -282,10 +322,10 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
           <button onClick={() => setResetKey((k) => k + 1)} title="Voltar a câmera" className={`${tool} w-9`}>
             <svg width="14" height="14" viewBox="0 0 16 16">{icon.reset}</svg>
           </button>
-          {current && (
+          {(current || accSkin) && (
             <div className="ml-auto flex">
               {(["classic", "slim"] as const).map((v) => (
-                <button key={v} onClick={() => setVariant(v)} className={`h-9 px-3 text-xs ${current.variant === v ? "bg-active text-ink" : "bg-[#1c1c1c] text-muted hover:text-soft"}`}>
+                <button key={v} onClick={() => setVariant(v)} className={`h-9 px-3 text-xs ${(current?.variant ?? accVariant) === v ? "bg-active text-ink" : "bg-[#1c1c1c] text-muted hover:text-soft"}`}>
                   {v === "classic" ? "Clássico" : "Slim"}
                 </button>
               ))}
@@ -333,7 +373,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
             </span>
             <span className="text-[13px] font-medium">Enviar skin</span>
           </button>
-          <SkinTile name="Skin atual" badge="EM USO" url={accSkin?.url ?? null} variant={accSkin?.variant ?? "classic"} on={pick === null} onClick={() => choose(null)} />
+          <SkinTile name="Skin atual" badge="EM USO" url={accSkin?.url ?? null} variant={accVariant} on={pick === null} onClick={() => choose(null)} />
           {skins.map((s) => (
             <SkinTile
               key={s.id}
