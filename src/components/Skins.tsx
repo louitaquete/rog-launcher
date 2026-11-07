@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SkinViewer, WalkingAnimation } from "skinview3d";
 import { skinsApi, type Cape, type Skin, type SkinVariant } from "../lib/api";
 import { useApp } from "../lib/store";
+import { useDismiss } from "../lib/useDismiss";
 
 /** Desenha a frente do personagem a partir do PNG da skin (64×64 ou 64×32). */
 export function SkinPreview({ url, variant, scale = 8 }: { url: string | null; variant: SkinVariant; scale?: number }) {
@@ -111,7 +112,7 @@ export function Skin3D({ url, variant, cape, paused, width = 340, height = 560, 
 }
 
 /** Skin da conta (minecraft.net). Sem acesso à Mojang, tenta o mc-heads. */
-export function useAccountSkin() {
+export function useAccountSkin(refresh = 0) {
   const { account } = useApp();
   const [acc, setAcc] = useState<{ url: string; variant: SkinVariant } | null | undefined>(undefined);
   useEffect(() => {
@@ -119,7 +120,7 @@ export function useAccountSkin() {
       .account()
       .then((a) => setAcc(a ?? (account ? { url: `https://mc-heads.net/skin/${account.uuid}`, variant: "classic" } : null)))
       .catch(() => setAcc(account ? { url: `https://mc-heads.net/skin/${account.uuid}`, variant: "classic" } : null));
-  }, [account]);
+  }, [account, refresh]);
   return acc;
 }
 
@@ -165,26 +166,37 @@ const icon = {
  * Estúdio de skins (estilo CurseForge): prévia 3D andando à esquerda com capas e Aplicar,
  * suas skins à direita. `selected = null` é a skin da própria conta.
  */
-export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar", note }: { selected: string | null; onSelect?: (id: string | null) => void; onApply: (id: string | null) => Promise<void>; applyLabel?: string; note?: string; previewLabel?: string; disabled?: boolean }) {
+export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar", note, resetOnApply }: { resetOnApply?: boolean; selected: string | null; onSelect?: (id: string | null) => void; onApply: (id: string | null) => Promise<void>; applyLabel?: string; note?: string; previewLabel?: string; disabled?: boolean }) {
   const { account } = useApp();
   const [skins, setSkins] = useState<Skin[]>([]);
   const [pick, setPick] = useState<string | null>(selected);
   const [capes, setCapes] = useState<Cape[]>([]);
+  const [capeError, setCapeError] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(0);
   const [capeMenu, setCapeMenu] = useState(false);
   const [paused, setPaused] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const urls = useSkinUrls(skins);
-  const accSkin = useAccountSkin();
+  const accSkin = useAccountSkin(refresh);
+  const capeRef = useDismiss<HTMLDivElement>(capeMenu, useCallback(() => setCapeMenu(false), []));
   const reload = () => skinsApi.list().then((l) => setSkins(l.skins));
   useEffect(() => {
     reload();
   }, []);
   useEffect(() => setPick(selected), [selected]);
   useEffect(() => {
-    if (account) skinsApi.capes().then(setCapes).catch(() => setCapes([]));
-  }, [account]);
+    if (!account) return;
+    setCapeError(null);
+    skinsApi
+      .capes()
+      .then(setCapes)
+      .catch((e) => {
+        setCapes([]);
+        setCapeError(String(e));
+      });
+  }, [account, refresh]);
 
   const current = skins.find((s) => s.id === pick) ?? null;
   const activeCape = capes.find((c) => c.active) ?? null;
@@ -233,6 +245,9 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
     setStatus(null);
     try {
       await onApply(pick);
+      await reload();
+      setRefresh((r) => r + 1);
+      if (resetOnApply) setPick(null);
       setStatus("Pronto! Já está na sua conta.");
     } catch (e) {
       setStatus(String(e));
@@ -254,7 +269,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
         <div className="relative flex flex-1 justify-center" style={{ backgroundImage: "linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)", backgroundSize: "28px 28px", backgroundPosition: "center" }}>
           <Skin3D url={current ? urls[current.id] ?? null : accSkin?.url ?? null} variant={current?.variant ?? accSkin?.variant ?? "classic"} cape={activeCape?.url} paused={paused} resetKey={resetKey} width={360} height={470} />
         </div>
-        <div className="relative flex items-center gap-1.5 px-4 py-3">
+        <div ref={capeRef} className="relative flex items-center gap-1.5 px-4 py-3">
           {account && (
             <button onClick={() => setCapeMenu((m) => !m)} className={`${tool} gap-2 px-3 text-xs font-medium`}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2h10l1 12-3-1-3 1-3-1-3 1z" /></svg>
@@ -277,7 +292,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
             </div>
           )}
           {capeMenu && (
-            <div className="absolute bottom-full left-4 z-20 mb-1 w-56 bg-[#1c1c1c] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" onMouseLeave={() => setCapeMenu(false)}>
+            <div className="absolute bottom-full left-4 z-20 mb-1 w-56 bg-[#1c1c1c] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
               <button onClick={() => chooseCape(null)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-active ${!activeCape ? "text-ink" : "text-[#9a9a9a]"}`}>
                 <span className="flex h-6 w-[15px] items-center justify-center bg-raised text-[11px]">—</span>
                 Sem capa
@@ -289,7 +304,9 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
                   {c.active && <span className="ml-auto text-[11px] text-muted">em uso</span>}
                 </button>
               ))}
-              {!capes.length && <p className="m-0 px-3 py-2 text-xs text-muted">Sua conta não tem capas.</p>}
+              {!capes.length && (
+                <p className="m-0 px-3 py-2 text-xs text-muted">{capeError ? `Não deu para carregar suas capas: ${capeError.replace(/^Error: /, "")}` : "Sua conta não tem capas."}</p>
+              )}
             </div>
           )}
         </div>
@@ -316,7 +333,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
             </span>
             <span className="text-[13px] font-medium">Enviar skin</span>
           </button>
-          <SkinTile name={account ? `${account.name} (conta)` : "Sua skin"} url={accSkin?.url ?? null} variant={accSkin?.variant ?? "classic"} on={pick === null} onClick={() => choose(null)} />
+          <SkinTile name="Skin atual" badge="EM USO" url={accSkin?.url ?? null} variant={accSkin?.variant ?? "classic"} on={pick === null} onClick={() => choose(null)} />
           {skins.map((s) => (
             <SkinTile
               key={s.id}
@@ -339,18 +356,23 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
   );
 }
 
-function SkinTile({ name, url, variant, on, onClick, onRemove }: { name: string; url: string | null; variant: SkinVariant; on: boolean; onClick: () => void; onRemove?: () => void }) {
+function SkinTile({ name, url, variant, on, onClick, onRemove, badge }: { name: string; url: string | null; variant: SkinVariant; on: boolean; onClick: () => void; onRemove?: () => void; badge?: string }) {
   return (
     <div className="group relative">
       <button onClick={onClick} className={`flex h-[190px] w-full flex-col ${on ? "bg-active outline-1 -outline-offset-1 outline-[#5a5a5a]" : "bg-[#161616] hover:bg-[#1c1c1c]"}`}>
-        <span className="flex flex-1 items-center justify-center">
+        <span className="relative flex flex-1 items-center justify-center">
+          {badge && <span className="absolute top-2 left-2 bg-ink px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-[#111]">{badge}</span>}
           <SkinPreview url={url} variant={variant} scale={4} />
         </span>
-        <span className={`w-full truncate bg-black/20 px-3 py-2.5 text-left text-[13px] ${on ? "text-ink" : "text-[#bdbdbd]"}`}>{name}</span>
+        <span className={`w-full truncate bg-black/20 py-2.5 pr-9 pl-3 text-left text-[13px] ${on ? "text-ink" : "text-[#bdbdbd]"}`}>{name}</span>
       </button>
       {onRemove && (
-        <button onClick={onRemove} title="Remover skin" className="absolute top-1.5 right-1.5 hidden h-6 w-6 items-center justify-center bg-[#1c1c1c] text-muted group-hover:flex hover:text-[#e5484d]">
-          <svg width="10" height="10" viewBox="0 0 14 14"><path d="M2 2 L12 12 M12 2 L2 12" stroke="currentColor" strokeWidth="1.8" /></svg>
+        <button
+          onClick={onRemove}
+          title="Excluir do catálogo"
+          className="absolute right-1 bottom-1 flex h-8 w-8 items-center justify-center text-muted hover:bg-[#2a1515] hover:text-[#e5484d]"
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M5 1h6v2h4v2H1V3h4zM2 6h12l-1 9H3zm4 2v5h1V8zm3 0v5h1V8z" /></svg>
         </button>
       )}
     </div>

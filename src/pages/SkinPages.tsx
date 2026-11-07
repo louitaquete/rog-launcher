@@ -5,7 +5,7 @@ import { useApp } from "../lib/store";
 import { SkinPicker } from "../components/Skins";
 import { PageHeader, Toggle } from "../components/ui";
 
-const note = "\"Sua skin\" é a da sua conta no minecraft.net. Ao clicar em Jogar com outra skin escolhida, o launcher troca a skin da conta e guarda uma cópia da sua para poder voltar.";
+const note = "A skin global é a skin da sua conta. Ao aplicar outra, a anterior fica guardada aqui no catálogo.";
 
 /** Skin global: usada em todas as instâncias sem skin própria. */
 export function SkinGlobalPage() {
@@ -20,10 +20,11 @@ export function SkinGlobalPage() {
       <SkinPicker
         selected={global}
         applyLabel="Aplicar"
+        resetOnApply
         onApply={async (id) => {
-          await skinsApi.setGlobal(id);
-          setGlobal(id);
-          await skinsApi.applyNow(id);
+          if (id === null) return; // já é a skin atual
+          await skinsApi.setAccountSkin(id);
+          setGlobal(null);
         }}
       />
       <p className="m-0 max-w-[760px] text-xs leading-relaxed text-muted">Instâncias com a opção "Skin própria" ligada na aba Skins sobrepõem a skin global. {note}</p>

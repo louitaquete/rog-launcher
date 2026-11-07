@@ -172,12 +172,15 @@ pub async fn apply_update(client: &reqwest::Client, url: &str) -> Result<(), Str
     // O cmd espera o setup terminar (o launcher já fechou) e abre o launcher de novo.
     let script = format!("timeout /t 2 /nobreak >nul & \"{}\" /S & start \"\" \"{}\"", setup.display(), exe.display());
     let mut cmd = std::process::Command::new("cmd");
-    cmd.args(["/C", &script]);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
+        // raw_arg: o Rust escaparia as aspas com \" (que o cmd não entende) e o caminho virava "\\…".
+        cmd.arg("/C").raw_arg(&script);
         cmd.creation_flags(0x0800_0000); // sem janela
     }
+    #[cfg(not(windows))]
+    cmd.args(["/C", &script]);
     cmd.spawn().map_err(|e| format!("não deu para rodar o instalador ({e})"))?;
     Ok(())
 }

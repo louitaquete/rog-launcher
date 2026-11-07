@@ -480,6 +480,12 @@ async fn apply_skin_now(store: State<'_, Store>, id: Option<String>) -> Res<()> 
     skins::apply(&install::download::client(), store.root(), &token(&store).await?, id.as_deref()).await
 }
 
+/// Skin global: troca a skin da conta e guarda a anterior na biblioteca.
+#[tauri::command]
+async fn set_account_skin(store: State<'_, Store>, id: String) -> Res<()> {
+    skins::set_account_skin(&install::download::client(), store.root(), &token(&store).await?, &id).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -541,6 +547,7 @@ pub fn run() {
             account_capes,
             set_cape,
             apply_skin_now,
+            set_account_skin,
             instance_cover,
             set_instance_cover,
             import_file,

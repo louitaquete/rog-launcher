@@ -1,7 +1,8 @@
+import { useDismiss } from "../lib/useDismiss";
 import { NavLink } from "react-router-dom";
 import type { IconName } from "./icons";
 import { Icon } from "./ui";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AnonymousHead, PlayerHead } from "./Avatar";
 import { accountApi } from "../lib/api";
 import { useApp } from "../lib/store";
@@ -49,8 +50,9 @@ export function Sidebar() {
 function AccountButton() {
   const { account, setAccount, setLoginOpen } = useApp();
   const [menu, setMenu] = useState(false);
+  const menuRef = useDismiss<HTMLDivElement>(menu, useCallback(() => setMenu(false), []));
   return (
-    <div className="relative" onMouseLeave={() => setMenu(false)}>
+    <div ref={menuRef} className="relative">
       <button
         aria-label="Conta"
         onClick={() => (account ? setMenu((m) => !m) : setLoginOpen(true))}

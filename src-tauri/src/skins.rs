@@ -238,3 +238,58 @@ pub async fn set_cape(client: &reqwest::Client, token: &str, id: Option<&str>) -
     }
     Ok(())
 }
+
+
+/// Guarda uma skin na biblioteca, se ainda não houver uma igual. Devolve o id.
+fn keep_in_library(root: &Path, png_bytes: &[u8], name: &str, variant: Variant) -> Result<String, String> {
+    let mut lib = load(root);
+    for sk in &lib.skins {
+        if std::fs::read(png_path(root, &sk.id)?).ok().as_deref() == Some(png_bytes) {
+            return Ok(sk.id.clone());
+        }
+    }
+    let id = format!("{:x}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis());
+    std::fs::create_dir_all(dir(root)).map_err(|e| e.to_string())?;
+    std::fs::write(png_path(root, &id)?, png_bytes).map_err(|e| e.to_string())?;
+    lib.skins.push(Skin { id: id.clone(), name: name.chars().take(32).collect(), variant });
+    save(root, &lib)?;
+    Ok(id)
+}
+
+/// Skin global = a skin da conta. Troca a skin da conta pela escolhida e guarda a antiga na biblioteca.
+pub async fn set_account_skin(client: &reqwest::Client, root: &Path, token: &str, id: &str) -> Result<(), String> {
+    let lib = load(root);
+    let skin = lib.skins.iter().find(|s| s.id == id).cloned().ok_or("skin não encontrada")?;
+    // A skin "verdadeira" da conta: a atual, ou a cópia se o launcher tinha trocado por uma instância.
+    let old = if using_own(&lib) { fetch_account(client, root, token).await.ok() } else { account_backup(root) };
+    if let Some(old) = old {
+        let date = {
+            let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+            let days = secs / 86_400;
+            // Data aproximada só para o nome (dd/mm/aaaa calculado a partir de 1970-01-01).
+            let (y, m, d) = civil_from_days(days as i64);
+            format!("{d:02}/{m:02}/{y}")
+        };
+        keep_in_library(root, &old.png, &format!("Skin anterior ({date})"), old.variant)?;
+    }
+    upload(client, token, png(root, &skin.id)?, skin.variant).await?;
+    let mut lib = load(root);
+    lib.global = None;
+    lib.last_applied = None;
+    save(root, &lib)?;
+    let _ = std::fs::remove_file(dir(root).join("account.png"));
+    Ok(())
+}
+
+/// Dias desde 1970-01-01 → (ano, mês, dia). Algoritmo de Howard Hinnant.
+fn civil_from_days(z: i64) -> (i64, u32, u32) {
+    let z = z + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z.rem_euclid(146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
+    (yoe + era * 400 + i64::from(m <= 2), m, d)
+}

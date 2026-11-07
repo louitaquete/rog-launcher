@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useDismiss } from "../lib/useDismiss";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, extrasApi, type Instance } from "../lib/api";
 import { useApp } from "../lib/store";
@@ -15,6 +16,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
   const { play, refresh } = useApp();
   const open = () => navigate(instancePath(instance));
   const [menu, setMenu] = useState(false);
+  const menuRef = useDismiss<HTMLDivElement>(menu, useCallback(() => setMenu(false), []));
   const [confirm, setConfirm] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const isPvp = instance.kind === "pvp";
@@ -56,7 +58,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
             </svg>
             Jogar
           </button>
-          <div className="relative" onClick={(e) => e.stopPropagation()} onMouseLeave={() => setMenu(false)}>
+          <div ref={menuRef} className="relative" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setMenu((m) => !m)}
             aria-label="Opções"

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useDismiss } from "../lib/useDismiss";
+import { useCallback, useState } from "react";
 import { api, type Instance, type LoaderType } from "../lib/api";
 import { useApp } from "../lib/store";
 
@@ -57,9 +58,10 @@ function VersionArt({ base, big, dim }: { base: string; big?: boolean; dim?: boo
 
 function SubPicker({ subs, value, disabled, onPick }: { subs: string[]; value: string; disabled?: boolean; onPick: (v: string) => void }) {
   const [open, setOpen] = useState(false);
+  const ref = useDismiss<HTMLDivElement>(open, useCallback(() => setOpen(false), []));
   const many = subs.length > 1;
   return (
-    <div className="relative w-32" onMouseLeave={() => setOpen(false)}>
+    <div ref={ref} className="relative w-32">
       <button
         disabled={disabled || !many}
         onClick={() => setOpen((o) => !o)}

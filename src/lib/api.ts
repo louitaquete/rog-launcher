@@ -421,6 +421,8 @@ export const skinsApi = {
   },
   setCape: (id: string | null): Promise<void> => (isTauri ? invoke("set_cape", { id }) : Promise.resolve()),
   /** Troca a skin da conta agora. `null` = volta para a skin da conta. */
+  /** Skin global: vira a skin da conta; a anterior vai para a biblioteca. */
+  setAccountSkin: (id: string): Promise<void> => (isTauri ? invoke("set_account_skin", { id }) : new Promise((r) => setTimeout(r, 600))),
   applyNow: (id: string | null): Promise<void> => (isTauri ? invoke("apply_skin_now", { id }) : new Promise((r) => setTimeout(r, 600))),
   /** Skin da conta Microsoft (minecraft.net) como URL de objeto. */
   account: async (): Promise<{ url: string; variant: SkinVariant } | null> => {
