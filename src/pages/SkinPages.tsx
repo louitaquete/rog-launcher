@@ -14,7 +14,7 @@ export function SkinGlobalPage() {
   }, []);
   if (global === undefined) return null;
   return (
-    <div className="flex h-full flex-col gap-7 overflow-y-auto px-10 py-8">
+    <div className="flex h-full flex-col gap-7 overflow-hidden px-10 py-8">
       <PageHeader title="Skin global" subtitle="Usada em todas as instâncias, exceto nas que têm skin própria ativada" />
       <SkinPicker
         selected={global}
@@ -43,8 +43,8 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
   }
 
   return (
-    <div className="flex flex-col gap-7 px-10 py-8">
-      <div className="flex items-center gap-4 border border-line bg-[#141414] px-5 py-4">
+    <div className="flex h-full flex-col gap-6 overflow-hidden px-10 py-6">
+      <div className="flex shrink-0 items-center gap-4 border border-line bg-[#141414] px-5 py-4">
         <div className="flex-1">
           <p className="m-0 text-sm font-semibold">Skin própria nesta instância</p>
           <p className="m-0 mt-0.5 text-xs text-muted">

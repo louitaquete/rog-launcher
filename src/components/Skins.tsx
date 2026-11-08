@@ -67,12 +67,26 @@ export function SkinPreview({ url, variant, scale = 8 }: { url: string | null; v
 }
 
 /** Prévia 3D (skinview3d): andando, gira com o mouse, capa opcional. */
-export function Skin3D({ url, variant, cape, paused, width = 340, height = 560, resetKey = 0 }: { url: string | null; variant: SkinVariant; cape?: string | null; paused?: boolean; width?: number; height?: number; resetKey?: number }) {
+export function Skin3D({ url, variant, cape, paused, width, height, resetKey = 0 }: { url: string | null; variant: SkinVariant; cape?: string | null; paused?: boolean; width?: number; height?: number; resetKey?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const viewer = useRef<SkinViewer | null>(null);
+  // Sem width/height: ocupa o espaço do pai e acompanha o tamanho da janela.
+  const auto = width === undefined || height === undefined;
+  useEffect(() => {
+    if (!auto || !box.current) return;
+    const el = box.current;
+    const ro = new ResizeObserver(() => {
+      const w = Math.max(80, Math.floor(el.clientWidth));
+      const h = Math.max(120, Math.floor(el.clientHeight));
+      viewer.current?.setSize(w, h);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [auto]);
   useEffect(() => {
     if (!ref.current) return;
-    const v = new SkinViewer({ canvas: ref.current, width, height });
+    const v = new SkinViewer({ canvas: ref.current, width: width ?? box.current?.clientWidth ?? 300, height: height ?? box.current?.clientHeight ?? 400 });
     v.background = null;
     v.fov = 40;
     v.zoom = 0.68;
@@ -108,7 +122,8 @@ export function Skin3D({ url, variant, cape, paused, width = 340, height = 560, 
     v.controls.reset?.();
     v.zoom = 0.68;
   }, [resetKey]);
-  return <canvas ref={ref} className="cursor-grab active:cursor-grabbing" />;
+  const canvas = <canvas ref={ref} className="cursor-grab active:cursor-grabbing" />;
+  return auto ? <div ref={box} className="absolute inset-0 overflow-hidden">{canvas}</div> : canvas;
 }
 
 /** Slim ou clássica pelo próprio PNG: na slim, a coluna de pixels 54 do braço direito (y 20–31) é transparente. */
@@ -298,16 +313,16 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
   const tool = "flex h-9 items-center justify-center bg-[#1c1c1c] text-[#bdbdbd] hover:bg-active hover:text-ink";
 
   return (
-    <div className="flex gap-8">
+    <div className="flex min-h-0 flex-1 gap-8">
       {/* Prévia */}
-      <div className="flex w-[380px] shrink-0 flex-col bg-[#121212]">
+      <div className="flex w-[clamp(260px,30vw,400px)] shrink-0 flex-col bg-[#121212]">
         <div className="flex justify-center gap-4 pt-4 text-[11px] text-muted">
           <span>Arraste para girar</span>
           <span>·</span>
           <span>Role para zoom</span>
         </div>
-        <div className="relative flex flex-1 justify-center" style={{ backgroundImage: "linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)", backgroundSize: "28px 28px", backgroundPosition: "center" }}>
-          <Skin3D url={current ? urls[current.id] ?? null : accSkin?.url ?? null} variant={current?.variant ?? accVariant} cape={activeCape?.url} paused={paused} resetKey={resetKey} width={360} height={470} />
+        <div className="relative min-h-0 flex-1" style={{ backgroundImage: "linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)", backgroundSize: "28px 28px", backgroundPosition: "center" }}>
+          <Skin3D url={current ? urls[current.id] ?? null : accSkin?.url ?? null} variant={current?.variant ?? accVariant} cape={activeCape?.url} paused={paused} resetKey={resetKey} />
         </div>
         <div ref={capeRef} className="relative flex items-center gap-1.5 px-4 py-3">
           {account && (
@@ -364,7 +379,7 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
       </div>
 
       {/* Skins */}
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
         <h3 className="m-0 text-lg font-semibold">Minhas skins</h3>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-3">
           <button onClick={upload} className="flex h-[190px] flex-col items-center justify-center gap-3 bg-[#161616] text-[#bdbdbd] hover:bg-[#1c1c1c] hover:text-ink">
