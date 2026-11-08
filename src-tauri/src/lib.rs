@@ -491,6 +491,26 @@ async fn release_notes() -> Res<Vec<extras::Note>> {
     extras::release_notes(&install::download::client()).await
 }
 
+/// Lê uma imagem escolhida pelo usuário (prévia antes de criar a instância).
+#[tauri::command]
+fn read_image(path: String) -> Res<Vec<u8>> {
+    let p = std::path::Path::new(&path);
+    let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
+    if !["png", "jpg", "jpeg", "webp", "gif"].contains(&ext.as_str()) {
+        return Err("use uma imagem .png, .jpg ou .webp".into());
+    }
+    if std::fs::metadata(p).map_err(err)?.len() > 15 * 1024 * 1024 {
+        return Err("imagem grande demais (máx. 15 MB)".into());
+    }
+    std::fs::read(p).map_err(err)
+}
+
+/// Define a capa a partir de um caminho já escolhido (usado logo depois de criar a instância).
+#[tauri::command]
+fn set_instance_cover_path(store: State<Store>, id: String, path: String) -> Res<Instance> {
+    set_instance_cover(store, id, Some(path))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -554,6 +574,8 @@ pub fn run() {
             apply_skin_now,
             set_account_skin,
             release_notes,
+            read_image,
+            set_instance_cover_path,
             instance_cover,
             set_instance_cover,
             import_file,

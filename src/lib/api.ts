@@ -488,6 +488,15 @@ export const coverApi = {
     return bytes ? URL.createObjectURL(new Blob([new Uint8Array(bytes)])) : null;
   },
   /** Pede uma imagem (ou remove com `remove = true`). */
+  /** Escolhe uma imagem e devolve o caminho e uma prévia. */
+  pick: async (): Promise<{ path: string; url: string } | null> => {
+    if (!isTauri) return null;
+    const path = await pickFile("Imagem", ["png", "jpg", "jpeg", "webp"]);
+    if (!path) return null;
+    const bytes = await invoke<number[]>("read_image", { path });
+    return { path, url: URL.createObjectURL(new Blob([new Uint8Array(bytes)])) };
+  },
+  setPath: (id: string, path: string): Promise<Instance> => invoke("set_instance_cover_path", { id, path }),
   set: async (id: string, remove = false): Promise<Instance | null> => {
     if (!isTauri) return null;
     const path = remove ? null : await pickFile("Imagem", ["png", "jpg", "jpeg", "webp"]);
