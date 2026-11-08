@@ -1,4 +1,5 @@
 import { SkinGlobalPage } from "./pages/SkinPages";
+import { Home } from "./pages/Home";
 import { LoginModal } from "./components/LoginModal";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { TitleBar } from "./components/TitleBar";
@@ -19,7 +20,7 @@ export default function App() {
           <Sidebar />
           <main className="min-w-0 flex-1 bg-bg">
             <Routes>
-              <Route path="/" element={<InstanceList filter="all" />} />
+              <Route path="/" element={<Home />} />
               <Route path="/vanilla" element={<InstanceList filter="vanilla" />} />
               <Route path="/vanilla/:id" element={<Navigate to="jogar" replace />} />
               <Route path="/vanilla/:id/:tab" element={<InstancePage area="vanilla" />} />
