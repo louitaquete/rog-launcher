@@ -49,14 +49,14 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-export function Modal({ title, subtitle, onClose, children, footer, width = 640 }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; footer?: ReactNode; width?: number }) {
+export function Modal({ title, subtitle, onClose, children, footer, width = 640, height }: { title: string; subtitle?: string; onClose: () => void; children: ReactNode; footer?: ReactNode; width?: number; height?: number }) {
   // Portal: renderiza no <body>. Dentro de um card com transform (hover), o "fixed" ficava preso ao card e piscava.
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
-        style={{ width }}
+        style={{ width, height, maxWidth: "94vw" }}
         className="flex max-h-[90vh] flex-col border border-edge bg-[#141414] text-left shadow-[0_24px_60px_rgba(0,0,0,0.6)]"
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -69,7 +69,7 @@ export function Modal({ title, subtitle, onClose, children, footer, width = 640 
             <svg width="14" height="14" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.3" /></svg>
           </button>
         </div>
-        <div className="overflow-y-auto px-7 py-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-6 [scrollbar-gutter:stable]">{children}</div>
         {footer && <div className="flex items-center gap-2 border-t border-line px-7 py-4">{footer}</div>}
       </div>
     </div>,

@@ -101,7 +101,8 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
     <Modal
       title="Nova instância"
       onClose={onClose}
-      width={tab === "modpacks" ? 720 : 580}
+      width={680}
+      height={620}
       footer={
         tab === "modpacks" ? undefined : (
           <>
