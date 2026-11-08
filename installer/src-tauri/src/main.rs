@@ -20,7 +20,7 @@ fn client() -> reqwest::Client {
     if let Some(p) = system_proxy().and_then(|p| reqwest::Proxy::all(p).ok()) {
         b = b.proxy(p);
     }
-    b.user_agent("RogLauncherInstaller/0.1.7").connect_timeout(Duration::from_secs(15)).read_timeout(Duration::from_secs(30)).build().unwrap()
+    b.user_agent("RogLauncherInstaller/0.1.8").connect_timeout(Duration::from_secs(15)).read_timeout(Duration::from_secs(30)).build().unwrap()
 }
 
 #[cfg(windows)]
