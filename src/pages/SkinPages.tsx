@@ -51,6 +51,15 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
             {inst.skin.enabled ? "Ao clicar em Jogar, sua skin é trocada para a escolhida abaixo" : "Desligado: esta instância usa a sua skin global"}
           </p>
         </div>
+        {inst.skin.enabled && (
+          <button
+            onClick={() => save({ ...inst, skin: { enabled: false, skinId: null } })}
+            className="flex h-9 items-center gap-2 bg-[#1c1c1c] px-3.5 text-[13px] text-[#d0d0d0] hover:bg-active hover:text-ink"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" /><path d="M2 2v3.5h3.5" /></svg>
+            Usar a skin global
+          </button>
+        )}
         <Toggle on={inst.skin.enabled} onChange={(v) => save({ ...inst, skin: { ...inst.skin, enabled: v } })} />
       </div>
 
