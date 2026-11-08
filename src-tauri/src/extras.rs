@@ -184,3 +184,48 @@ pub async fn apply_update(client: &reqwest::Client, url: &str) -> Result<(), Str
     cmd.spawn().map_err(|e| format!("não deu para rodar o instalador ({e})"))?;
     Ok(())
 }
+
+
+#[derive(Debug, Serialize)]
+pub struct Note {
+    pub version: String,
+    pub name: String,
+    pub date: String,
+    pub body: String,
+    pub url: String,
+    /// Mais nova que a versão instalada.
+    pub newer: bool,
+}
+
+/// Notas das últimas releases (patch notes), da mais nova para a mais antiga.
+pub async fn release_notes(client: &reqwest::Client) -> Result<Vec<Note>, String> {
+    let r = client
+        .get("https://api.github.com/repos/louitaquete/rog-launcher/releases?per_page=10")
+        .header("User-Agent", "rog-launcher")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !r.status().is_success() {
+        return Err(format!("GitHub: HTTP {}", r.status()));
+    }
+    let list: serde_json::Value = r.json().await.map_err(|e| e.to_string())?;
+    let me = parse(env!("CARGO_PKG_VERSION"));
+    Ok(list
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|r| r["draft"] != true)
+        .map(|r| {
+            let tag = r["tag_name"].as_str().unwrap_or_default();
+            Note {
+                version: tag.trim_start_matches('v').into(),
+                name: r["name"].as_str().unwrap_or(tag).into(),
+                date: r["published_at"].as_str().unwrap_or_default().into(),
+                body: r["body"].as_str().unwrap_or_default().into(),
+                url: r["html_url"].as_str().unwrap_or_default().into(),
+                newer: parse(tag) > me,
+            }
+        })
+        .collect())
+}

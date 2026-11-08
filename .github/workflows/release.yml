@@ -57,8 +57,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: v
         run: echo "version=$(tr -d '[:space:]' < RELEASE)" >> "$GITHUB_OUTPUT"
+      # Patch notes: títulos dos commits desde a release anterior (sem os de versão).
+      - name: Notas da versão
+        run: |
+          prev=$(git tag --sort=-creatordate | head -n1)
+          range=${prev:+$prev..HEAD}
+          git log $range --no-merges --pretty='- %s' | grep -viE '^- (Bump version|Versão [0-9]|Release v)' > notes.md || true
+          [ -s notes.md ] || echo "- Melhorias e correções" > notes.md
+          {
+            echo
+            echo "---"
+            echo "**Como instalar:** baixe o \`Rog-Launcher-Installer.exe\`, abra e clique em Instalar. Se o Windows avisar que o arquivo é desconhecido, clique em *Mais informações → Executar assim mesmo*."
+            echo
+            echo "Não é um produto oficial do Minecraft. Não é aprovado nem associado à Mojang ou à Microsoft."
+          } >> notes.md
+          cat notes.md
       - uses: actions/download-artifact@v4
         with:
           path: out
@@ -69,11 +86,5 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Rog Launcher v${{ steps.v.outputs.version }}
           prerelease: ${{ contains(steps.v.outputs.version, '-') }}
-          body: |
-            Primeira versão pública do Rog Launcher (pré-alpha). Espere bugs!
-
-            **Como instalar:** baixe o `Rog-Launcher-Installer.exe`, abra e clique em Instalar.
-            O Windows pode avisar que o arquivo é desconhecido (ainda não temos assinatura digital): clique em *Mais informações → Executar assim mesmo*.
-
-            Não é um produto oficial do Minecraft. Não é aprovado nem associado à Mojang ou à Microsoft.
+          body_path: notes.md
           files: out/*.exe

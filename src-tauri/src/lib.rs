@@ -486,6 +486,11 @@ async fn set_account_skin(store: State<'_, Store>, id: String) -> Res<()> {
     skins::set_account_skin(&install::download::client(), store.root(), &token(&store).await?, &id).await
 }
 
+#[tauri::command]
+async fn release_notes() -> Res<Vec<extras::Note>> {
+    extras::release_notes(&install::download::client()).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -548,6 +553,7 @@ pub fn run() {
             set_cape,
             apply_skin_now,
             set_account_skin,
+            release_notes,
             instance_cover,
             set_instance_cover,
             import_file,

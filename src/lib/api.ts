@@ -383,6 +383,13 @@ export const extrasApi = {
   checkUpdate: (): Promise<{ version: string; url: string; download: string | null } | null> =>
     isTauri ? invoke("check_update") : Promise.resolve(null),
   applyUpdate: (url: string): Promise<void> => invoke("apply_update", { url }),
+  releaseNotes: (): Promise<{ version: string; name: string; date: string; body: string; url: string; newer: boolean }[]> =>
+    isTauri
+      ? invoke("release_notes")
+      : Promise.resolve([
+          { version: "0.1.5-prealpha", name: "Rog Launcher v0.1.5-prealpha", date: "2026-11-07T15:00:00Z", body: "- Janelas não piscam mais ao excluir\n- Skin slim detectada sozinha", url: "#", newer: true },
+          { version: "0.1.4-prealpha", name: "Rog Launcher v0.1.4-prealpha", date: "2026-11-07T14:00:00Z", body: "- Menus fecham ao clicar fora\n- Caixa de novidades", url: "#", newer: false },
+        ]),
   deleteInstance: (id: string): Promise<void> => api.deleteInstance(id),
 };
 
