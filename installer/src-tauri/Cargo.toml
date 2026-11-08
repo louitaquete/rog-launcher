@@ -1,6 +1,6 @@
 [package]
 name = "rog-installer"
-version = "0.1.6"
+version = "0.1.7"
 description = "Instalador do Rog Launcher"
 authors = ["louitaquete"]
 edition = "2024"
