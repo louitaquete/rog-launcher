@@ -88,7 +88,7 @@ export function GameBar({ id, consoleOpen, onToggleConsole }: { id: string; cons
 }
 
 /** Painel de console na parte de baixo da página da instância. */
-export function ConsolePanel({ id, onClose }: { id: string; onClose: () => void }) {
+export function ConsolePanel({ id, onClose, full }: { id: string; onClose?: () => void; full?: boolean }) {
   const { logs } = useApp();
   const lines = logs[id] ?? [];
   const [filter, setFilter] = useState<"all" | "warn" | "error">("all");
@@ -101,9 +101,9 @@ export function ConsolePanel({ id, onClose }: { id: string; onClose: () => void 
   const shown = lines.filter((l) => filter === "all" || level(l) === filter || (filter === "warn" && level(l) === "error"));
 
   return (
-    <div className="flex h-[38%] min-h-[220px] shrink-0 flex-col border-t border-[#2a2a2a] bg-[#0a0a0a]">
+    <div className={full ? "flex h-full min-h-0 flex-col bg-[#0a0a0a]" : "flex h-[38%] min-h-[220px] shrink-0 flex-col border-t border-[#2a2a2a] bg-[#0a0a0a]"}>
       <div className="flex shrink-0 items-center gap-2 bg-bar py-1.5 pr-3 pl-5">
-        <span className="flex-1 text-[11px] font-medium tracking-[0.08em] text-[#9a9a9a]">CONSOLE</span>
+        <span className="flex-1 text-[11px] font-medium tracking-[0.08em] text-[#9a9a9a]">{full ? "LOG DO JOGO" : "CONSOLE"}</span>
         {(["all", "warn", "error"] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 text-[11px] font-medium ${filter === f ? "bg-[#2a2a2a] text-ink" : "bg-[#171717] text-muted"}`}>
             {f === "all" ? "Tudo" : f === "warn" ? "Avisos" : "Erros"}
@@ -111,9 +111,9 @@ export function ConsolePanel({ id, onClose }: { id: string; onClose: () => void 
         ))}
         <Button variant="ghost" className="py-1" onClick={() => navigator.clipboard.writeText(lines.join("\n"))}>Copiar</Button>
         <Button variant="ghost" className="py-1" onClick={() => api.openFolder(id)}>Abrir pasta</Button>
-        <button aria-label="Fechar console" onClick={onClose} className="p-1 text-muted hover:text-ink">
+        {onClose && <button aria-label="Fechar console" onClick={onClose} className="p-1 text-muted hover:text-ink">
           <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.3" /></svg>
-        </button>
+        </button>}
       </div>
       <div ref={box} className="flex-1 overflow-auto px-5 py-3 font-mono text-xs leading-5 select-text">
         {shown.map((l, i) => {
@@ -124,7 +124,7 @@ export function ConsolePanel({ id, onClose }: { id: string; onClose: () => void 
             </div>
           );
         })}
-        {shown.length === 0 && <div className="text-faint">Sem mensagens ainda.</div>}
+        {shown.length === 0 && <div className="text-faint">{full ? "O log aparece aqui quando você abrir o jogo." : "Sem mensagens ainda."}</div>}
       </div>
     </div>
   );

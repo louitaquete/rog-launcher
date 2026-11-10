@@ -40,7 +40,7 @@ function unit(stage: Stage) {
   return stage === "assets" ? "arquivos" : stage === "libraries" ? "bibliotecas" : "arquivos";
 }
 
-export function PlayTab({ instance }: { instance: Instance }) {
+export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: boolean }) {
   const { installs, play, cancelInstall, games, logs, launchErrors, setLoginOpen } = useApp();
   const p: Progress | undefined = installs[instance.id];
   const game = games[instance.id];
@@ -51,10 +51,15 @@ export function PlayTab({ instance }: { instance: Instance }) {
   const ratio = p && p.filesTotal ? p.filesDone / p.filesTotal : 0;
   const at = p ? ORDER.indexOf(p.stage) : -1;
 
+  if (!hero) {
+    const steps = p && !["done", "cancelled", "error"].includes(p.stage);
+    if (!(launchError && !inGame) && !crashed && p?.stage !== "error" && !steps) return null;
+  }
+
   return (
-    <div className="flex flex-col gap-6 px-12 py-8">
+    <div className={hero ? "flex flex-col gap-6 px-12 py-8" : "flex flex-col gap-4 px-10 pt-5"}>
       {/* Destaque */}
-      <div className="relative flex min-h-[230px] items-end overflow-hidden border border-line bg-gradient-to-r from-[#212121] to-[#121212] px-10 py-9">
+      {hero && <div className="relative flex min-h-[230px] items-end overflow-hidden border border-line bg-gradient-to-r from-[#212121] to-[#121212] px-10 py-9">
         <InstanceCover instance={instance} mode="hero" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#121212] via-[#121212]/80 to-transparent" />
         <div className="relative flex flex-col gap-3">
@@ -109,7 +114,7 @@ export function PlayTab({ instance }: { instance: Instance }) {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {launchError && !inGame && (
         <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-4 py-3">

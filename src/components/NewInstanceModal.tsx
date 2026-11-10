@@ -8,16 +8,16 @@ import { useDismiss } from "../lib/useDismiss";
 import { ModpackSearch } from "./ModpackSearch";
 import { Button, Modal, Select } from "./ui";
 
-const LOADERS: LoaderType[] = ["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"];
+const LOADERS: LoaderType[] = ["Fabric", "Forge", "NeoForge", "Quilt", "Vanilla"];
 
-export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose: () => void; defaultKind?: "vanilla" | "mods" }) {
+export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind?: "vanilla" | "mods" }) {
   const { refresh } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [versions, setVersions] = useState<VersionInfo[]>([]);
   const [snapshots, setSnapshots] = useState(false);
   const [version, setVersion] = useState("");
-  const [loader, setLoader] = useState<LoaderType>(defaultKind === "mods" ? "Fabric" : "Vanilla");
+  const [loader, setLoader] = useState<LoaderType>("Fabric");
   const [loaderVersions, setLoaderVersions] = useState<LoaderVersion[] | null>(null);
   const [loaderVersion, setLoaderVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +77,7 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
       if (image) await coverApi.setPath(inst.id, image.path).catch(() => {});
       await refresh();
       onClose();
-      navigate(`/${inst.kind}/${inst.id}/jogar`);
+      navigate(`/${inst.kind}/${inst.id}/conteudo`);
     } catch (e) {
       setError(String(e));
       setBusy(false);
@@ -132,7 +132,7 @@ export function NewInstanceModal({ onClose, defaultKind = "vanilla" }: { onClose
           onDone={async (inst) => {
             await refresh();
             onClose();
-            navigate(`/${inst.kind}/${inst.id}/jogar`);
+            navigate(`/${inst.kind}/${inst.id}/conteudo`);
           }}
         />
       ) : (

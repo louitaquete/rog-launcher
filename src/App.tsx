@@ -22,10 +22,10 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/vanilla" element={<InstanceList filter="vanilla" />} />
-              <Route path="/vanilla/:id" element={<Navigate to="jogar" replace />} />
+              <Route path="/vanilla/:id" element={<Navigate to="conteudo" replace />} />
               <Route path="/vanilla/:id/:tab" element={<InstancePage area="vanilla" />} />
               <Route path="/mods" element={<InstanceList filter="mods" />} />
-              <Route path="/mods/:id" element={<Navigate to="jogar" replace />} />
+              <Route path="/mods/:id" element={<Navigate to="conteudo" replace />} />
               <Route path="/mods/:id/:tab" element={<InstancePage area="mods" />} />
               <Route path="/pvp" element={<Navigate to="/pvp/jogar" replace />} />
               <Route path="/pvp/:tab" element={<InstancePage area="pvp" />} />

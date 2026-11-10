@@ -26,7 +26,7 @@ export function ImportModal({ onClose }: { onClose: () => void }) {
       if (!inst) return setBusy(null);
       await refresh();
       onClose();
-      navigate(`/${inst.kind}/${inst.id}/jogar`);
+      navigate(`/${inst.kind}/${inst.id}/conteudo`);
     } catch (e) {
       setError(String(e));
       setBusy(null);

@@ -492,6 +492,62 @@ async fn release_notes() -> Res<Vec<extras::Note>> {
 }
 
 /// Lê uma imagem escolhida pelo usuário (prévia antes de criar a instância).
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Shot {
+    path: String,
+    name: String,
+    modified: u64,
+}
+
+/// Prints da instância (pasta screenshots), do mais novo pro mais velho.
+#[tauri::command]
+fn screenshots(store: State<Store>, id: String) -> Res<Vec<Shot>> {
+    let dir = store.game_dir(&id).map_err(err)?.join("screenshots");
+    let mut out = Vec::new();
+    if let Ok(rd) = std::fs::read_dir(&dir) {
+        for e in rd.flatten() {
+            let p = e.path();
+            if p.extension().and_then(|x| x.to_str()).map(|x| x.eq_ignore_ascii_case("png")) != Some(true) {
+                continue;
+            }
+            let modified = e
+                .metadata()
+                .and_then(|m| m.modified())
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
+            out.push(Shot { name: e.file_name().to_string_lossy().into_owned(), path: p.display().to_string(), modified });
+        }
+    }
+    out.sort_by(|a, b| b.modified.cmp(&a.modified));
+    Ok(out)
+}
+
+/// Abre um print no visualizador do Windows ou mostra na pasta.
+#[tauri::command]
+fn screenshot_open(app: tauri::AppHandle, store: State<Store>, id: String, name: String, reveal: bool) -> Res<()> {
+    let p = shot_path(&store, &id, &name)?;
+    if reveal {
+        app.opener().reveal_item_in_dir(&p).map_err(err)
+    } else {
+        app.opener().open_path(p.display().to_string(), None::<&str>).map_err(err)
+    }
+}
+
+#[tauri::command]
+fn screenshot_delete(store: State<Store>, id: String, name: String) -> Res<()> {
+    std::fs::remove_file(shot_path(&store, &id, &name)?).map_err(err)
+}
+
+fn shot_path(store: &Store, id: &str, name: &str) -> Res<std::path::PathBuf> {
+    if name.contains(['/', '\\']) || name.contains("..") {
+        return Err("nome inválido".into());
+    }
+    Ok(store.game_dir(id).map_err(err)?.join("screenshots").join(name))
+}
+
 #[tauri::command]
 fn read_image(path: String) -> Res<Vec<u8>> {
     let p = std::path::Path::new(&path);
@@ -527,6 +583,9 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            screenshots,
+            screenshot_open,
+            screenshot_delete,
             app_version,
             data_dir,
             get_settings,

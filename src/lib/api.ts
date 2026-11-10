@@ -546,3 +546,11 @@ export const cfModpackApi = {
       : Promise.reject("CurseForge só funciona no app"),
   install: (projectId: number, cover?: string | null): Promise<Instance> => invoke("cf_import_modpack", { projectId, cover: cover ?? null }),
 };
+
+export interface Shot { path: string; name: string; modified: number }
+export const shotsApi = {
+  list: (id: string): Promise<Shot[]> => (isTauri ? invoke("screenshots", { id }) : Promise.resolve([])),
+  url: async (path: string): Promise<string> => URL.createObjectURL(new Blob([new Uint8Array(await invoke<number[]>("read_image", { path }))], { type: "image/png" })),
+  open: (id: string, name: string, reveal = false): Promise<void> => invoke("screenshot_open", { id, name, reveal }),
+  remove: (id: string, name: string): Promise<void> => invoke("screenshot_delete", { id, name }),
+};

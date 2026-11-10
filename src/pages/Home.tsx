@@ -25,7 +25,7 @@ const Play = ({ size = 10 }: { size?: number }) => (
 
 function ago(ts: number | null) {
   if (!ts) return "Ainda não jogada";
-  const m = Math.floor((Date.now() - ts) / 60000);
+  const m = Math.floor((Date.now() / 1000 - ts) / 60);
   if (m < 1) return "Jogada agora";
   if (m < 60) return `Jogada há ${m} min`;
   const h = Math.floor(m / 60);
@@ -34,7 +34,7 @@ function ago(ts: number | null) {
   return `Jogada há ${d} ${d === 1 ? "dia" : "dias"}`;
 }
 const hours = (s: number) => (s < 3600 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1).replace(".", ",")} h`);
-const route = (i: Instance) => (i.kind === "pvp" ? "/pvp/jogar" : `/${i.kind}/${i.id}/jogar`);
+const route = (i: Instance) => (i.kind === "pvp" ? "/pvp/jogar" : `/${i.kind}/${i.id}/conteudo`);
 const label = (i: Instance) => (i.loader.type === "Vanilla" ? i.mcVersion : `${i.loader.type} ${i.mcVersion}`);
 
 export function Home() {
