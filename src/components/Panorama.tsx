@@ -45,8 +45,7 @@ function buildWorld(scene: THREE.Scene, yaw: number) {
   const r = rng(11);
   const mat = (hex: number) => new THREE.MeshLambertMaterial({ color: hex });
   const stone = [mat(0x5f5f66), mat(0x55555c), mat(0x6a6a71), mat(0x4c4c53)];
-  const ground = [mat(0x26262c), mat(0x222228), mat(0x2a2a30)];
-
+  
   // Bloco de pedra atrás das costas (2 de largura, 2 de altura)
   const set = new THREE.Group();
   for (const [x, y] of [[-1, 0], [0, 0], [0, 1], [1, 0]] as const) {
@@ -54,15 +53,19 @@ function buildWorld(scene: THREE.Scene, yaw: number) {
     m.position.set(x * 16 + 6, -16 + y * 16, -16);
     set.add(m);
   }
-  // Chão: uma faixa de blocos sob o player, que some na névoa
-  for (let x = -4; x <= 3; x++)
-    for (let z = -2; z <= 3; z++) {
-      const m = new THREE.Mesh(box, ground[Math.floor(r() * ground.length)]);
-      m.position.set(x * 16, -32, z * 16 - 6);
-      set.add(m);
-    }
   set.rotation.y = yaw;
   world.add(set);
+
+  // Chão infinito: só a grade de linhas brancas, sumindo na névoa
+  const ext = 900, step = 20, v: number[] = [];
+  // Linhas em pedaços curtos: linhas longas que passam por trás da câmera somem em algumas GPUs.
+  for (let i = -ext; i <= ext; i += step)
+    for (let j = -ext; j < ext; j += step) v.push(j, 0, i, j + step, 0, i, i, 0, j, i, 0, j + step);
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute("position", new THREE.Float32BufferAttribute(v, 3));
+  const grid = new THREE.LineSegments(gg, new THREE.LineBasicMaterial({ color: 0x5a5a60 }));
+  grid.position.y = -24;
+  world.add(grid);
 
   // Partículas do void
   const N = 160;
@@ -78,7 +81,7 @@ function buildWorld(scene: THREE.Scene, yaw: number) {
   world.add(pts);
 
   scene.add(world);
-  scene.fog = new THREE.Fog(0x0e0e10, 90, 260);
+  scene.fog = new THREE.Fog(0x0b0b0d, 60, 420);
   return { world, pts };
 }
 
@@ -120,7 +123,7 @@ export function Panorama({ skin, variant, paused }: { skin: string | null; varia
     v.controls.enabled = false;
     v.controls.enableZoom = false;
     // Câmera perto, com o player à direita do quadro
-    v.camera.position.set(-14, 6, 112);
+    v.camera.position.set(-14, 22, 112);
     v.controls.target.set(-30, -6, 0);
     v.controls.update();
     v.camera.lookAt(-30, -6, 0);
