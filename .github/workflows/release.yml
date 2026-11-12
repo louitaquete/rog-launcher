@@ -3,7 +3,7 @@ name: Release
 # Para publicar: escreva a versão (ex.: 0.1.0-prealpha) no arquivo RELEASE e faça push no main.
 on:
   push:
-    branches: [main]
+    branches: [main, exp/v3]
     paths: ["RELEASE"]
 
 permissions:
