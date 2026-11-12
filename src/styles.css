@@ -198,3 +198,4 @@ nav a > span::before { display: none !important; }
 .rog-cascade > :nth-child(7) { animation-delay: 180ms; }
 .rog-cascade > :nth-child(8) { animation-delay: 210ms; }
 .rog-cascade > :nth-child(n + 9) { animation-delay: 240ms; }
+@keyframes rog-fade { from { opacity: 0; } }

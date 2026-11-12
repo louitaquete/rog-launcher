@@ -100,7 +100,7 @@ function Page({ inst, area, modsVersion }: { inst: Instance; area: "vanilla" | "
               </span>
             </div>
           </div>
-          <PlayButton id={inst.id} />
+          {!(pvp && current.slug === "jogar") && <PlayButton id={inst.id} />}
           <div ref={menuRef} className="relative">
             <button aria-label="Mais opções" onClick={() => setMenu((m) => !m)} className={`flex h-12 w-12 items-center justify-center text-ink hover:bg-[#34343a] ${menu ? "bg-[#34343a]" : "bg-active"}`}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="3" r="1.4" /><circle cx="8" cy="8" r="1.4" /><circle cx="8" cy="13" r="1.4" /></svg>
