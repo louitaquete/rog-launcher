@@ -306,7 +306,7 @@ function Details({ item, onClose }: { item: Item; onClose: () => void }) {
           <button
             onClick={install}
             disabled={busy || versions === null || (item.src === "modrinth" && !vid)}
-            className={`relative flex h-12 items-center justify-center overflow-hidden text-base font-semibold ${busy ? "bg-active text-ink" : "bg-ink text-[#111] hover:bg-white disabled:opacity-40"}`}
+            className={`relative flex h-12 items-center justify-center overflow-hidden text-base font-semibold ${busy ? "bg-active text-ink" : "bg-ink text-[#111112] hover:bg-white disabled:opacity-40"}`}
           >
             {busy && <span className="absolute inset-y-0 left-0 w-1/3 animate-[rog-slide_1.2s_ease-in-out_infinite] bg-white/15" />}
             <span className="relative">{busy ? "Instalando…" : "Instalar"}</span>

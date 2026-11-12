@@ -16,9 +16,9 @@ const SECTIONS = [
 
 export function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex w-[900px] max-w-full flex-col gap-2.5">
-      <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">{title}</p>
-      <div className="flex flex-col border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line">{children}</div>
+    <section className="flex w-[760px] max-w-full flex-col gap-2.5">
+      <p className="m-0 text-xs font-medium tracking-[0.08em] text-muted uppercase">{title}</p>
+      <div className="flex flex-col overflow-hidden rounded-[10px] bg-surface [&>*+*]:border-t [&>*+*]:border-line">{children}</div>
     </section>
   );
 }
@@ -48,7 +48,7 @@ export function Memory({ value, onChange, min = 1024, max = 16384 }: { value: nu
         className="rog-range w-[200px]"
         style={{ background: `linear-gradient(to right, #d9d9d9 ${((value - min) / (max - min)) * 100}%, #2a2a2a 0)` }}
       />
-      <span className="w-14 text-right text-[13px] font-medium">{(value / 1024).toFixed(value % 1024 ? 1 : 0)} GB</span>
+      <span className="w-14 text-right text-sm font-medium">{(value / 1024).toFixed(value % 1024 ? 1 : 0)} GB</span>
     </div>
   );
 }
@@ -79,30 +79,25 @@ export function SettingsPage() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-60 shrink-0 flex-col border-r border-line bg-[#111] py-7">
-        <p className="m-0 px-6 pb-3 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">Configurações</p>
+      <aside className="flex w-[232px] shrink-0 flex-col gap-0.5 border-r border-line px-4 py-7">
+        <p className="m-0 px-3 pb-3 text-xs font-medium tracking-[0.08em] text-muted uppercase">Configurações</p>
         {SECTIONS.map((s) => (
           <NavLink
             key={s.slug}
             to={`/config/${s.slug}`}
             className={({ isActive }) =>
-              `relative flex h-10 items-center px-6 text-[13px] font-medium no-underline ${isActive ? "bg-raised text-ink" : "text-[#8a8a8a] hover:text-soft"}`
+              `relative flex h-10 items-center rounded-[6px] px-3 text-sm no-underline ${isActive ? "bg-active font-medium text-ink" : "text-soft hover:bg-raised hover:text-ink"}`
             }
           >
-            {({ isActive }) => (
-              <>
-                {isActive && <span className="absolute top-0 left-0 h-10 w-0.5 bg-[#e6e6e6]" />}
-                {s.label}
-              </>
-            )}
+            {s.label}
           </NavLink>
         ))}
       </aside>
 
       <div className="flex flex-1 flex-col gap-8 overflow-y-auto px-12 py-9">
         <div>
-          <h1 className="m-0 text-2xl font-semibold">{current.label}</h1>
-          <p className="m-0 mt-1 text-[13px] text-muted">{current.sub}</p>
+          <h1 className="m-0 text-[28px] leading-9 font-semibold">{current.label}</h1>
+          <p className="m-0 mt-1 text-sm text-muted">{current.sub}</p>
         </div>
 
         {section === "geral" && (
@@ -227,14 +222,14 @@ export function SettingsPage() {
 
         {section === "sobre" && (
           <>
-            <div className="flex w-[900px] max-w-full items-center gap-5 border border-line bg-surface p-6">
+            <div className="flex w-[760px] max-w-full items-center gap-5 rounded-[10px] bg-surface p-6">
               <Icon name="logo" size={60} />
               <div className="flex-1">
                 <p className="m-0 font-brand text-[22px] font-bold">Rog Launcher</p>
-                <p className="m-0 mt-1 text-[13px] text-muted">Versão {version}</p>
+                <p className="m-0 mt-1 text-sm text-muted">Versão {version}</p>
               </div>
             </div>
-            <p className="m-0 text-[11px] text-faint">
+            <p className="m-0 text-xs text-faint">
               Rog Launcher não é afiliado à Mojang ou à Microsoft. Minecraft é marca da Mojang Synergies AB.
             </p>
           </>

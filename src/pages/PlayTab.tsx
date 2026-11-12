@@ -18,7 +18,7 @@ const fmtSpeed = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1).
 
 function Bar({ value }: { value: number }) {
   return (
-    <div className="h-1.5 w-full bg-[#2a2a2a]">
+    <div className="h-1.5 w-full bg-active">
       <div className="h-full bg-ink transition-[width] duration-150" style={{ width: `${Math.min(100, value * 100)}%` }} />
     </div>
   );
@@ -67,13 +67,13 @@ export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: 
             {instance.kind === "pvp" ? <Chip>Competitivo</Chip> : (<><Chip>{instance.loader.type}{instance.loader.version && hasLoader(instance) ? ` ${instance.loader.version}` : ""}</Chip><Chip>{instance.mcVersion}</Chip></>)}
           </div>
           <h1 className="m-0 text-4xl font-semibold">{instance.name}</h1>
-          <p className="m-0 text-[13px] text-muted">
+          <p className="m-0 text-sm text-muted">
             {instance.lastPlayedAt ? `Última vez jogado: ${new Date(instance.lastPlayedAt * 1000).toLocaleString("pt-BR")}` : "Ainda não jogado"}
           </p>
 
           {running ? (
             <div className="mt-1 flex flex-col gap-2.5">
-              <div className="flex w-[560px] flex-col gap-2.5 border border-edge bg-[#1a1a1a] px-[18px] py-3.5">
+              <div className="flex w-[560px] flex-col gap-2.5 border border-edge bg-raised px-[18px] py-3.5">
                 <div className="flex items-center text-sm font-semibold">
                   <span className="flex-1">
                     {p!.stage === "loader" ? `Instalando ${instance.loader.type}` : `Baixando ${STEPS.find((s) => s.stage === p!.stage)?.label(instance).toLowerCase()}`}
@@ -96,7 +96,7 @@ export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: 
             </div>
           ) : inGame ? (
             <div className="mt-1 flex items-center gap-3">
-              <div className="flex h-14 w-60 items-center justify-center gap-3 border border-edge bg-raised text-[17px] font-semibold text-[#9a9a9a]">
+              <div className="flex h-14 w-60 items-center justify-center gap-3 border border-edge bg-raised text-[17px] font-semibold text-muted">
                 <span className="h-2 w-2 animate-pulse bg-[#9a9a9a]" />
                 Em jogo
               </div>
@@ -105,34 +105,34 @@ export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: 
             <div className="mt-1 flex items-center gap-2">
               <button
                 onClick={() => play(instance.id)}
-                className="flex h-14 w-60 items-center justify-center gap-3 bg-ink text-[17px] font-semibold text-[#111] transition-colors hover:bg-white"
+                className="flex h-14 w-60 items-center justify-center gap-3 bg-ink text-[17px] font-semibold text-[#111112] transition-colors hover:bg-white"
               >
                 <svg width="14" height="14" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="currentColor" /></svg>
                 Jogar
               </button>
-              {p?.stage === "cancelled" && <span className="text-[13px] text-muted">Download cancelado. O que já baixou fica salvo.</span>}
+              {p?.stage === "cancelled" && <span className="text-sm text-muted">Download cancelado. O que já baixou fica salvo.</span>}
             </div>
           )}
         </div>
       </div>}
 
       {launchError && !inGame && (
-        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-4 py-3">
+        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-raised px-4 py-3">
           <div className="flex-1">
             {launchError.includes("NEEDS_ACCOUNT") ? (
               <>
-                <p className="m-0 text-[13px] font-semibold">Conecte sua conta Microsoft para jogar</p>
-                <p className="m-0 mt-0.5 text-xs text-[#9a9a9a]">Os arquivos já estão baixados. É só entrar e jogar.</p>
+                <p className="m-0 text-sm font-semibold">Conecte sua conta Microsoft para jogar</p>
+                <p className="m-0 mt-0.5 text-xs text-muted">Os arquivos já estão baixados. É só entrar e jogar.</p>
               </>
             ) : (
               <>
-                <p className="m-0 text-[13px] font-semibold">Não deu para abrir o jogo</p>
-                <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{launchError.replace(/^NO_GAME: /, "")}</p>
+                <p className="m-0 text-sm font-semibold">Não deu para abrir o jogo</p>
+                <p className="m-0 mt-0.5 text-xs break-all text-muted">{launchError.replace(/^NO_GAME: /, "")}</p>
               </>
             )}
           </div>
           {launchError.includes("NEEDS_ACCOUNT") && (
-            <button onClick={() => setLoginOpen(true)} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white">Entrar</button>
+            <button onClick={() => setLoginOpen(true)} className="bg-ink px-4 py-2 text-sm font-semibold text-[#111112] hover:bg-white">Entrar</button>
           )}
         </div>
       )}
@@ -150,17 +150,17 @@ export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: 
             <Button variant="outline" onClick={() => navigator.clipboard.writeText((logs[instance.id] ?? []).join("\n"))}>Copiar log</Button>
             <Button variant="outline" onClick={() => api.openFolder(instance.id)}>Abrir pasta da instância</Button>
           </div>
-          <pre className="m-0 max-h-64 overflow-auto border-t border-line bg-[#0a0a0a] px-5 py-3 font-mono text-xs leading-5 text-[#9a9a9a] select-text">
+          <pre className="m-0 max-h-64 overflow-auto border-t border-line bg-[#0a0a0a] px-5 py-3 font-mono text-xs leading-5 text-muted select-text">
             {(logs[instance.id] ?? []).slice(-40).join("\n") || "Sem log."}
           </pre>
         </div>
       )}
 
       {p?.stage === "error" && (
-        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-4 py-3">
+        <div className="flex items-center gap-4 border-l-2 border-[#4a4a4a] bg-raised px-4 py-3">
           <div className="flex-1">
-            <p className="m-0 text-[13px] font-semibold">Não deu para baixar os arquivos</p>
-            <p className="m-0 mt-0.5 text-xs break-all text-[#9a9a9a]">{p.error}</p>
+            <p className="m-0 text-sm font-semibold">Não deu para baixar os arquivos</p>
+            <p className="m-0 mt-0.5 text-xs break-all text-muted">{p.error}</p>
           </div>
           <Button variant="outline" onClick={() => play(instance.id)}>Tentar de novo</Button>
         </div>
@@ -168,19 +168,19 @@ export function PlayTab({ instance, hero = true }: { instance: Instance; hero?: 
 
       {/* Etapas */}
       {p && !["done", "cancelled", "error"].includes(p.stage) && (
-        <div className="flex flex-col border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line">
+        <div className="flex flex-col rounded-[10px] bg-surface [&>*+*]:border-t [&>*+*]:border-line">
           {STEPS.filter((s) => s.stage !== "loader" || hasLoader(instance)).map((s, i) => {
             const state = i < at || p.stage === "done" ? "done" : i === at && running ? "now" : "wait";
             return (
               <div key={s.stage} className={`flex items-center gap-3.5 px-[18px] py-3 ${state === "now" ? "bg-[#1b1b1b]" : ""}`}>
                 <StepIcon state={state} />
-                <span className={`flex-1 text-[13px] font-medium ${state === "wait" ? "text-[#8a8a8a]" : ""}`}>{s.label(instance)}</span>
+                <span className={`flex-1 text-sm font-medium ${state === "wait" ? "text-muted" : ""}`}>{s.label(instance)}</span>
                 {state === "now" && (
                   <div className="w-[220px]">
                     <Bar value={ratio} />
                   </div>
                 )}
-                <span className={`w-28 text-right text-xs ${state === "wait" ? "text-faint" : "text-[#9a9a9a]"}`}>
+                <span className={`w-28 text-right text-xs ${state === "wait" ? "text-faint" : "text-muted"}`}>
                   {state === "done" ? "Pronto" : state === "now" ? `${p.filesDone} / ${p.filesTotal}` : "Na fila"}
                 </span>
               </div>

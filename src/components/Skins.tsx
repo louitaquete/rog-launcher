@@ -310,13 +310,13 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
     setBusy(false);
   }
 
-  const tool = "flex h-9 items-center justify-center bg-[#1c1c1c] text-[#bdbdbd] hover:bg-active hover:text-ink";
+  const tool = "flex h-9 items-center justify-center bg-raised text-soft hover:bg-active hover:text-ink";
 
   return (
     <div className="flex min-h-0 flex-1 gap-8">
       {/* Prévia */}
-      <div className="flex w-[clamp(260px,30vw,400px)] shrink-0 flex-col bg-[#121212]">
-        <div className="flex justify-center gap-4 pt-4 text-[11px] text-muted">
+      <div className="flex w-[clamp(260px,30vw,400px)] shrink-0 flex-col bg-bg">
+        <div className="flex justify-center gap-4 pt-4 text-xs text-muted">
           <span>Arraste para girar</span>
           <span>·</span>
           <span>Role para zoom</span>
@@ -340,23 +340,23 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
           {(current || accSkin) && (
             <div className="ml-auto flex">
               {(["classic", "slim"] as const).map((v) => (
-                <button key={v} onClick={() => setVariant(v)} className={`h-9 px-3 text-xs ${(current?.variant ?? accVariant) === v ? "bg-active text-ink" : "bg-[#1c1c1c] text-muted hover:text-soft"}`}>
+                <button key={v} onClick={() => setVariant(v)} className={`h-9 px-3 text-xs ${(current?.variant ?? accVariant) === v ? "bg-active text-ink" : "bg-raised text-muted hover:text-soft"}`}>
                   {v === "classic" ? "Clássico" : "Slim"}
                 </button>
               ))}
             </div>
           )}
           {capeMenu && (
-            <div className="absolute bottom-full left-4 z-20 mb-1 w-56 bg-[#1c1c1c] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
-              <button onClick={() => chooseCape(null)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-active ${!activeCape ? "text-ink" : "text-[#9a9a9a]"}`}>
-                <span className="flex h-6 w-[15px] items-center justify-center bg-raised text-[11px]">—</span>
+            <div className="absolute bottom-full left-4 z-20 mb-1 w-56 bg-raised py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+              <button onClick={() => chooseCape(null)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-active ${!activeCape ? "text-ink" : "text-muted"}`}>
+                <span className="flex h-6 w-[15px] items-center justify-center bg-raised text-xs">—</span>
                 Sem capa
               </button>
               {capes.map((c) => (
-                <button key={c.id} onClick={() => chooseCape(c)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-active ${c.active ? "text-ink" : "text-[#9a9a9a]"}`}>
+                <button key={c.id} onClick={() => chooseCape(c)} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-active ${c.active ? "text-ink" : "text-muted"}`}>
                   <CapeThumb url={c.url} />
                   {c.alias}
-                  {c.active && <span className="ml-auto text-[11px] text-muted">em uso</span>}
+                  {c.active && <span className="ml-auto text-xs text-muted">em uso</span>}
                 </button>
               ))}
               {!capes.length && (
@@ -365,14 +365,14 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 bg-[#161616] px-4 py-3.5">
+        <div className="flex items-center gap-3 bg-surface px-4 py-3.5">
           <p className="m-0 min-w-0 flex-1 truncate text-[15px] font-semibold">{name}</p>
           {dirty && (
             <button onClick={() => choose(selected)} title="Desfazer" className={`${tool} w-9`}>
               <svg width="14" height="14" viewBox="0 0 16 16">{icon.reset}</svg>
             </button>
           )}
-          <button disabled={busy} onClick={apply} className="h-9 bg-ink px-5 text-[13px] font-semibold text-[#111] hover:bg-white disabled:opacity-50">
+          <button disabled={busy} onClick={apply} className="h-9 bg-ink px-5 text-sm font-semibold text-[#111112] hover:bg-white disabled:opacity-50">
             {busy ? "Aplicando…" : applyLabel}
           </button>
         </div>
@@ -382,11 +382,11 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
         <h3 className="m-0 text-lg font-semibold">Minhas skins</h3>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-3">
-          <button onClick={upload} className="flex h-[190px] flex-col items-center justify-center gap-3 bg-[#161616] text-[#bdbdbd] hover:bg-[#1c1c1c] hover:text-ink">
-            <span className="flex h-11 w-11 items-center justify-center bg-[#2a2a2a]">
+          <button onClick={upload} className="flex h-[190px] flex-col items-center justify-center gap-3 bg-surface text-soft hover:bg-raised hover:text-ink">
+            <span className="flex h-11 w-11 items-center justify-center bg-active">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7 15h2V7l3 3 1.4-1.4L8 3.2 2.6 8.6 4 10l3-3z" /><path d="M2 1h12v2H2z" /></svg>
             </span>
-            <span className="text-[13px] font-medium">Enviar skin</span>
+            <span className="text-sm font-medium">Enviar skin</span>
           </button>
           <SkinTile name="Skin atual" badge="EM USO" url={accSkin?.url ?? null} variant={accVariant} on={pick === null} onClick={() => choose(null)} />
           {skins.map((s) => (
@@ -414,18 +414,18 @@ export function SkinPicker({ selected, onSelect, onApply, applyLabel = "Aplicar"
 function SkinTile({ name, url, variant, on, onClick, onRemove, badge }: { name: string; url: string | null; variant: SkinVariant; on: boolean; onClick: () => void; onRemove?: () => void; badge?: string }) {
   return (
     <div className="group relative">
-      <button onClick={onClick} className={`flex h-[190px] w-full flex-col ${on ? "bg-active outline-1 -outline-offset-1 outline-[#5a5a5a]" : "bg-[#161616] hover:bg-[#1c1c1c]"}`}>
+      <button onClick={onClick} className={`flex h-[190px] w-full flex-col ${on ? "bg-active outline-1 -outline-offset-1 outline-[#5a5a5a]" : "bg-surface hover:bg-raised"}`}>
         <span className="relative flex flex-1 items-center justify-center">
-          {badge && <span className="absolute top-2 left-2 bg-ink px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-[#111]">{badge}</span>}
+          {badge && <span className="absolute top-2 left-2 bg-ink px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-[#111112]">{badge}</span>}
           <SkinPreview url={url} variant={variant} scale={4} />
         </span>
-        <span className={`w-full truncate bg-black/20 py-2.5 pr-9 pl-3 text-left text-[13px] ${on ? "text-ink" : "text-[#bdbdbd]"}`}>{name}</span>
+        <span className={`w-full truncate bg-black/20 py-2.5 pr-9 pl-3 text-left text-sm ${on ? "text-ink" : "text-soft"}`}>{name}</span>
       </button>
       {onRemove && (
         <button
           onClick={onRemove}
           title="Excluir do catálogo"
-          className="absolute right-1 bottom-1 flex h-8 w-8 items-center justify-center text-muted hover:bg-[#2a1515] hover:text-[#e5484d]"
+          className="absolute right-1 bottom-1 flex h-8 w-8 items-center justify-center text-muted hover:bg-[#2a1515] hover:text-danger"
         >
           <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M5 1h6v2h4v2H1V3h4zM2 6h12l-1 9H3zm4 2v5h1V8zm3 0v5h1V8z" /></svg>
         </button>

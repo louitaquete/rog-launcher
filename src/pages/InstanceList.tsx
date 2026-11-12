@@ -11,7 +11,7 @@ import { Button, Icon, PageHeader, SectionLabel } from "../components/ui";
 const copy = {
   all: { title: "Início", subtitle: "Todas as suas instâncias em um só lugar" },
   vanilla: { title: "Vanilla", subtitle: "Instâncias sem mods, do jeito que a Mojang fez" },
-  mods: { title: "Mods", subtitle: "Instâncias com loader e mods" },
+  mods: { title: "Mods", subtitle: "" },
 };
 
 // Vanilla e PVP primeiro, depois as de mods.
@@ -65,7 +65,7 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
     <div className="flex h-full flex-col gap-7 overflow-y-auto px-10 py-8">
       <PageHeader
         title={title}
-        subtitle={subtitle}
+        subtitle={subtitle || `${list.length} ${list.length === 1 ? "instância" : "instâncias"}`}
         actions={
           <>
             <Button variant="dark" onClick={doImport}>Importar</Button>
@@ -74,12 +74,24 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
         }
       />
       {filter === "mods" ? <ModsTabs /> : <SectionLabel>Instâncias</SectionLabel>}
-      <div className="flex flex-wrap gap-5">
-        {list.map((i) => (
-          <InstanceCard key={i.id} instance={i} />
-        ))}
-        <NewInstanceCard onClick={() => setCreating(true)} />
-      </div>
+      {list.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-2.5 pb-10 text-center">
+          <span className="mb-2.5 flex h-28 w-28 items-center justify-center rounded-[14px] bg-surface"><Icon name={filter === "mods" ? "mods" : "vanilla"} size={52} className="opacity-45" /></span>
+          <h2 className="m-0 text-xl font-semibold text-ink">{filter === "mods" ? "Sua forja está vazia" : "Nenhuma instância ainda"}</h2>
+          <p className="m-0 text-sm text-muted">{filter === "mods" ? "Crie uma instância do zero ou instale um modpack pronto." : "Crie a primeira e ela aparece aqui."}</p>
+          <div className="flex gap-2.5 pt-3.5">
+            <Button variant="primary" onClick={() => setCreating(true)}>+ Nova instância</Button>
+            {filter === "mods" && <Button variant="dark" onClick={() => navigate("/mods/explorar")}>Explorar modpacks</Button>}
+          </div>
+        </div>
+      ) : (
+        <div className="rog-cascade grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-4">
+          {list.map((i) => (
+            <InstanceCard key={i.id} instance={i} />
+          ))}
+          <NewInstanceCard onClick={() => setCreating(true)} />
+        </div>
+      )}
       {modal}
       {importModal}
     </div>

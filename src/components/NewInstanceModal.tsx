@@ -207,12 +207,12 @@ export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onCl
               </button>
               {imgMenu && (
                 <div className="absolute top-11 left-2 z-10 w-48 overflow-hidden rounded-[10px] bg-active py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
-                  <button onClick={pickImage} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
+                  <button onClick={pickImage} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="1.5" y="2.5" width="13" height="11" /><path d="M2 12l4-4 3 3 2-2 3 3" /></svg>
                     Escolher imagem
                   </button>
                   {image && (
-                    <button onClick={() => { setImage(null); setImgMenu(false); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
+                    <button onClick={() => { setImage(null); setImgMenu(false); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 1h6v2h4v2H1V3h4zM2 6h12l-1 9H3z" /></svg>
                       Remover imagem
                     </button>
@@ -230,7 +230,7 @@ export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onCl
                   placeholder={placeholder}
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && create()}
-                  className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-[#6f6f6f]"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint"
                 />
                 {name && (
                   <button onClick={() => setName("")} aria-label="Limpar" className="text-muted hover:text-ink">
@@ -238,7 +238,7 @@ export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onCl
                   </button>
                 )}
               </div>
-              <p className="m-0 mt-2 text-[11px] text-[#7a7a7a]">Imagem opcional. Sem ela, usamos o banner da versão ou o símbolo do loader.</p>
+              <p className="m-0 mt-2 text-xs text-muted">Imagem opcional. Sem ela, usamos o banner da versão ou o símbolo do loader.</p>
             </div>
           </div>
 
@@ -246,7 +246,7 @@ export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onCl
           <div>
             <div className="mb-2 flex items-center">
               <p className={`${label} mb-0 flex-1`}>Versão do Minecraft</p>
-              <label className="flex items-center gap-2 text-[11px] text-muted">
+              <label className="flex items-center gap-2 text-xs text-muted">
                 <input type="checkbox" checked={snapshots} onChange={(e) => setSnapshots(e.target.checked)} className="accent-[#ededed]" />
                 Mostrar snapshots
               </label>
@@ -276,7 +276,7 @@ export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onCl
               {loaderVersions === null ? (
                 <div className={`${field} text-muted`}>Buscando versões…</div>
               ) : noLoader ? (
-                <div className={`${field} text-[#9a9a9a]`}>O {loader} ainda não tem versão para o Minecraft {version}.</div>
+                <div className={`${field} text-muted`}>O {loader} ainda não tem versão para o Minecraft {version}.</div>
               ) : (
                 <Select
                   value={loaderVersion}

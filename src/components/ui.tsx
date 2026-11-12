@@ -8,10 +8,10 @@ export function Icon({ name, size = 24, className = "" }: { name: IconName; size
 
 type Variant = "primary" | "dark" | "outline" | "ghost";
 const variants: Record<Variant, string> = {
-  primary: "bg-ink text-[#111] hover:bg-white",
-  dark: "bg-active text-[#d0d0d0] hover:bg-[#2a2a2a]",
-  outline: "border border-edge text-[#d0d0d0] hover:bg-raised",
-  ghost: "text-[#d0d0d0] hover:bg-raised",
+  primary: "bg-ink text-[#111112] hover:bg-white",
+  dark: "bg-active text-soft hover:bg-active",
+  outline: "border border-edge text-soft hover:bg-raised",
+  ghost: "text-soft hover:bg-raised",
 };
 
 export function Button({
@@ -65,7 +65,7 @@ export function Modal({ title, subtitle, onClose, children, footer, width = 640,
             <h2 className="m-0 text-xl font-semibold text-ink">{title}</h2>
             {subtitle && <p className="m-0 mt-1 text-xs text-muted">{subtitle}</p>}
           </div>
-          <button aria-label="Fechar" onClick={onClose} className="p-1 text-[#9a9a9a] hover:text-ink">
+          <button aria-label="Fechar" onClick={onClose} className="p-1 text-muted hover:text-ink">
             <svg width="14" height="14" viewBox="0 0 12 12"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.3" /></svg>
           </button>
         </div>
@@ -82,7 +82,7 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
     <label className="flex flex-col gap-2">
       <SectionLabel>{label}</SectionLabel>
       {children}
-      {hint && <span className="text-[11px] text-faint">{hint}</span>}
+      {hint && <span className="text-xs text-faint">{hint}</span>}
     </label>
   );
 }
@@ -127,8 +127,8 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="flex items-center">
       <div className="flex-1">
-        <h1 className="m-0 text-2xl font-semibold text-ink">{title}</h1>
-        {subtitle && <p className="m-0 mt-1 text-[13px] text-muted">{subtitle}</p>}
+        <h1 className="m-0 text-[28px] leading-9 font-semibold text-ink">{title}</h1>
+        {subtitle && <p className="m-0 text-sm text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex gap-2.5">{actions}</div>}
     </div>
@@ -136,5 +136,5 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="m-0 text-[11px] font-medium tracking-[0.08em] text-[#8a8a8a] uppercase">{children}</p>;
+  return <p className="m-0 text-xs font-medium tracking-[0.08em] text-muted uppercase">{children}</p>;
 }

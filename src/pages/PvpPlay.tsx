@@ -65,7 +65,7 @@ function SubPicker({ subs, value, disabled, onPick }: { subs: string[]; value: s
       <button
         disabled={disabled || !many}
         onClick={() => setOpen((o) => !o)}
-        className="flex h-full w-full items-center justify-center gap-2 border-l border-[#bdbdbd] bg-[#d6d6d6] font-brand text-base font-bold text-[#111] hover:bg-[#e2e2e2] disabled:hover:bg-[#d6d6d6]"
+        className="flex h-full w-full items-center justify-center gap-2 border-l border-[#bdbdbd] bg-[#d6d6d6] font-brand text-base font-bold text-[#111112] hover:bg-[#e2e2e2] disabled:hover:bg-[#d6d6d6]"
       >
         {value}
         {many && <svg width="12" height="12" viewBox="0 0 12 12" className={open ? "rotate-180" : ""}><path d="M2 4 L6 8 L10 4" stroke="#111" strokeWidth="1.6" fill="none" /></svg>}
@@ -88,7 +88,7 @@ function SubPicker({ subs, value, disabled, onPick }: { subs: string[]; value: s
   );
 }
 
-const label = "font-brand text-[11px] font-bold tracking-[0.14em]";
+const label = "font-brand text-xs font-bold tracking-[0.14em]";
 
 export function PvpPlay({ instance }: { instance: Instance }) {
   const { play, installs, games, launchErrors, cancelInstall, refresh, setLoginOpen } = useApp();
@@ -117,7 +117,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
     <div className="flex h-full gap-10 px-10 py-8">
       {/* Esquerda: versões */}
       <div className="flex min-w-0 flex-[1.1] flex-col gap-4">
-        <p className={`${label} m-0 text-[#9a9a9a]`}>SELECIONE UMA VERSÃO PARA DEFINIR COMO PADRÃO</p>
+        <p className={`${label} m-0 text-muted`}>SELECIONE UMA VERSÃO PARA DEFINIR COMO PADRÃO</p>
         <div className="grid grid-cols-2 gap-3.5 overflow-y-auto pr-1">
           {BASES.map((b) => {
             const sel = b.base === base;
@@ -131,7 +131,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
                 className={`group relative aspect-[400/190] overflow-hidden border text-left transition-colors ${sel ? "border-[#5a5a5a]" : "border-edge hover:border-[#555]"}`}
               >
                 <VersionArt base={b.base} dim={!sel} />
-                {sel && <span className={`${label} absolute top-3 left-3 bg-ink px-2 py-0.5 text-[9px] text-[#111]`}>PADRÃO</span>}
+                {sel && <span className={`${label} absolute top-3 left-3 bg-ink px-2 py-0.5 text-[9px] text-[#111112]`}>PADRÃO</span>}
               </button>
             );
           })}
@@ -165,7 +165,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
                   title={m.ok ? undefined : "Disponível a partir da 1.16"}
                   disabled={!m.ok || inGame}
                   onClick={() => save(sub, m.id)}
-                  className={`h-11 font-brand text-sm font-bold tracking-[0.06em] transition-colors ${on ? "bg-raised text-ink shadow-[inset_0_-2px_0_#6a6a6a]" : "text-muted hover:bg-[#181818] hover:text-ink"} disabled:cursor-not-allowed disabled:text-[#444] disabled:hover:bg-transparent`}
+                  className={`h-11 font-brand text-sm font-bold tracking-[0.06em] transition-colors ${on ? "bg-raised text-ink shadow-[inset_0_-2px_0_#6a6a6a]" : "text-muted hover:bg-surface hover:text-ink"} disabled:cursor-not-allowed disabled:text-[#444] disabled:hover:bg-transparent`}
                 >
                   {m.id}
                 </button>
@@ -176,12 +176,12 @@ export function PvpPlay({ instance }: { instance: Instance }) {
 
         {/* Jogar + subversão */}
         {downloading ? (
-          <div className="flex flex-col gap-2 border border-edge bg-[#1a1a1a] px-4 py-3">
-            <div className="flex text-[13px] font-semibold">
+          <div className="flex flex-col gap-2 border border-edge bg-raised px-4 py-3">
+            <div className="flex text-sm font-semibold">
               <span className="flex-1">{p!.stage === "loader" ? "Instalando o loader" : "Baixando arquivos do jogo"}</span>
               {p!.filesTotal > 0 && <span>{p!.filesDone.toLocaleString("pt-BR")} / {p!.filesTotal.toLocaleString("pt-BR")}</span>}
             </div>
-            <div className="h-1.5 bg-[#2a2a2a]">
+            <div className="h-1.5 bg-active">
               <div className="h-full bg-ink transition-[width]" style={{ width: `${p!.filesTotal ? (p!.filesDone / p!.filesTotal) * 100 : 0}%` }} />
             </div>
             <button onClick={() => cancelInstall(instance.id)} className="self-start text-xs text-muted hover:text-ink">Cancelar</button>
@@ -191,7 +191,7 @@ export function PvpPlay({ instance }: { instance: Instance }) {
             <button
               disabled={inGame}
               onClick={() => play(instance.id)}
-              className="flex flex-1 items-center justify-center gap-3 bg-ink text-[#111] transition-colors hover:bg-white disabled:bg-raised disabled:text-[#9a9a9a]"
+              className="flex flex-1 items-center justify-center gap-3 bg-ink text-[#111112] transition-colors hover:bg-white disabled:bg-raised disabled:text-muted"
             >
               {inGame ? <span className="h-2 w-2 animate-pulse bg-[#9a9a9a]" /> : <svg width="16" height="16" viewBox="0 0 12 12"><path d="M2 1 L11 6 L2 11 Z" fill="currentColor" /></svg>}
               <span className="font-brand text-xl font-black tracking-[0.08em]">{inGame ? "EM JOGO" : "JOGAR"}</span>
@@ -201,10 +201,10 @@ export function PvpPlay({ instance }: { instance: Instance }) {
         )}
 
         {err && (
-          <div className="flex items-center gap-3 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-3 py-2">
-            <p className="m-0 flex-1 text-xs break-all text-[#9a9a9a]">{String(err).replace(/^(NEEDS_ACCOUNT|NO_GAME): /, "")}</p>
+          <div className="flex items-center gap-3 border-l-2 border-[#4a4a4a] bg-raised px-3 py-2">
+            <p className="m-0 flex-1 text-xs break-all text-muted">{String(err).replace(/^(NEEDS_ACCOUNT|NO_GAME): /, "")}</p>
             {String(err).includes("NEEDS_ACCOUNT") && (
-              <button onClick={() => setLoginOpen(true)} className="bg-ink px-3 py-1.5 text-xs font-semibold text-[#111] hover:bg-white">Entrar</button>
+              <button onClick={() => setLoginOpen(true)} className="bg-ink px-3 py-1.5 text-xs font-semibold text-[#111112] hover:bg-white">Entrar</button>
             )}
           </div>
         )}

@@ -36,14 +36,14 @@ export function GameBar({ id, consoleOpen, onToggleConsole }: { id: string; cons
   return (
     <>
       <div className="flex items-center gap-2">
-        <span className="flex items-center gap-2 bg-raised px-2.5 py-1 text-xs font-medium text-[#d0d0d0]">
+        <span className="flex items-center gap-2 bg-raised px-2.5 py-1 text-xs font-medium text-soft">
           <span className="h-[7px] w-[7px] animate-pulse bg-ink" />
           Em execução · {elapsed}
         </span>
-        <button onClick={onToggleConsole} className={`flex items-center gap-2 border border-edge px-3 py-1.5 text-[13px] font-medium text-[#d0d0d0] hover:bg-raised ${consoleOpen ? "bg-[#2a2a2a]" : ""}`}>
+        <button onClick={onToggleConsole} className={`flex items-center gap-2 border border-edge px-3 py-1.5 text-sm font-medium text-soft hover:bg-raised ${consoleOpen ? "bg-active" : ""}`}>
           {termIcon} Console
         </button>
-        <button onClick={onKill} className="flex items-center gap-2 border border-[#7a2a2a] px-3 py-1.5 text-[13px] font-medium text-[#e5484d] hover:border-[#e5484d] hover:bg-[#e5484d] hover:text-[#111]">
+        <button onClick={onKill} className="flex items-center gap-2 border border-[#7a2a2a] px-3 py-1.5 text-sm font-medium text-danger hover:border-danger hover:bg-danger hover:text-[#111112]">
           {powerIcon} Kill game
         </button>
       </div>
@@ -70,13 +70,13 @@ export function GameBar({ id, consoleOpen, onToggleConsole }: { id: string; cons
           }
         >
           <div className="flex flex-col gap-4">
-            <p className="m-0 text-[13px] leading-relaxed text-[#9a9a9a]">
+            <p className="m-0 text-sm leading-relaxed text-muted">
               O Minecraft será encerrado na hora, como puxar da tomada. Tudo o que não foi salvo — progresso no mundo, inventário, configurações alteradas — pode ser perdido, e o mundo pode até corromper.
             </p>
-            <p className="m-0 border-l-2 border-[#4a4a4a] bg-[#1a1a1a] px-3 py-2.5 text-xs text-[#8a8a8a]">
+            <p className="m-0 border-l-2 border-[#4a4a4a] bg-raised px-3 py-2.5 text-xs text-muted">
               Dica: se o jogo ainda responde, prefira sair pelo menu "Salvar e sair".
             </p>
-            <label className="flex items-center gap-2.5 text-[13px] text-[#d0d0d0]">
+            <label className="flex items-center gap-2.5 text-sm text-soft">
               <input type="checkbox" checked={dontAsk} onChange={(e) => setDontAsk(e.target.checked)} className="accent-[#ededed]" />
               Não mostrar este aviso de novo
             </label>
@@ -103,9 +103,9 @@ export function ConsolePanel({ id, onClose, full }: { id: string; onClose?: () =
   return (
     <div className={full ? "flex h-full min-h-0 flex-col bg-[#0a0a0a]" : "flex h-[38%] min-h-[220px] shrink-0 flex-col border-t border-[#2a2a2a] bg-[#0a0a0a]"}>
       <div className="flex shrink-0 items-center gap-2 bg-bar py-1.5 pr-3 pl-5">
-        <span className="flex-1 text-[11px] font-medium tracking-[0.08em] text-[#9a9a9a]">{full ? "LOG DO JOGO" : "CONSOLE"}</span>
+        <span className="flex-1 text-xs font-medium tracking-[0.08em] text-muted">{full ? "LOG DO JOGO" : "CONSOLE"}</span>
         {(["all", "warn", "error"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 text-[11px] font-medium ${filter === f ? "bg-[#2a2a2a] text-ink" : "bg-[#171717] text-muted"}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`px-2.5 py-1 text-xs font-medium ${filter === f ? "bg-active text-ink" : "bg-surface text-muted"}`}>
             {f === "all" ? "Tudo" : f === "warn" ? "Avisos" : "Erros"}
           </button>
         ))}
@@ -119,7 +119,7 @@ export function ConsolePanel({ id, onClose, full }: { id: string; onClose?: () =
         {shown.map((l, i) => {
           const lv = level(l);
           return (
-            <div key={i} className={`whitespace-pre-wrap ${lv === "error" ? "font-semibold text-ink" : lv === "warn" ? "text-[#d0d0d0]" : "text-[#8a8a8a]"}`}>
+            <div key={i} className={`whitespace-pre-wrap ${lv === "error" ? "font-semibold text-ink" : lv === "warn" ? "text-soft" : "text-muted"}`}>
               {l}
             </div>
           );

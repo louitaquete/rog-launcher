@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { coverApi, type Instance } from "../lib/api";
-import { LoaderIcon } from "./LoaderIcon";
+import type { Instance } from "../lib/api";
+import { useCover } from "../lib/tint";
 
 /** Banners das versões (os mesmos do PVP). */
 const ART: Record<string, string> = Object.fromEntries(
@@ -22,41 +21,24 @@ export function versionArt(mc: string): string | null {
   return ART[pick.b];
 }
 
-const hasLoader = (i: Instance) => !["Vanilla", "OptiFine"].includes(i.loader.type);
-
 /**
  * Capa da instância, nesta ordem:
  * 1. imagem escolhida (ou do modpack, salva ao instalar)
- * 2. com loader: o símbolo do loader, monocromático
- * 3. Vanilla/PVP: o banner da versão
+ * 2. Vanilla/PVP: o banner da versão
+ * 3. com loader e sem imagem: capa gerada (tom do nome + inicial)
  */
-export function InstanceCover({ instance, mode }: { instance: Instance; mode: "card" | "hero" }) {
-  const [cover, setCover] = useState<string | null>(null);
-  useEffect(() => {
-    if (instance.cover) coverApi.url(instance.id).then(setCover);
-    else setCover(null);
-  }, [instance.id, instance.cover]);
-
+export function InstanceCover({ instance, mode }: { instance: Instance; mode: "card" | "hero" | "mini" }) {
+  const { url, tint } = useCover(instance);
   const hero = mode === "hero";
-  if (cover)
-    return <img src={cover} alt="" className={`absolute inset-0 h-full w-full object-cover ${hero ? "opacity-60" : "transition-transform duration-200 group-hover:scale-105"}`} />;
-
-  if (hasLoader(instance))
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#262626] to-[#171717]">
-        <span className={`grayscale ${hero ? "absolute right-16 opacity-[0.12]" : "opacity-50 transition-transform duration-200 group-hover:scale-110"}`}>
-          <LoaderIcon loader={instance.loader.type} size={hero ? 220 : 72} />
-        </span>
-      </div>
-    );
-
-  const art = versionArt(instance.mcVersion);
-  if (!art) return <div className="absolute inset-0 bg-gradient-to-b from-[#262626] to-[#171717]" />;
+  if (url)
+    return <img src={url} alt="" className={`absolute inset-0 h-full w-full object-cover ${hero ? "" : "transition-[transform,filter] duration-200 group-hover:scale-[1.03] group-hover:brightness-110"}`} />;
   return (
-    <img
-      src={art}
-      alt=""
-      className={`absolute inset-0 h-full w-full object-cover ${hero ? "opacity-50" : "brightness-[.8] transition-[transform,filter] duration-200 group-hover:scale-105 group-hover:brightness-100"}`}
-    />
+    <div className="absolute inset-0 overflow-hidden bg-[#131316]" style={{ backgroundImage: `linear-gradient(to bottom, rgb(${tint} / 0.6), rgb(${tint} / 0.05))` }}>
+      <span
+        className={`absolute font-brand leading-none font-bold text-white/10 select-none ${hero ? "top-1/2 right-16 -translate-y-1/2 text-[200px]" : mode === "mini" ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[22px] !text-white/40" : "top-[10%] left-[8%] text-[clamp(40px,7vw,120px)] transition-transform duration-200 group-hover:scale-105"}`}
+      >
+        {(instance.name.trim()[0] ?? "R").toUpperCase()}
+      </span>
+    </div>
   );
 }

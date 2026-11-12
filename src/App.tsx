@@ -1,5 +1,6 @@
 import { SkinGlobalPage } from "./pages/SkinPages";
 import { Home } from "./pages/Home";
+import { Dock } from "./components/Dock";
 import { ExploreModpacks } from "./pages/ExploreModpacks";
 import { LoginModal } from "./components/LoginModal";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
@@ -19,7 +20,8 @@ export default function App() {
         <LoginModal />
         <div className="flex min-h-0 flex-1">
           <Sidebar />
-          <main className="min-w-0 flex-1 bg-bg">
+          <div className="flex min-w-0 flex-1 flex-col">
+          <main className="min-h-0 min-w-0 flex-1 bg-bg">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/vanilla" element={<InstanceList filter="vanilla" />} />
@@ -37,6 +39,8 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+          <Dock />
+          </div>
         </div>
       </div>
     </HashRouter>

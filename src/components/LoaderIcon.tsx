@@ -14,7 +14,7 @@ export function LoaderIcon({ loader, size = 40 }: { loader: LoaderType; size?: n
   const src = LOGOS[loader.toLowerCase()];
   if (src) return <img src={src} width={size} height={size} alt="" className="object-contain [image-rendering:pixelated]" style={{ width: size, height: size }} />;
   return (
-    <span className="flex items-center justify-center border border-edge bg-raised font-brand font-black text-[#9a9a9a]" style={{ width: size, height: size, fontSize: size * 0.32 }}>
+    <span className="flex items-center justify-center border border-edge bg-raised font-brand font-black text-muted" style={{ width: size, height: size, fontSize: size * 0.32 }}>
       {MARK[loader]}
     </span>
   );

@@ -44,7 +44,7 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
 
   return (
     <div className="flex h-full flex-col gap-6 overflow-hidden px-10 py-6">
-      <div className="flex shrink-0 items-center gap-4 border border-line bg-[#141414] px-5 py-4">
+      <div className="flex shrink-0 items-center gap-4 rounded-[10px] bg-surface px-5 py-4">
         <div className="flex-1">
           <p className="m-0 text-sm font-semibold">Skin própria nesta instância</p>
           <p className="m-0 mt-0.5 text-xs text-muted">
@@ -54,7 +54,7 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
         {inst.skin.enabled && (
           <button
             onClick={() => save({ ...inst, skin: { enabled: false, skinId: null } })}
-            className="flex h-9 items-center gap-2 bg-[#1c1c1c] px-3.5 text-[13px] text-[#d0d0d0] hover:bg-active hover:text-ink"
+            className="flex h-9 items-center gap-2 bg-raised px-3.5 text-sm text-soft hover:bg-active hover:text-ink"
           >
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" /><path d="M2 2v3.5h3.5" /></svg>
             Usar a skin global
@@ -72,10 +72,10 @@ export function InstanceSkinsTab({ instance }: { instance: Instance }) {
         />
       ) : (
         <div className="flex flex-col items-start gap-3">
-          <p className="m-0 max-w-[620px] text-[13px] leading-relaxed text-[#9a9a9a]">
+          <p className="m-0 max-w-[620px] text-sm leading-relaxed text-muted">
             Ligue "Skin própria" para escolher uma skin só para {inst.name}. Ela é aplicada automaticamente sempre que você der Jogar nesta instância.
           </p>
-          <button onClick={() => navigate("/skin")} className="border border-edge px-4 py-2 text-[13px] text-[#d0d0d0] hover:bg-raised">
+          <button onClick={() => navigate("/skin")} className="border border-edge px-4 py-2 text-sm text-soft hover:bg-raised">
             Editar skin global
           </button>
         </div>
