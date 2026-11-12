@@ -5,6 +5,7 @@ import { useApp } from "../lib/store";
 import { InstanceCard, NewInstanceCard } from "../components/InstanceCard";
 import { NewInstanceModal } from "../components/NewInstanceModal";
 import { ImportModal } from "../components/ImportModal";
+import { ModsTabs } from "./ExploreModpacks";
 import { Button, Icon, PageHeader, SectionLabel } from "../components/ui";
 
 const copy = {
@@ -28,7 +29,7 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
 
   const list = (instances ?? []).filter((i) => filter === "all" || i.kind === filter).sort((a, b) => order[a.kind] - order[b.kind]);
   const firstRun = filter === "all" && instances !== null && !instances.some((i) => i.kind !== "pvp");
-  const modal = creating && <NewInstanceModal onClose={() => setCreating(false)} defaultKind={filter === "mods" ? "mods" : "vanilla"} />;
+  const modal = creating && <NewInstanceModal onClose={() => setCreating(false)} onImport={doImport} />;
 
   if (firstRun) {
     return (
@@ -48,7 +49,7 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
             { t: "PVP", d: "Versões de combate prontas", go: () => navigate("/pvp") },
             { t: "Conectar conta", d: "Entre com a Microsoft", go: () => setLoginOpen(true) },
           ].map((q) => (
-            <button key={q.t} onClick={q.go} className="w-[220px] border border-line bg-surface px-[18px] py-4 text-left hover:border-edge hover:bg-raised">
+            <button key={q.t} onClick={q.go} className="w-[220px] !rounded-[10px] bg-surface px-[18px] py-4 text-left hover:bg-raised">
               <p className="m-0 text-sm font-semibold text-ink">{q.t}</p>
               <p className="m-0 mt-1 text-xs text-muted">{q.d}</p>
             </button>
@@ -67,12 +68,12 @@ export function InstanceList({ filter }: { filter: "all" | "vanilla" | "mods" })
         subtitle={subtitle}
         actions={
           <>
-            <Button variant="dark" className="border border-edge" onClick={doImport}>Importar</Button>
+            <Button variant="dark" onClick={doImport}>Importar</Button>
             <Button variant="primary" onClick={() => setCreating(true)}>+ Nova instância</Button>
           </>
         }
       />
-      <SectionLabel>Instâncias</SectionLabel>
+      {filter === "mods" ? <ModsTabs /> : <SectionLabel>Instâncias</SectionLabel>}
       <div className="flex flex-wrap gap-5">
         {list.map((i) => (
           <InstanceCard key={i.id} instance={i} />

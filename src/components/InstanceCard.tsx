@@ -26,7 +26,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
   return (
     <div
       onClick={open}
-      className="group flex h-[360px] w-[208px] cursor-pointer flex-col border border-line bg-card transition-all duration-150 hover:-translate-y-0.5 hover:border-[#3a3a3a] hover:bg-[#1e1e1e] hover:shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
+      className="group flex h-[360px] w-[208px] cursor-pointer flex-col overflow-hidden rounded-[10px] border border-transparent bg-card transition-all duration-150 hover:-translate-y-0.5 hover:border-[#3a3a3a] hover:bg-[#1e1e1e] hover:shadow-[0_8px_24px_rgba(0,0,0,0.55)]"
     >
       <div className="relative h-[208px] overflow-hidden">
         <InstanceCover instance={instance} mode="card" />
@@ -138,7 +138,7 @@ export function InstanceCard({ instance }: { instance: Instance }) {
 
 export function NewInstanceCard({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 border border-dashed border-edge text-[#8a8a8a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
+    <button onClick={onClick} className="flex h-[360px] w-[208px] flex-col items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-edge text-[#8a8a8a] transition-colors hover:border-[#4a4a4a] hover:text-soft">
       <span className="text-[32px] leading-none">+</span>
       <span className="text-[13px] font-medium">Nova instância</span>
     </button>

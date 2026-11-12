@@ -2,24 +2,26 @@
 
 /* Tokens do Figma (monocromático, flat, sem cantos arredondados) */
 @theme {
-  --color-bg: #0d0d0d;
-  --color-bar: #121212;
-  --color-sidebar: #161616;
-  --color-surface: #151515;
-  --color-card: #171717;
-  --color-raised: #1c1c1c;
-  --color-active: #242424;
-  --color-line: #222222;
-  --color-edge: #2e2e2e;
-  --color-ink: #ededed;
-  --color-soft: #bdbdbd;
-  --color-muted: #8f8f8f;
-  --color-faint: #7a7a7a;
+  --color-bg: #0b0b0c;
+  --color-bar: #0b0b0c;
+  --color-sidebar: #151517;
+  --color-surface: #151517;
+  --color-card: #1a1a1d;
+  --color-raised: #1e1e21;
+  --color-active: #2a2a2e;
+  --color-line: #26262a;
+  --color-edge: #303035;
+  --color-ink: #f2f2f2;
+  --color-soft: #b6b6bb;
+  --color-muted: #86868c;
+  --color-faint: #77777d;
 
   --font-sans: "Poppins", system-ui, sans-serif;
   --font-brand: "Orbitron", "Poppins", sans-serif;
 
-  --radius-*: initial;
+  --color-playing: #3ddc84;
+  --color-update: #f5b83d;
+  --color-danger: #e5484d;
 }
 
 html,
@@ -38,7 +40,11 @@ body {
   overflow: hidden;
 }
 
-* {
+/* v3: raio pequeno e consistente (6 controles · 10 cards · 14 modais). */
+button, input, select, textarea {
+  border-radius: 6px;
+}
+[data-tauri-drag-region] button {
   border-radius: 0;
 }
 
@@ -88,10 +94,11 @@ button:disabled, select:disabled {
 
 /* Afundar ao pressionar: resposta física imediata. */
 button:not(:disabled), a {
-  transition: transform 90ms ease-out, background-color 120ms, color 120ms, border-color 120ms, opacity 120ms, box-shadow 120ms;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 120ms, color 120ms, border-color 120ms, opacity 120ms, box-shadow 120ms;
 }
 button:not(:disabled):active, a:active {
-  transform: translateY(1px) scale(0.98);
+  transform: scale(0.97);
+  transition-duration: 90ms;
 }
 
 /* Teclado: contorno quadrado bem visível. */
@@ -160,4 +167,16 @@ nav a:not(.active):hover > span::before {
 .group.relative.aspect-\[400\/190\]:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* v3: o clarão quadrado saiu; o clique agora é só o "afundar" com mola. */
+.rog-flash { display: none; }
+::-webkit-scrollbar-thumb { border-radius: 5px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}
+nav a > span::before { display: none !important; }
+@keyframes rog-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
 }

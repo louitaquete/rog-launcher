@@ -5,12 +5,52 @@ import { useApp } from "../lib/store";
 import { LoaderIcon } from "./LoaderIcon";
 import { versionArt } from "./InstanceCover";
 import { useDismiss } from "../lib/useDismiss";
-import { ModpackSearch } from "./ModpackSearch";
 import { Button, Modal, Select } from "./ui";
 
 const LOADERS: LoaderType[] = ["Fabric", "Forge", "NeoForge", "Quilt", "Vanilla"];
 
-export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind?: "vanilla" | "mods" }) {
+const cube = (cx: number, cy: number, s: number, t: string, l: string, r: string) => (
+  <>
+    <path d={`M${cx} ${cy - s}L${cx + s} ${cy - s / 2}L${cx} ${cy}L${cx - s} ${cy - s / 2}Z`} fill={t} />
+    <path d={`M${cx - s} ${cy - s / 2}L${cx} ${cy}L${cx} ${cy + s}L${cx - s} ${cy + s / 2}Z`} fill={l} />
+    <path d={`M${cx + s} ${cy - s / 2}L${cx} ${cy}L${cx} ${cy + s}L${cx + s} ${cy + s / 2}Z`} fill={r} />
+  </>
+);
+const PackIcon = () => (
+  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+    {cube(38, 74, 22, "#b6b6bb", "#6a6a70", "#4a4a50")}
+    {cube(82, 74, 22, "#b6b6bb", "#6a6a70", "#4a4a50")}
+    {cube(60, 41, 22, "#f2f2f2", "#b6b6bb", "#86868c")}
+  </svg>
+);
+const ZeroIcon = () => (
+  <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+    <g stroke="#86868c" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="5 4">
+      <path d="M56 28L86 43L56 58L26 43Z" />
+      <path d="M26 43L26 73L56 88L86 73L86 43" />
+      <path d="M56 58L56 88" />
+    </g>
+    <rect x="74" y="72" width="30" height="30" rx="7" fill="#f2f2f2" />
+    <path d="M89 80v14M82 87h14" stroke="#111112" strokeWidth="2.6" strokeLinecap="round" />
+  </svg>
+);
+const HINT: Partial<Record<LoaderType, string>> = { Fabric: "Leve e rápido", Forge: "O clássico", NeoForge: "Novo Forge", Quilt: "Alternativo", Vanilla: "Sem mods" };
+
+function Choice({ title, text, tags, icon, primary, onClick }: { title: string; text: string; tags: string[]; icon: React.ReactNode; primary?: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`group flex flex-col overflow-hidden !rounded-[10px] border-[1.5px] bg-raised text-left ${primary ? "border-ink" : "border-transparent hover:border-[#5a5a5f]"}`}>
+      <span className="flex h-[170px] w-full items-center justify-center bg-bg transition-transform duration-200 group-hover:[&>svg]:scale-105 [&>svg]:transition-transform [&>svg]:duration-200">{icon}</span>
+      <span className="flex flex-col gap-2 px-[18px] py-4">
+        <span className="text-base font-semibold text-ink">{title}</span>
+        <span className="text-sm leading-[22px] text-soft">{text}</span>
+        <span className="flex gap-1.5 pt-1">{tags.map((t) => <span key={t} className="rounded-[6px] bg-active px-2 py-[3px] text-xs font-medium text-soft">{t}</span>)}</span>
+      </span>
+    </button>
+  );
+}
+
+export function NewInstanceModal({ onClose, onImport, start = "choose" }: { onClose: () => void; onImport?: () => void; start?: "choose" | "scratch"; defaultKind?: "vanilla" | "mods" }) {
+  const [step, setStep] = useState<"choose" | "scratch">(start);
   const { refresh } = useApp();
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -22,7 +62,6 @@ export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind
   const [loaderVersion, setLoaderVersion] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"scratch" | "modpacks">("scratch");
   const [image, setImage] = useState<{ path: string; url: string } | null>(null);
   const [imgMenu, setImgMenu] = useState(false);
   const imgRef = useDismiss<HTMLDivElement>(imgMenu, useCallback(() => setImgMenu(false), []));
@@ -94,53 +133,65 @@ export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind
     }
   }
 
-  const label = "m-0 mb-2 text-xs font-medium text-muted";
-  const field = "flex h-11 w-full items-center bg-[#1a1a1a] px-3.5 text-sm text-ink";
+  const label = "m-0 mb-1.5 text-xs font-medium text-muted";
+  const field = "flex h-11 w-full items-center rounded-[6px] bg-raised px-3.5 text-sm text-ink";
+
+  const explore = () => {
+    onClose();
+    navigate("/mods/explorar");
+  };
+
+  if (step === "choose")
+    return (
+      <Modal
+        title="Nova instância"
+        subtitle="Como você quer começar?"
+        onClose={onClose}
+        width={748}
+        footer={
+          onImport && (
+            <span className="text-xs text-muted">
+              Já tem um arquivo ou vem de outro launcher?{" "}
+              <button onClick={() => { onClose(); onImport(); }} className="p-0 font-medium text-ink hover:underline">Importar →</button>
+            </span>
+          )
+        }
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <Choice primary title="Modpack pronto" text="Centenas de mods já configurados e testados juntos. Escolha um e jogue." tags={["Modrinth", "CurseForge"]} icon={<PackIcon />} onClick={explore} />
+          <Choice title="Do zero" text="Você escolhe a versão e o loader, e adiciona os mods que quiser depois." tags={["Qualquer versão", "5 loaders"]} icon={<ZeroIcon />} onClick={() => setStep("scratch")} />
+        </div>
+      </Modal>
+    );
 
   return (
     <Modal
       title="Nova instância"
+      subtitle="Monte do zero em menos de um minuto"
       onClose={onClose}
-      width={680}
-      height={620}
+      width={640}
       footer={
-        tab === "modpacks" ? undefined : (
-          <>
-            <span className="flex-1 truncate text-[11px] text-[#e5484d]" title={error ?? ""}>{error ?? ""}</span>
-            <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-            <Button variant="primary" onClick={create} disabled={busy || noLoader || (!isVanilla && !loaderVersion)}>
-              {busy ? "Criando…" : "Criar"}
-            </Button>
-          </>
-        )
+        <>
+          {error ? (
+            <span className="flex-1 truncate text-xs text-danger" title={error}>{error}</span>
+          ) : (
+            <span className="flex-1 text-xs text-muted">
+              Prefere um pacote pronto?{" "}
+              <button onClick={explore} className="p-0 font-medium text-ink hover:underline">Explorar modpacks →</button>
+            </span>
+          )}
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button variant="primary" onClick={create} disabled={busy || noLoader || (!isVanilla && !loaderVersion)}>
+            {busy ? "Criando…" : "Criar instância"}
+          </Button>
+        </>
       }
     >
-      <div className="-mt-1 mb-6 flex border-b border-line">
-        {([
-          ["scratch", "Do zero"],
-          ["modpacks", "Modpacks"],
-        ] as const).map(([v, l]) => (
-          <button key={v} onClick={() => setTab(v)} className={`relative -mb-px px-4 py-2.5 text-[13px] font-medium ${tab === v ? "text-ink" : "text-muted hover:text-soft"}`}>
-            {l}
-            {tab === v && <span className="absolute right-0 bottom-0 left-0 h-0.5 bg-ink" />}
-          </button>
-        ))}
-      </div>
-
-      {tab === "modpacks" ? (
-        <ModpackSearch
-          onDone={async (inst) => {
-            await refresh();
-            onClose();
-            navigate(`/${inst.kind}/${inst.id}/conteudo`);
-          }}
-        />
-      ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           {/* Imagem + nome */}
-          <div className="flex gap-6">
-            <div ref={imgRef} className="relative h-[112px] w-[112px] shrink-0">
-              <button onClick={() => setImgMenu((m) => !m)} className="group relative h-full w-full overflow-hidden bg-[#1c1c1c]" title="Trocar imagem">
+          <div className="flex gap-[18px]">
+            <div ref={imgRef} className="relative h-[104px] w-[104px] shrink-0">
+              <button onClick={() => setImgMenu((m) => !m)} className="group relative h-full w-full overflow-hidden !rounded-[10px] bg-raised" title="Trocar imagem">
                 {image ? (
                   <img src={image.url} alt="" className="h-full w-full object-cover" />
                 ) : isVanilla && art ? (
@@ -150,18 +201,18 @@ export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind
                     <LoaderIcon loader={loader} size={52} />
                   </span>
                 )}
-                <span className="absolute top-2 left-2 flex h-8 w-8 items-center justify-center bg-[#0d0d0d]/85 text-ink group-hover:bg-[#0d0d0d]">
+                <span className="absolute top-2 left-2 flex h-7 w-7 items-center justify-center rounded-[6px] bg-black/65 text-ink group-hover:bg-black/85">
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 1.5l3 3L5 14H2v-3z" /></svg>
                 </span>
               </button>
               {imgMenu && (
-                <div className="absolute top-12 left-2 z-10 w-48 bg-[#242424] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
-                  <button onClick={pickImage} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft hover:bg-[#2e2e2e] hover:text-ink">
+                <div className="absolute top-11 left-2 z-10 w-48 overflow-hidden rounded-[10px] bg-active py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+                  <button onClick={pickImage} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="1.5" y="2.5" width="13" height="11" /><path d="M2 12l4-4 3 3 2-2 3 3" /></svg>
                     Escolher imagem
                   </button>
                   {image && (
-                    <button onClick={() => { setImage(null); setImgMenu(false); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft hover:bg-[#2e2e2e] hover:text-ink">
+                    <button onClick={() => { setImage(null); setImgMenu(false); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-[13px] text-soft !rounded-none hover:bg-[#34343a] hover:text-ink">
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 1h6v2h4v2H1V3h4zM2 6h12l-1 9H3z" /></svg>
                       Remover imagem
                     </button>
@@ -206,13 +257,13 @@ export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind
           {/* Loader */}
           <div>
             <p className={label}>Loader</p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="grid grid-cols-5 gap-2">
               {LOADERS.map((l) => {
                 const on = l === loader;
                 return (
-                  <button key={l} type="button" onClick={() => setLoader(l)} className="flex items-center gap-2.5 py-1">
-                    <span className={`flex h-[18px] w-[18px] items-center justify-center ${on ? "bg-ink" : "bg-[#2a2a2a]"}`}>{on && <span className="h-2 w-2 bg-[#111]" />}</span>
-                    <span className={`text-[13px] ${on ? "font-semibold text-ink" : "text-soft"}`}>{l}</span>
+                  <button key={l} type="button" onClick={() => setLoader(l)} className={`flex flex-col gap-0.5 border-[1.5px] px-3 py-2.5 text-left ${on ? "border-ink bg-active" : "border-transparent bg-raised hover:bg-active"}`}>
+                    <span className={`text-sm font-medium ${on ? "text-ink" : "text-soft"}`}>{l}</span>
+                    <span className="text-xs text-muted">{HINT[l]}</span>
                   </button>
                 );
               })}
@@ -237,7 +288,6 @@ export function NewInstanceModal({ onClose }: { onClose: () => void; defaultKind
             </div>
           )}
         </div>
-      )}
     </Modal>
   );
 }

@@ -22,6 +22,8 @@ interface Version {
   id: string;
   version_number: string;
   version_type: "release" | "beta" | "alpha";
+  game_versions?: string[];
+  loaders?: string[];
   files: { url: string; filename: string; primary: boolean; hashes: { sha1: string } }[];
   dependencies: { project_id: string | null; version_id: string | null; dependency_type: string }[];
 }
@@ -130,9 +132,26 @@ export async function updateAll(inst: Instance): Promise<number> {
 }
 
 /** Busca modpacks no Modrinth. */
-export async function searchModpacks(query: string, offset = 0) {
-  const q = new URLSearchParams({ query, index: "relevance", limit: "20", offset: String(offset), facets: JSON.stringify([["project_type:modpack"]]) });
+export async function searchModpacks(query: string, offset = 0, f: { version?: string; loader?: string; sort?: Sort } = {}) {
+  const facets: string[][] = [["project_type:modpack"]];
+  if (f.version) facets.push([`versions:${f.version}`]);
+  if (f.loader) facets.push([`categories:${f.loader}`]);
+  const q = new URLSearchParams({ query, index: f.sort ?? "relevance", limit: "20", offset: String(offset), facets: JSON.stringify(facets) });
   return get<{ hits: Hit[]; total_hits: number }>(`/search?${q}`);
+}
+
+export interface PackVersion { id: string; label: string; url: string }
+
+/** Versões de um modpack, da mais nova pra mais velha, só as que têm arquivo. */
+export async function modpackVersions(projectId: string): Promise<PackVersion[]> {
+  const versions = await get<Version[]>(`/project/${projectId}/version`);
+  return versions.flatMap((v) => {
+    const file = v.files.find((x) => x.primary) ?? v.files[0];
+    if (!file) return [];
+    const mc = v.game_versions?.[v.game_versions.length - 1];
+    const extra = [mc && `Minecraft ${mc}`, v.loaders?.[0], v.version_type !== "release" && v.version_type].filter(Boolean).join(" · ");
+    return [{ id: v.id, label: extra ? `${v.version_number} · ${extra}` : v.version_number, url: file.url }];
+  });
 }
 
 /** URL do .mrpack mais recente (release) de um modpack. */
