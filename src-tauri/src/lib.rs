@@ -430,8 +430,8 @@ fn import_found(store: State<Store>, found: importer::Found) -> Res<Instance> {
 }
 
 #[tauri::command]
-async fn cf_search_modpacks(query: String, offset: u32) -> Res<curseforge::Page> {
-    curseforge::search_modpacks(&install::download::client(), &query, offset).await
+async fn cf_search_modpacks(query: String, offset: u32, game_version: Option<String>, loader: Option<u32>, sort: Option<u32>) -> Res<curseforge::Page> {
+    curseforge::search_modpacks(&install::download::client(), &query, offset, game_version.as_deref(), loader, sort.unwrap_or(2)).await
 }
 
 #[tauri::command]

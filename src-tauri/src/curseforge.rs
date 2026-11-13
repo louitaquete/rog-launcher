@@ -214,16 +214,22 @@ pub async fn download_files(client: &reqwest::Client, mods_dir: &Path, ids: &[(u
 }
 
 /// Busca modpacks (classId 4471) para a aba Modpacks.
-pub async fn search_modpacks(client: &reqwest::Client, query: &str, offset: u32) -> Result<Page, String> {
-    let q = vec![
+pub async fn search_modpacks(client: &reqwest::Client, query: &str, offset: u32, game_version: Option<&str>, loader: Option<u32>, sort: u32) -> Result<Page, String> {
+    let mut q = vec![
         ("gameId", MINECRAFT.to_string()),
         ("classId", "4471".into()),
         ("searchFilter", query.to_string()),
-        ("sortField", "2".into()),
+        ("sortField", sort.to_string()),
         ("sortOrder", "desc".into()),
         ("pageSize", "20".into()),
         ("index", offset.to_string()),
     ];
+    if let Some(v) = game_version.filter(|v| !v.is_empty()) {
+        q.push(("gameVersion", v.to_string()));
+    }
+    if let Some(l) = loader {
+        q.push(("modLoaderType", l.to_string()));
+    }
     let v = get(client, "/mods/search", &q).await?;
     let hits = v["data"].as_array().map(|a| a.iter().map(hit).collect()).unwrap_or_default();
     Ok(Page { hits, total_hits: v["pagination"]["totalCount"].as_u64().unwrap_or(0).min(10_000) })

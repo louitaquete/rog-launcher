@@ -1,6 +1,6 @@
 [package]
 name = "rog-launcher"
-version = "0.1.10"
+version = "1.0.2"
 description = "Rog Launcher — launcher para Minecraft: Java Edition"
 authors = ["louitaquete"]
 edition = "2024"

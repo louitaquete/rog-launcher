@@ -10,7 +10,7 @@ function WinButton({ label, onClick, children, danger }: { label: string; onClic
     <button
       aria-label={label}
       onClick={onClick}
-      className={`flex h-10 w-[46px] items-center justify-center text-[#9a9a9a] transition-colors ${danger ? "hover:bg-ink hover:text-[#111]" : "hover:bg-raised hover:text-ink"}`}
+      className={`flex h-10 w-[46px] items-center justify-center text-muted transition-colors ${danger ? "hover:bg-ink hover:text-[#111112]" : "hover:bg-raised hover:text-ink"}`}
     >
       {children}
     </button>
@@ -59,7 +59,7 @@ function NoteBody({ body }: { body: string }) {
   return (
     <ul className="m-0 mt-2 flex list-none flex-col gap-1 p-0">
       {lines.map((l, i) => (
-        <li key={i} className="flex gap-2 text-xs leading-relaxed text-[#bdbdbd]">
+        <li key={i} className="flex gap-2 text-xs leading-relaxed text-soft">
           <span className="mt-[7px] h-1 w-1 shrink-0 bg-[#6a6a6a]" />
           {l}
         </li>
@@ -122,36 +122,36 @@ function Inbox() {
         aria-label={unread ? `Novidades: ${unread} não lida${unread > 1 ? "s" : ""}` : "Novidades"}
         title="Novidades"
         onClick={toggle}
-        className={`relative flex h-10 w-[46px] items-center justify-center transition-colors ${open ? "bg-raised text-ink" : "text-[#9a9a9a] hover:bg-raised hover:text-ink"}`}
+        className={`relative flex h-10 w-[46px] items-center justify-center transition-colors ${open ? "bg-raised text-ink" : "text-muted hover:bg-raised hover:text-ink"}`}
       >
         <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
           <path d="M1.5 9.5v4h13v-4" />
           <path d="M1.5 9.5l2-6.5h9l2 6.5h-4l-1 2h-3l-1-2z" />
         </svg>
         {unread > 0 && (
-          <span className="absolute bottom-1 left-1.5 flex h-[14px] min-w-[14px] items-center justify-center bg-[#e5484d] px-1 text-[10px] leading-none font-bold text-white shadow-[0_0_0_2px_#121212]">
+          <span className="absolute bottom-1 left-1.5 flex h-[14px] min-w-[14px] items-center justify-center bg-danger px-1 text-[10px] leading-none font-bold text-white shadow-[0_0_0_2px_#121212]">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute top-full right-0 z-40 mt-1 flex max-h-[70vh] w-[360px] flex-col bg-[#1c1c1c] shadow-[0_12px_32px_rgba(0,0,0,0.65)]">
+        <div className="absolute top-full right-0 z-40 mt-1 flex max-h-[70vh] w-[360px] flex-col bg-raised shadow-[0_12px_32px_rgba(0,0,0,0.65)]">
           <div className="flex items-center gap-3 border-b border-line px-4 py-3">
             <div className="min-w-0 flex-1">
               <p className="m-0 text-sm font-semibold">{update ? `Rog Launcher ${version}` : "Rog Launcher"}</p>
               <p className="m-0 text-xs text-muted">{update ? "Atualização disponível" : `Versão ${base(current) || "…"} · mais recente`}</p>
             </div>
             {update ? (
-              <button disabled={state === "busy"} onClick={apply} className="shrink-0 bg-ink px-4 py-2 text-xs font-semibold text-[#111] hover:bg-white disabled:opacity-50">
+              <button disabled={state === "busy"} onClick={apply} className="shrink-0 bg-ink px-4 py-2 text-xs font-semibold text-[#111112] hover:bg-white disabled:opacity-50">
                 {state === "busy" ? "Baixando…" : state === "idle" ? "Atualizar" : "Tentar de novo"}
               </button>
             ) : (
-              <span title="Você está na versão mais recente" className="flex h-8 w-8 shrink-0 items-center justify-center bg-[#242424] text-ink">
+              <span title="Você está na versão mais recente" className="flex h-8 w-8 shrink-0 items-center justify-center bg-active text-ink">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8.5l3.2 3L13 4.5" /></svg>
               </span>
             )}
           </div>
-          {state !== "idle" && state !== "busy" && <p className="m-0 border-b border-line px-4 py-2 text-xs text-[#e5484d]">Não deu para atualizar: {state}</p>}
+          {state !== "idle" && state !== "busy" && <p className="m-0 border-b border-line px-4 py-2 text-xs text-danger">Não deu para atualizar: {state}</p>}
           <div className="min-h-0 flex-1 overflow-y-auto">
             {notes.length === 0 && <p className="m-0 px-4 py-6 text-center text-xs text-muted">Sem notas de versão por enquanto.</p>}
             {notes.map((n) => {
@@ -159,14 +159,14 @@ function Inbox() {
               return (
                 <div key={n.version} className="border-b border-line px-4 py-3 last:border-b-0">
                   <div className="flex items-center gap-2">
-                    <p className="m-0 text-[13px] font-semibold">{base(n.version)}</p>
-                    {n.newer && <span className="bg-ink px-1.5 py-px text-[10px] font-bold text-[#111]">NOVA</span>}
-                    {isCurrent && <span className="bg-[#2a2a2a] px-1.5 py-px text-[10px] font-semibold text-soft">INSTALADA</span>}
+                    <p className="m-0 text-sm font-semibold">{base(n.version)}</p>
+                    {n.newer && <span className="bg-ink px-1.5 py-px text-[10px] font-bold text-[#111112]">NOVA</span>}
+                    {isCurrent && <span className="bg-active px-1.5 py-px text-[10px] font-semibold text-soft">INSTALADA</span>}
                     <span className="flex-1" />
-                    <span className="text-[11px] text-muted">{n.date ? new Date(n.date).toLocaleDateString("pt-BR") : ""}</span>
+                    <span className="text-xs text-muted">{n.date ? new Date(n.date).toLocaleDateString("pt-BR") : ""}</span>
                   </div>
                   <NoteBody body={n.body} />
-                  <button onClick={() => openUrl(n.url)} className="mt-2 p-0 text-[11px] text-muted hover:text-ink">
+                  <button onClick={() => openUrl(n.url)} className="mt-2 p-0 text-xs text-muted hover:text-ink">
                     Ver no GitHub ↗
                   </button>
                 </div>

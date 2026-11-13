@@ -540,9 +540,9 @@ export const importApi = {
 };
 
 export const cfModpackApi = {
-  search: (query: string, offset: number) =>
+  search: (query: string, offset: number, f: { version?: string; loader?: number; sort?: number } = {}) =>
     isTauri
-      ? invoke<{ hits: (import("./modrinth").Hit & { url: string | null })[]; total_hits: number }>("cf_search_modpacks", { query, offset })
+      ? invoke<{ hits: (import("./modrinth").Hit & { url: string | null })[]; total_hits: number }>("cf_search_modpacks", { query, offset, gameVersion: f.version || null, loader: f.loader ?? null, sort: f.sort ?? 2 })
       : Promise.reject("CurseForge só funciona no app"),
   install: (projectId: number, cover?: string | null): Promise<Instance> => invoke("cf_import_modpack", { projectId, cover: cover ?? null }),
 };

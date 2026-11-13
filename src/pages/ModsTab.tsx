@@ -45,7 +45,7 @@ export function ModsTab({ instance }: { instance: Instance }) {
         />
         {kinds.length > 1 && <Segmented value={kind} onChange={setKind} options={kinds.map((k) => ({ value: k, label: kindLabel[k] }))} />}
         <span className="flex-1" />
-        <button onClick={() => api.openFolder(instance.id)} className="text-[13px] text-muted hover:text-ink">
+        <button onClick={() => api.openFolder(instance.id)} className="text-sm text-muted hover:text-ink">
           Abrir pasta
         </button>
       </div>
@@ -65,8 +65,8 @@ function Installed({ instance, items, kind, reload, onExplore }: { instance: Ins
   if (!items.length)
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-        <p className="m-0 text-sm text-[#9a9a9a]">Nenhum {kindSingular[kind]} instalado ainda.</p>
-        <button onClick={onExplore} className="bg-ink px-5 py-2.5 text-[13px] font-semibold text-[#111] hover:bg-white">
+        <p className="m-0 text-sm text-muted">Nenhum {kindSingular[kind]} instalado ainda.</p>
+        <button onClick={onExplore} className="bg-ink px-5 py-2.5 text-sm font-semibold text-[#111112] hover:bg-white">
           Explorar {kindLabel[kind].toLowerCase()}
         </button>
       </div>
@@ -178,7 +178,7 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Buscar ${kindLabel[kind].toLowerCase()} para ${instance.mcVersion}…`}
-          className="h-10 flex-1 border border-edge bg-[#171717] px-4 text-[13px] text-ink outline-none placeholder:text-[#6f6f6f] focus:border-[#555]"
+          className="h-10 flex-1 border border-edge bg-surface px-4 text-sm text-ink outline-none placeholder:text-faint focus:border-[#555]"
         />
         <Select
           value={sort}
@@ -193,36 +193,36 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         />
       </div>
 
-      {error && <p className="m-0 text-[13px] text-[#9a9a9a]">{error.includes("403") ? "O CurseForge recusou a chave (403). A chave ainda não foi liberada para apps de terceiros." : `Não deu para buscar: ${error}`}</p>}
+      {error && <p className="m-0 text-sm text-muted">{error.includes("403") ? "O CurseForge recusou a chave (403). A chave ainda não foi liberada para apps de terceiros." : `Não deu para buscar: ${error}`}</p>}
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-3">
         {hits.map((h) => {
           const state = busy[h.project_id];
           const has = isInstalled(h.project_id);
           return (
-            <div key={h.project_id} className="flex gap-4 border border-line bg-[#141414] p-4 transition-colors hover:border-[#3a3a3a] hover:bg-[#181818]">
+            <div key={h.project_id} className="flex gap-4 rounded-[10px] bg-surface p-4 transition-colors hover:border-[#3a3a3a] hover:bg-surface">
               <ProjectIcon url={h.icon_url} size={56} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-baseline gap-2">
                   <p className="m-0 truncate text-sm font-semibold">{h.title}</p>
                   <span className="shrink-0 text-xs text-muted">por {h.author}</span>
                 </div>
-                <p className="m-0 line-clamp-2 text-xs leading-relaxed text-[#9a9a9a]">{h.description}</p>
+                <p className="m-0 line-clamp-2 text-xs leading-relaxed text-muted">{h.description}</p>
                 <div className="mt-auto flex items-center gap-3 pt-2">
-                  <span className="text-[11px] text-muted">↓ {fmtCount(h.downloads)}</span>
-                  <span className="text-[11px] text-muted">♥ {fmtCount(h.follows)}</span>
+                  <span className="text-xs text-muted">↓ {fmtCount(h.downloads)}</span>
+                  <span className="text-xs text-muted">♥ {fmtCount(h.follows)}</span>
                   <span className="flex-1" />
                   {state?.includes("BLOCKED:") ? (
-                    <button onClick={() => openUrl(state.slice(state.indexOf("BLOCKED:") + 8))} className="text-[11px] text-[#9a9a9a] underline hover:text-ink" title="O autor não libera download por outros apps">
+                    <button onClick={() => openUrl(state.slice(state.indexOf("BLOCKED:") + 8))} className="text-xs text-muted underline hover:text-ink" title="O autor não libera download por outros apps">
                       Baixar no site
                     </button>
                   ) : (
-                    state && state !== "installing" && <span className="max-w-[180px] truncate text-[11px] text-[#9a9a9a]" title={state}>{state}</span>
+                    state && state !== "installing" && <span className="max-w-[180px] truncate text-xs text-muted" title={state}>{state}</span>
                   )}
                   <button
                     disabled={has || state === "installing"}
                     onClick={() => add(h)}
-                    className={`px-4 py-1.5 text-xs font-semibold ${has ? "border border-edge text-muted" : "bg-ink text-[#111] hover:bg-white"} disabled:cursor-default`}
+                    className={`px-4 py-1.5 text-xs font-semibold ${has ? "border border-edge text-muted" : "bg-ink text-[#111112] hover:bg-white"} disabled:cursor-default`}
                   >
                     {has ? "Instalado" : state === "installing" ? "Instalando…" : "Instalar"}
                   </button>
@@ -233,14 +233,14 @@ function Explore({ instance, kind, installed, reload }: { instance: Instance; ki
         })}
       </div>
 
-      {!loading && !error && hits.length === 0 && <p className="m-0 text-[13px] text-muted">Nada encontrado para {instance.mcVersion}.</p>}
-      {loading && <p className="m-0 text-[13px] text-muted">Carregando…</p>}
+      {!loading && !error && hits.length === 0 && <p className="m-0 text-sm text-muted">Nada encontrado para {instance.mcVersion}.</p>}
+      {loading && <p className="m-0 text-sm text-muted">Carregando…</p>}
       {!loading && !error && hits.length < total && (
-        <button onClick={() => load(hits.length)} className="self-center border border-edge px-5 py-2 text-[13px] text-[#d0d0d0] hover:bg-raised">
+        <button onClick={() => load(hits.length)} className="self-center border border-edge px-5 py-2 text-sm text-soft hover:bg-raised">
           Carregar mais
         </button>
       )}
-      <p className="m-0 pb-2 text-[11px] text-[#7a7a7a]">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
+      <p className="m-0 pb-2 text-xs text-muted">Conteúdo do {source === "curseforge" ? "CurseForge" : "Modrinth"}.</p>
     </div>
   );
 }
@@ -283,38 +283,38 @@ function AddLoader({ instance }: { instance: Instance }) {
 
   if (!open)
     return (
-      <div className="flex items-center gap-4 border border-line bg-[#151515] px-4 py-3">
-        <p className="m-0 flex-1 text-[13px] text-[#9a9a9a]">Instâncias Vanilla não rodam mods, só resource packs. Adicione um loader para usar mods aqui.</p>
-        <button onClick={() => setOpen(true)} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white">Adicionar loader</button>
+      <div className="flex items-center gap-4 rounded-[10px] bg-surface px-4 py-3">
+        <p className="m-0 flex-1 text-sm text-muted">Instâncias Vanilla não rodam mods, só resource packs. Adicione um loader para usar mods aqui.</p>
+        <button onClick={() => setOpen(true)} className="bg-ink px-4 py-2 text-sm font-semibold text-[#111112] hover:bg-white">Adicionar loader</button>
       </div>
     );
 
   return (
-    <div className="flex flex-col gap-4 border border-line bg-[#151515] p-5">
-      <p className="m-0 text-[13px] text-[#9a9a9a]">Escolha o loader. A instância passa para a aba Mods e o loader é baixado no próximo Jogar.</p>
+    <div className="flex flex-col gap-4 rounded-[10px] bg-surface p-5">
+      <p className="m-0 text-sm text-muted">Escolha o loader. A instância passa para a aba Mods e o loader é baixado no próximo Jogar.</p>
       <div className="grid max-w-[560px] grid-cols-4 gap-2">
         {MOD_LOADERS.map((l) => (
           <button
             key={l}
             onClick={() => setLoader(l)}
-            className={`flex flex-col items-center gap-2 border px-2 pt-3 pb-2.5 ${l === loader ? "border-[#454545] bg-active" : "border-edge bg-[#121212] hover:border-[#4a4a4a]"}`}
+            className={`flex flex-col items-center gap-2 border px-2 pt-3 pb-2.5 ${l === loader ? "border-[#454545] bg-active" : "border-edge bg-bg hover:border-[#4a4a4a]"}`}
           >
             <span className={l === loader ? "" : "opacity-60"}><LoaderIcon loader={l} size={34} /></span>
-            <span className={`text-xs font-medium ${l === loader ? "text-ink" : "text-[#9a9a9a]"}`}>{l}</span>
+            <span className={`text-xs font-medium ${l === loader ? "text-ink" : "text-muted"}`}>{l}</span>
           </button>
         ))}
       </div>
       <div className="flex items-center gap-3">
         {versions === null ? (
-          <span className="text-[13px] text-muted">Buscando versões…</span>
+          <span className="text-sm text-muted">Buscando versões…</span>
         ) : versions.length === 0 ? (
-          <span className="text-[13px] text-[#9a9a9a]">O {loader} ainda não tem versão para o Minecraft {instance.mcVersion}.</span>
+          <span className="text-sm text-muted">O {loader} ainda não tem versão para o Minecraft {instance.mcVersion}.</span>
         ) : (
           <Select value={version} onChange={setVersion} className="w-64" options={versions.map((v) => ({ value: v.version, label: `${v.version}${v.recommended ? " (recomendada)" : v.stable ? "" : " · beta"}` }))} />
         )}
         <span className="flex-1" />
-        <button onClick={() => setOpen(false)} className="px-3 py-2 text-[13px] text-muted hover:text-ink">Cancelar</button>
-        <button disabled={busy || !version} onClick={apply} className="bg-ink px-4 py-2 text-[13px] font-semibold text-[#111] hover:bg-white disabled:opacity-40">
+        <button onClick={() => setOpen(false)} className="px-3 py-2 text-sm text-muted hover:text-ink">Cancelar</button>
+        <button disabled={busy || !version} onClick={apply} className="bg-ink px-4 py-2 text-sm font-semibold text-[#111112] hover:bg-white disabled:opacity-40">
           {busy ? "Aplicando…" : `Usar ${loader}`}
         </button>
       </div>

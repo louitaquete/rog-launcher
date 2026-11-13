@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { importApi, type Instance } from "../lib/api";
 import { useApp } from "../lib/store";
 import { fmtCount, modpackFile, searchModpacks, type Hit } from "../lib/modrinth";
 import { InstanceCover } from "../components/InstanceCover";
+import { PlayButton } from "../components/PlayButton";
+import { useCover } from "../lib/tint";
+import { Chip } from "../components/ui";
 import { NewInstanceModal } from "../components/NewInstanceModal";
 import { ImportModal } from "../components/ImportModal";
 import { InstanceList } from "./InstanceList";
@@ -57,7 +60,7 @@ export function Home() {
   const firstRun = instances !== null && !instances.some((i) => i.kind !== "pvp");
   if (firstRun) return <InstanceList filter="all" />;
 
-  const sorted = [...(instances ?? [])].sort((a, b) => (b.lastPlayedAt ?? b.createdAt) - (a.lastPlayedAt ?? a.createdAt));
+  const sorted = [...(instances ?? [])].sort((a, b) => (b.lastPlayedAt ?? 0) - (a.lastPlayedAt ?? 0) || b.createdAt - a.createdAt);
   const last = sorted[0];
   const rest = sorted.slice(1, 7);
   const go = (i: Instance) => {
@@ -66,17 +69,17 @@ export function Home() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-8 overflow-y-auto px-10 py-8">
+    <div className="flex h-full flex-col gap-6 overflow-y-auto px-10 py-7">
       <div className="flex items-center">
-        <h1 className="m-0 flex-1 text-[22px] font-semibold">Início</h1>
+        <h1 className="m-0 flex-1 text-xl font-semibold">Início</h1>
         <div ref={menuRef} className="relative">
           <button onClick={() => setMenu((m) => !m)} className="px-3 py-1.5 text-xs text-muted hover:bg-raised hover:text-ink">
             Personalizar
           </button>
           {menu && (
-            <div className="absolute right-0 top-full z-20 mt-1 w-[200px] bg-[#1c1c1c] py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)]">
+            <div className="absolute top-full right-0 z-20 mt-1 w-[210px] overflow-hidden rounded-[10px] bg-active py-1.5 shadow-[0_12px_30px_rgba(0,0,0,0.5)]">
               {([["recent", "Continuar jogando"], ["discover", "Descobrir"]] as const).map(([k, t]) => (
-                <label key={k} className="flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-[13px] text-ink hover:bg-raised">
+                <label key={k} className="flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-sm text-ink hover:bg-raised">
                   <input type="checkbox" checked={sections[k]} onChange={() => toggle(k)} className="accent-white" />
                   {t}
                 </label>
@@ -86,44 +89,20 @@ export function Home() {
         </div>
       </div>
 
-      {last && (
-        <section className="group relative h-[230px] shrink-0 cursor-pointer overflow-hidden bg-[#151515]" onClick={() => navigate(route(last))}>
-          <InstanceCover instance={last} mode="hero" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f0f0f] via-[#0f0f0f]/70 to-transparent" />
-          <div className="relative flex h-full flex-col justify-end gap-1 p-8">
-            <p className="m-0 text-[11px] font-medium uppercase tracking-[0.14em] text-muted">Continuar de onde parou</p>
-            <h2 className="m-0 text-[28px] font-semibold text-ink">{last.name}</h2>
-            <p className="m-0 text-xs text-muted">
-              {label(last)} · {ago(last.lastPlayedAt)}
-              {last.playTimeSecs > 0 && ` · ${hours(last.playTimeSecs)} jogadas`}
-            </p>
-            <div className="pt-4">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  go(last);
-                }}
-                className="inline-flex h-11 items-center gap-2.5 bg-ink px-7 text-sm font-semibold text-[#111] hover:bg-white"
-              >
-                <Play /> Jogar
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {last && <Hero inst={last} onOpen={() => navigate(route(last))} />}
 
       {sections.recent && rest.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h3 className="m-0 text-[13px] font-semibold text-ink">Continuar jogando</h3>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2">
+          <h3 className="m-0 text-base font-semibold text-ink">Continuar jogando</h3>
+          <div className="rog-cascade grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {rest.map((i) => (
-              <div key={i.id} onClick={() => navigate(route(i))} className="group flex cursor-pointer items-center gap-3 bg-surface p-2 pr-2.5 hover:bg-raised">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden bg-[#1c1c1c]">
-                  <InstanceCover instance={i} mode="card" />
+              <div key={i.id} onClick={() => navigate(route(i))} className="group flex cursor-pointer items-center gap-3 rounded-[10px] bg-surface p-2 pr-2.5 hover:bg-raised">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[6px] bg-raised">
+                  <InstanceCover instance={i} mode="mini" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="m-0 truncate text-[13px] font-medium text-ink">{i.name}</p>
-                  <p className="m-0 truncate text-[11px] text-faint">{label(i)}</p>
+                  <p className="m-0 truncate text-sm font-medium text-ink">{i.name}</p>
+                  <p className="m-0 truncate text-xs text-muted">{label(i)}</p>
                 </div>
                 <button
                   aria-label={`Jogar ${i.name}`}
@@ -131,7 +110,7 @@ export function Home() {
                     e.stopPropagation();
                     go(i);
                   }}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center text-muted hover:bg-ink hover:text-[#111] group-hover:text-ink"
+                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center bg-active text-ink hover:bg-ink hover:text-[#111112]"
                 >
                   <Play />
                 </button>
@@ -146,6 +125,27 @@ export function Home() {
       {creating && <NewInstanceModal onClose={() => setCreating(false)} defaultKind="vanilla" />}
       {importing && <ImportModal onClose={() => setImporting(false)} />}
     </div>
+  );
+}
+
+function Hero({ inst, onOpen }: { inst: Instance; onOpen: () => void }) {
+  const { tint } = useCover(inst);
+  return (
+    <section className="group relative h-[250px] shrink-0 cursor-pointer overflow-hidden rounded-[14px] bg-raised" onClick={onOpen}>
+      <InstanceCover instance={inst} mode="hero" />
+      <div className="absolute inset-0" style={{ backgroundImage: `linear-gradient(to right, rgb(11 11 12 / 0.96), rgb(${tint} / 0.28) 55%, rgb(${tint} / 0.05))` }} />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0b0b0c]/80 via-transparent to-transparent" />
+      <div className="relative flex h-full flex-col justify-end gap-1.5 p-8">
+        <p className="m-0 text-xs font-medium tracking-[0.06em] text-soft uppercase">Continuar de onde parou</p>
+        <h2 className="m-0 text-[28px] leading-9 font-semibold text-ink">{inst.name}</h2>
+        <div className="flex items-center gap-2 pb-3">
+          <Chip>{inst.mcVersion}</Chip>
+          {inst.loader.type !== "Vanilla" && <Chip>{inst.loader.type}</Chip>}
+          <span className="text-xs text-soft">{ago(inst.lastPlayedAt)}{inst.playTimeSecs > 0 && ` · ${hours(inst.playTimeSecs)} jogadas`}</span>
+        </div>
+        <PlayButton id={inst.id} className="self-start" onPlay={onOpen} />
+      </div>
+    </section>
   );
 }
 
@@ -179,35 +179,36 @@ function Discover({ onInstalled }: { onInstalled: (i: Instance) => void }) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline">
-        <h3 className="m-0 flex-1 text-[13px] font-semibold text-ink">Descobrir</h3>
-        <span className="text-[11px] text-faint">Modpacks do Modrinth</span>
+        <h3 className="m-0 text-base font-semibold text-ink">Descobrir</h3>
+        <span className="flex-1 pl-2.5 text-xs text-muted">Modpacks em alta no Modrinth</span>
+        <Link to="/mods/explorar" className="text-xs font-medium text-ink no-underline hover:underline">Ver todos →</Link>
       </div>
-      {error && <p className="m-0 text-xs text-[#e5484d]">{error}</p>}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
+      {error && <p className="m-0 text-xs text-danger">{error}</p>}
+      <div className="rog-cascade grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         {(hits ?? Array.from({ length: 4 }, () => null)).map((h, n) =>
           h ? (
-            <div key={h.project_id} className="group flex flex-col bg-surface">
-              <div className="relative aspect-[16/9] overflow-hidden bg-[#1c1c1c]">
+            <div key={h.project_id} className="group flex flex-col overflow-hidden rounded-[10px] bg-surface">
+              <div className="relative aspect-[16/9] overflow-hidden bg-raised">
                 {(h.featured_gallery || h.icon_url) && (
                   <img src={h.featured_gallery || h.icon_url!} alt="" className="h-full w-full object-cover brightness-[.85] transition-[transform,filter] duration-200 group-hover:scale-105 group-hover:brightness-100" />
                 )}
               </div>
               <div className="flex items-center gap-2 p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="m-0 truncate text-[13px] font-medium text-ink">{h.title}</p>
-                  <p className="m-0 text-[11px] text-faint">↓ {fmtCount(h.downloads)}</p>
+                  <p className="m-0 truncate text-sm font-medium text-ink">{h.title}</p>
+                  <p className="m-0 text-xs text-muted">↓ {fmtCount(h.downloads)}</p>
                 </div>
                 <button
                   disabled={busy !== null}
                   onClick={() => install(h)}
-                  className="h-8 shrink-0 bg-active px-3 text-xs font-semibold text-[#d0d0d0] hover:bg-ink hover:text-[#111] disabled:opacity-50"
+                  className="h-8 shrink-0 bg-active px-3 text-sm font-medium text-ink hover:bg-ink hover:text-[#111112] disabled:opacity-50"
                 >
                   {busy === h.project_id ? "Instalando…" : "Instalar"}
                 </button>
               </div>
             </div>
           ) : (
-            <div key={n} className="aspect-[16/12] animate-pulse bg-surface" />
+            <div key={n} className="aspect-[16/12] animate-pulse rounded-[10px] bg-surface" />
           ),
         )}
       </div>

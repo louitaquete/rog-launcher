@@ -50,14 +50,14 @@ export function LoginModal() {
       <div className="flex flex-col items-center gap-5 py-2 text-center">
         {error ? (
           <>
-            <p className="m-0 text-sm text-[#d0d0d0]">{error}</p>
+            <p className="m-0 text-sm text-soft">{error}</p>
             <Button variant="primary" onClick={begin}>Tentar de novo</Button>
           </>
         ) : !code ? (
           <p className="m-0 text-sm text-muted">Pedindo um código à Microsoft…</p>
         ) : (
           <>
-            <p className="m-0 text-sm text-[#9a9a9a]">
+            <p className="m-0 text-sm text-muted">
               Abrimos <span className="text-ink">{code.verificationUri.replace(/^https:\/\/(www\.)?/, "")}</span> no navegador. Digite este código lá:
             </p>
             <button

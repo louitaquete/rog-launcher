@@ -43,8 +43,8 @@ export function InstanceSettingsTab({ instance }: { instance: Instance }) {
     <div className="flex flex-col gap-8 px-10 py-8">
       <div>
         <h2 className="m-0 text-lg font-semibold">Configurações da instância</h2>
-        <p className="m-0 mt-1 text-[13px] text-muted">Valem só para {inst.name} e substituem as configurações globais</p>
-        {error && <p className="m-0 mt-2 text-xs text-[#e5484d]">{error}</p>}
+        <p className="m-0 mt-1 text-sm text-muted">Valem só para {inst.name} e substituem as configurações globais</p>
+        {error && <p className="m-0 mt-2 text-xs text-danger">{error}</p>}
       </div>
 
       {!isPvp && (
@@ -64,7 +64,7 @@ export function InstanceSettingsTab({ instance }: { instance: Instance }) {
                     refresh();
                   }
                 }}
-                className="border border-edge px-3 py-2 text-[13px] text-[#d0d0d0] hover:bg-raised"
+                className="border border-edge px-3 py-2 text-sm text-soft hover:bg-raised"
               >
                 Alterar imagem
               </button>
@@ -76,7 +76,7 @@ export function InstanceSettingsTab({ instance }: { instance: Instance }) {
                     setCover(null);
                     refresh();
                   }}
-                  className="px-2 py-2 text-[13px] text-muted hover:text-ink"
+                  className="px-2 py-2 text-sm text-muted hover:text-ink"
                 >
                   Remover
                 </button>

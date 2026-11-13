@@ -59,7 +59,7 @@ export function PrintsTab({ instance }: { instance: Instance }) {
         {shots.map((s) => (
           <button key={s.path} onClick={() => setView(s)} className="group relative aspect-video overflow-hidden bg-surface">
             {urls[s.path] && <img src={urls[s.path]} alt="" className="h-full w-full object-cover brightness-90 transition-[transform,filter] duration-200 group-hover:scale-105 group-hover:brightness-100" />}
-            <span className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/70 to-transparent px-2.5 pt-5 pb-1.5 text-left text-[11px] text-[#cfcfcf] opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/70 to-transparent px-2.5 pt-5 pb-1.5 text-left text-xs text-[#cfcfcf] opacity-0 transition-opacity group-hover:opacity-100">
               {new Date(s.modified * 1000).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
             </span>
           </button>
@@ -74,10 +74,10 @@ export function PrintsTab({ instance }: { instance: Instance }) {
           width={980}
           footer={
             <>
-              <button onClick={() => remove(view)} className="px-3 py-2 text-[13px] text-[#e5484d] hover:bg-[#e5484d] hover:text-[#111]">Apagar</button>
+              <button onClick={() => remove(view)} className="px-3 py-2 text-sm text-danger hover:bg-danger hover:text-[#111112]">Apagar</button>
               <span className="flex-1" />
-              <button onClick={() => shotsApi.open(instance.id, view.name, true)} className="px-4 py-2.5 text-[13px] text-[#d0d0d0] hover:bg-raised">Mostrar na pasta</button>
-              <button onClick={() => shotsApi.open(instance.id, view.name)} className="bg-ink px-4 py-2.5 text-[13px] font-semibold text-[#111] hover:bg-white">Abrir</button>
+              <button onClick={() => shotsApi.open(instance.id, view.name, true)} className="px-4 py-2.5 text-sm text-soft hover:bg-raised">Mostrar na pasta</button>
+              <button onClick={() => shotsApi.open(instance.id, view.name)} className="bg-ink px-4 py-2.5 text-sm font-semibold text-[#111112] hover:bg-white">Abrir</button>
             </>
           }
         >
