@@ -48,6 +48,10 @@ pub struct Hit {
     pub follows: u64,
     pub icon_url: Option<String>,
     pub url: Option<String>,
+    /// Primeira imagem da galeria do projeto, usada como banner (nem todo projeto tem).
+    pub featured_gallery: Option<String>,
+    pub date_modified: Option<String>,
+    pub categories: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -83,6 +87,24 @@ fn hit(m: &Value) -> Hit {
         follows: m["thumbsUpCount"].as_u64().unwrap_or(0),
         icon_url: m["logo"]["thumbnailUrl"].as_str().map(String::from),
         url: m["links"]["websiteUrl"].as_str().map(String::from),
+        featured_gallery: m["screenshots"][0]["url"].as_str().or(m["screenshots"][0]["thumbnailUrl"].as_str()).map(String::from),
+        date_modified: m["dateModified"].as_str().map(String::from),
+        categories: {
+            let mut out: Vec<String> = Vec::new();
+            for f in m["latestFilesIndexes"].as_array().into_iter().flatten() {
+                let name = match f["modLoader"].as_u64() {
+                    Some(1) => "forge",
+                    Some(4) => "fabric",
+                    Some(5) => "quilt",
+                    Some(6) => "neoforge",
+                    _ => continue,
+                };
+                if !out.iter().any(|x| x == name) {
+                    out.push(name.into());
+                }
+            }
+            out
+        },
     }
 }
 
