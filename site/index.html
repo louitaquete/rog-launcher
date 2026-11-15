@@ -36,8 +36,10 @@
     .lede { color: var(--soft); max-width: 56ch; }
 
     /* Topo */
-    .top { position: absolute; inset: 0 0 auto 0; z-index: 5; }
-    .top .wrap { display: flex; align-items: center; gap: 28px; height: 76px; }
+    .top { position: fixed; inset: 0 0 auto 0; z-index: 20; transition: background 200ms, backdrop-filter 200ms; }
+    .top.stuck { background: rgb(11 11 12 / 0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+    .top.stuck .wrap { height: 60px; }
+    .top .wrap { display: flex; align-items: center; gap: 28px; height: 76px; transition: height 200ms; }
     .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; margin-right: auto; }
     .brand img { width: 24px; height: 24px; }
     .brand span { font-family: Orbitron, sans-serif; font-size: 13px; letter-spacing: 0.08em; }
@@ -59,6 +61,13 @@
     .hero h1 { font-size: clamp(38px, 5.6vw, 76px); max-width: 14ch; }
     .hero .lede { margin-top: 22px; font-size: clamp(16px, 1.5vw, 19px); }
     .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 34px; }
+    @keyframes rise { from { opacity: 0; translate: 0 22px; } }
+    @keyframes land { from { opacity: 0; translate: -50% 90px; } }
+    @keyframes fade { from { opacity: 0; } }
+    .hero h1 { animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .hero .lede { animation: rise 700ms 120ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .hero .cta { animation: rise 700ms 220ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .glow, .floor-box { animation: fade 1200ms 300ms ease-out backwards; }
 
     /* Palco: chão em grade + a janela do launcher */
     .stage { position: relative; height: calc(min(1000px, 92vw) * 0.6 + clamp(90px, 13vw, 190px)); margin-top: clamp(28px, 4vw, 52px); perspective: 1400px; }
@@ -67,8 +76,10 @@
     .floor { position: absolute; left: -75%; right: -75%; bottom: -4%; height: 190%; transform-origin: 50% 100%; transform: perspective(460px) rotateX(70deg);
       background-image: linear-gradient(to right, rgb(255 255 255 / 0.34) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.34) 1px, transparent 1px);
       background-size: 72px 72px; animation: drift 9s linear infinite; }
+    .floor-box.hot { -webkit-mask-image: radial-gradient(circle 260px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%); mask-image: radial-gradient(circle 260px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%); animation: none; }
+    .floor-box.hot .floor { background-image: linear-gradient(to right, rgb(var(--tint)) 2px, transparent 2px), linear-gradient(to bottom, rgb(var(--tint)) 2px, transparent 2px); filter: brightness(1.7); }
     @keyframes drift { to { background-position: 0 72px; } }
-    .win { position: absolute; left: 50%; top: 0; width: min(1000px, 92vw); aspect-ratio: 1000 / 600; translate: -50% 0; transform: rotateX(var(--rx, 7deg)) rotateY(var(--ry, 0deg)); transition: transform 300ms ease-out;
+    .win { position: absolute; left: 50%; top: 0; width: min(1000px, 92vw); aspect-ratio: 1000 / 600; translate: -50% 0; transform: rotateX(var(--rx, 12deg)) rotateY(var(--ry, 0deg)) scale(var(--sc, 0.95)); transition: transform 260ms ease-out; animation: land 1000ms 380ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; transform-origin: 50% 100%;
       background: var(--bg); border-radius: 12px; overflow: hidden; box-shadow: 0 50px 110px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.07); display: grid; grid-template: 6.2% 1fr 6.8% / 6.4% 1fr; font-size: clamp(6px, 1.05vw, 11.5px); }
     .w-title { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.8em; padding: 0 1.4em; color: var(--soft); }
     .w-title img { height: 46%; } .w-title span { font-family: Orbitron, sans-serif; letter-spacing: 0.08em; font-size: 0.95em; }
@@ -88,6 +99,18 @@
     .cov small { position: absolute; z-index: 1; left: 9%; bottom: 7%; font-size: 0.95em; color: var(--soft); }
     .w-dock { display: flex; align-items: center; gap: 1em; padding: 0 1.6em; background: var(--surface); border-top: 1px solid var(--line); font-size: 1.05em; color: var(--muted); }
     .w-dock b { color: var(--ink); font-weight: 500; } .w-dock u { margin-left: auto; text-decoration: none; background: var(--hi); color: var(--ink); padding: 0.35em 1em; border-radius: 0.5em; font-weight: 500; }
+    .w-dock .bar { width: 22%; height: 0.36em; border-radius: 0.2em; background: var(--hi); overflow: hidden; }
+    .w-dock .bar s { display: block; height: 100%; width: 0; background: var(--ink); }
+    .w-dock .live { color: var(--play); font-weight: 500; display: inline-flex; align-items: center; gap: 0.6em; }
+    .w-dock .live::before, .w-rail span.playing::after { content: ""; width: 0.7em; height: 0.7em; border-radius: 50%; background: var(--play); animation: breathe 2s ease-in-out infinite; }
+    .w-rail span { position: relative; }
+    .w-rail span.playing::after { position: absolute; top: 8%; right: 8%; width: 22%; height: 22%; box-shadow: 0 0 0 2px var(--surface); }
+    .w-dock u.press { background: var(--ink); color: #111112; transform: scale(0.94); }
+    .w-dock u { transition: transform 160ms, background 160ms, color 160ms; }
+    .cov i { position: absolute; z-index: 2; left: 0; bottom: 0; height: 4%; width: 0; background: var(--ink); }
+    .cov em { position: absolute; z-index: 2; top: 7%; left: 8%; font-style: normal; font-size: 0.9em; font-weight: 500; color: var(--play); background: rgb(11 11 12 / 0.7); padding: 0.2em 0.7em; border-radius: 0.5em; opacity: 0; transition: opacity 200ms; }
+    .cov.live em { opacity: 1; }
+    @keyframes breathe { 50% { opacity: 0.45; scale: 0.8; } }
     .stage-note { text-align: center; color: var(--muted); font-size: 14px; margin-top: 6px; padding: 0 24px; }
 
     section.block { padding: clamp(84px, 11vw, 150px) 0 0; }
@@ -105,6 +128,12 @@
     .panel ul { list-style: none; margin-top: 22px; display: grid; gap: 10px; }
     .panel li { display: flex; gap: 12px; align-items: baseline; color: var(--ink); font-size: 15px; }
     .panel li::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 2px; background: rgb(var(--tint)); translate: 0 -1px; }
+    @keyframes swap { from { opacity: 0; translate: 14px 0; } }
+    @keyframes zoom { from { opacity: 0; scale: 1.06; } }
+    .panel > div:first-child > * { animation: swap 360ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .panel > div:first-child > :nth-child(2) { animation-delay: 50ms; }
+    .panel > div:first-child > :nth-child(3) { animation-delay: 100ms; }
+    .panel .shot { animation: zoom 500ms ease-out backwards; }
     .shot { aspect-ratio: 16 / 10; border-radius: 14px; background: var(--raised) center / cover; position: relative; overflow: hidden; }
     .shot::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, rgb(11 11 12 / 0.55), transparent 60%); }
 
@@ -113,6 +142,16 @@
     .choice { background: var(--surface); border-radius: 14px; overflow: hidden; }
     .choice .art { height: clamp(150px, 20vw, 230px); display: grid; place-items: center; background: #070708; }
     .choice .art svg { width: clamp(110px, 14vw, 160px); height: auto; }
+    .choice .cb { opacity: 0; translate: 0 -34px; transition: opacity 260ms ease-out, translate 520ms cubic-bezier(0.34, 1.4, 0.64, 1); }
+    .choice.in .cb { opacity: 1; translate: 0 0; }
+    .choice.in .c2 { transition-delay: 140ms; } .choice.in .c3 { transition-delay: 320ms; }
+    .choice .draw { stroke-dasharray: 5 4; opacity: 0; transition: opacity 500ms ease-out; }
+    .choice.in .draw { opacity: 1; }
+    .choice .plus { scale: 0; transform-origin: 89px 87px; transition: scale 420ms 380ms cubic-bezier(0.34, 1.7, 0.64, 1); }
+    .choice.in .plus { scale: 1; }
+    .choice { transition: translate 200ms ease-out, background 200ms; }
+    .choice:hover { translate: 0 -4px; background: var(--raised); }
+    .choice:hover .art svg { scale: 1.06; } .choice .art svg { transition: scale 300ms ease-out; }
     .choice div.txt { padding: 24px 28px 28px; }
     .choice h3 { font-size: 22px; } .choice p { color: var(--soft); margin-top: 8px; max-width: 44ch; }
     .also { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 56px; }
@@ -149,6 +188,8 @@
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .floor { animation: none; }
+      .hero h1, .hero .lede, .hero .cta, .win, .glow, .floor-box, .panel * { animation: none !important; }
+      .choice .cb, .choice .draw, .choice .plus { opacity: 1; translate: none; scale: 1; }
       *, :root { transition-duration: 0ms !important; }
     }
   </style>
@@ -180,6 +221,7 @@
       <div class="stage" id="stage">
         <div class="glow"></div>
         <div class="floor-box"><div class="floor"></div></div>
+        <div class="floor-box hot" aria-hidden="true"><div class="floor"></div></div>
         <div class="win" id="win">
           <div class="w-title"><img src="assets/logo.svg" alt="" /><span>ROG LAUNCHER</span><i><b></b><b></b><b></b></i></div>
           <div class="w-rail">
@@ -194,10 +236,10 @@
             <div class="w-tabs"><span class="on">Minhas instâncias</span><span>Explorar modpacks</span></div>
             <div class="w-grid" id="covers"></div>
           </div>
-          <div class="w-dock">Continuar <b id="dock-name">Survival com amigos</b> jogada há 2 h <u>Jogar</u></div>
+          <div class="w-dock" id="dock"></div>
         </div>
       </div>
-      <p class="stage-note">Escolha uma instância: o launcher tira a cor da capa de cada uma, e esta página também.</p>
+      <p class="stage-note">Isto é uma demonstração: passe o mouse nas instâncias e veja a cor da capa tomar conta da página.</p>
     </section>
 
     <section class="block">
@@ -217,11 +259,11 @@
         <p class="lede" style="margin-top:16px">Ao criar uma instância, o launcher pergunta primeiro como você quer começar.</p>
         <div class="two">
           <div class="choice">
-            <div class="art"><svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><path d="M38 52L60 63L38 74L16 63Z" fill="#b6b6bb"/><path d="M16 63L38 74L38 96L16 85Z" fill="#6a6a70"/><path d="M60 63L38 74L38 96L60 85Z" fill="#4a4a50"/><path d="M82 52L104 63L82 74L60 63Z" fill="#b6b6bb"/><path d="M60 63L82 74L82 96L60 85Z" fill="#6a6a70"/><path d="M104 63L82 74L82 96L104 85Z" fill="#4a4a50"/><path d="M60 19L82 30L60 41L38 30Z" fill="#f2f2f2"/><path d="M38 30L60 41L60 63L38 52Z" fill="#b6b6bb"/><path d="M82 30L60 41L60 63L82 52Z" fill="#86868c"/></svg></div>
+            <div class="art"><svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><g class="cb c1"><path d="M38 52L60 63L38 74L16 63Z" fill="#b6b6bb"/><path d="M16 63L38 74L38 96L16 85Z" fill="#6a6a70"/><path d="M60 63L38 74L38 96L60 85Z" fill="#4a4a50"/></g><g class="cb c2"><path d="M82 52L104 63L82 74L60 63Z" fill="#b6b6bb"/><path d="M60 63L82 74L82 96L60 85Z" fill="#6a6a70"/><path d="M104 63L82 74L82 96L104 85Z" fill="#4a4a50"/></g><g class="cb c3"><path d="M60 19L82 30L60 41L38 30Z" fill="#f2f2f2"/><path d="M38 30L60 41L60 63L38 52Z" fill="#b6b6bb"/><path d="M82 30L60 41L60 63L82 52Z" fill="#86868c"/></g></svg></div>
             <div class="txt"><h3>Modpack pronto</h3><p>Busque no Modrinth e no CurseForge ao mesmo tempo, escolha a versão e instale. Os mods já vêm configurados.</p></div>
           </div>
           <div class="choice">
-            <div class="art"><svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><g stroke="#86868c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 4"><path d="M56 28L86 43L56 58L26 43Z"/><path d="M26 43L26 73L56 88L86 73L86 43"/><path d="M56 58L56 88"/></g><rect x="74" y="72" width="30" height="30" rx="7" fill="#f2f2f2"/><path d="M89 80v14M82 87h14" stroke="#111112" stroke-width="2.6" stroke-linecap="round"/></svg></div>
+            <div class="art"><svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><g class="draw" stroke="#86868c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M56 28L86 43L56 58L26 43Z"/><path d="M26 43L26 73L56 88L86 73L86 43"/><path d="M56 58L56 88"/></g><g class="plus"><rect x="74" y="72" width="30" height="30" rx="7" fill="#f2f2f2"/><path d="M89 80v14M82 87h14" stroke="#111112" stroke-width="2.6" stroke-linecap="round"/></g></svg></div>
             <div class="txt"><h3>Do zero</h3><p>Escolha a versão do Minecraft e o loader: Fabric, Forge, NeoForge, Quilt ou nenhum. Os mods você adiciona depois.</p></div>
           </div>
         </div>
@@ -276,35 +318,93 @@
       { n: "Distant Horizons", v: "NeoForge 1.21.1", img: "1.20", t: "217 138 168" },
       { n: "Cobblemon", v: "Fabric 1.21.1", img: "1.17", t: "128 96 190" },
     ];
-    const covers = document.getElementById("covers");
-    covers.innerHTML = INST.map((i, k) => `<button class="cov" data-k="${k}" style="background-image:url(assets/banners/${i.img}.webp)" aria-label="${i.n}"><b>${i.n}</b><small>${i.v}</small></button>`).join("");
-    const pick = (k) => {
-      covers.querySelectorAll(".cov").forEach((c, n) => c.classList.toggle("on", n === k));
-      setTint(INST[k].t);
-      document.getElementById("dock-name").textContent = INST[k].n;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const covers = document.getElementById("covers"), dock = document.getElementById("dock"), anvil = document.querySelector(".w-rail span.on");
+    covers.innerHTML = INST.map((i, k) => `<button class="cov" data-k="${k}" style="background-image:url(assets/banners/${i.img}.webp)" aria-label="${i.n}"><em>Em jogo</em><b>${i.n}</b><small>${i.v}</small><i></i></button>`).join("");
+    const cards = [...covers.querySelectorAll(".cov")];
+    let cur = 0, timers = [], holdUntil = 0;
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    const idle = (k) => {
+      cards.forEach((c) => { c.classList.remove("live"); const i = c.querySelector("i"); i.style.transition = "none"; i.style.width = "0"; });
+      anvil.classList.remove("playing");
+      dock.innerHTML = `Continuar <b>${INST[k].n}</b> jogada há 2 h <u>Jogar</u>`;
     };
-    covers.addEventListener("pointerover", (e) => { const c = e.target.closest(".cov"); if (c) pick(+c.dataset.k); });
-    covers.addEventListener("focusin", (e) => { const c = e.target.closest(".cov"); if (c) pick(+c.dataset.k); });
-    covers.addEventListener("click", (e) => { const c = e.target.closest(".cov"); if (c) pick(+c.dataset.k); });
+    const pick = (k) => {
+      cur = k;
+      cards.forEach((c, n) => c.classList.toggle("on", n === k));
+      setTint(INST[k].t);
+      idle(k);
+    };
+    // Roteiro da demonstração: Jogar → baixa (o progresso enche) → Em jogo → próxima instância.
+    const act = () => {
+      timers.forEach(clearTimeout); timers = [];
+      const wait = Math.max(0, holdUntil - Date.now());
+      later(() => dock.querySelector("u")?.classList.add("press"), wait + 1500);
+      later(() => {
+        dock.innerHTML = `Baixando <b>${INST[cur].n}</b> <span class="bar"><s></s></span> <span id="pct">0%</span> <u>Cancelar</u>`;
+        const bar = dock.querySelector("s"), line = cards[cur].querySelector("i"), pct = dock.querySelector("#pct");
+        requestAnimationFrame(() => requestAnimationFrame(() => { for (const el of [bar, line]) { el.style.transition = "width 2200ms cubic-bezier(0.3, 0, 0.3, 1)"; el.style.width = "100%"; } }));
+        const t0 = performance.now();
+        const tick = (now) => { const p = Math.min(1, (now - t0) / 2200); if (pct.isConnected) { pct.textContent = Math.round(p * 100) + "%"; if (p < 1) requestAnimationFrame(tick); } };
+        requestAnimationFrame(tick);
+      }, wait + 1800);
+      later(() => {
+        cards[cur].querySelector("i").style.width = "0";
+        cards[cur].classList.add("live");
+        anvil.classList.add("playing");
+        dock.innerHTML = `<span class="live">Em jogo</span> <b>${INST[cur].n}</b> agora <u>Ver logs</u>`;
+      }, wait + 4200);
+      later(() => { pick((cur + 1) % INST.length); act(); }, wait + 7200);
+    };
+    const choose = (e) => {
+      const c = e.target.closest(".cov");
+      if (!c || +c.dataset.k === cur && Date.now() < holdUntil) return;
+      holdUntil = Date.now() + 2500; // dá um tempo antes de retomar o roteiro
+      pick(+c.dataset.k);
+      if (!reduce) act();
+    };
+    covers.addEventListener("pointerover", choose);
+    covers.addEventListener("focusin", choose);
+    covers.addEventListener("click", choose);
     pick(0);
+    if (!reduce) {
+      act();
+      document.addEventListener("visibilitychange", () => (document.hidden ? (timers.forEach(clearTimeout), (timers = [])) : (idle(cur), act())));
+    }
 
-    // A janela inclina de leve acompanhando o mouse.
-    const stage = document.getElementById("stage"), win = document.getElementById("win");
-    if (matchMedia("(pointer: fine)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // A janela endireita conforme a página rola e inclina de leve com o mouse; o chão acende perto do ponteiro.
+    const stage = document.getElementById("stage"), win = document.getElementById("win"), hot = document.querySelector(".floor-box.hot"), topBar = document.querySelector(".top");
+    let base = 12, mx = 0, my = 0;
+    const apply = () => { win.style.setProperty("--rx", base - my * 5 + "deg"); win.style.setProperty("--ry", mx * 7 + "deg"); };
+    const onScroll = () => {
+      topBar.classList.toggle("stuck", scrollY > 24);
+      if (reduce) return;
+      const r = stage.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.9)));
+      base = 16 - 14 * p;
+      win.style.setProperty("--sc", 0.9 + 0.1 * p);
+      apply();
+    };
+    addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    if (matchMedia("(pointer: fine)").matches && !reduce) {
       stage.addEventListener("pointermove", (e) => {
-        const r = stage.getBoundingClientRect();
-        win.style.setProperty("--ry", ((e.clientX - r.left) / r.width - 0.5) * 7 + "deg");
-        win.style.setProperty("--rx", 7 - ((e.clientY - r.top) / r.height - 0.5) * 5 + "deg");
+        const r = stage.getBoundingClientRect(), h = hot.getBoundingClientRect();
+        mx = (e.clientX - r.left) / r.width - 0.5;
+        my = (e.clientY - r.top) / r.height - 0.5;
+        hot.style.setProperty("--mx", e.clientX - h.left + "px");
+        hot.style.setProperty("--my", e.clientY - h.top + "px");
+        apply();
       });
-      stage.addEventListener("pointerleave", () => { win.style.removeProperty("--ry"); win.style.removeProperty("--rx"); });
+      stage.addEventListener("pointerleave", () => { mx = my = 0; hot.style.setProperty("--mx", "-999px"); apply(); });
     }
 
     // Áreas do launcher.
     const AREAS = [
-      { id: "home", name: "Início", h: "Volte para onde parou.", p: "A última instância que você jogou aparece em destaque, com as recentes logo abaixo e modpacks em alta para descobrir.", li: ["Um clique para continuar jogando", "Seções que você liga e desliga", "O progresso do download fica no rodapé"], img: "1.20" },
-      { id: "vanilla", name: "Vanilla", h: "O jogo puro, em qualquer versão.", p: "Do 1.8 ao lançamento mais recente, com snapshots se você quiser. O launcher baixa o Java certo para cada versão.", li: ["Uma instância para cada versão", "Mundos e configurações separados", "Memória e Java ajustáveis por instância"], img: "1.18" },
-      { id: "mods", name: "Mods", h: "A bigorna é a forja dos mods.", p: "Crie instâncias com Fabric, Forge, NeoForge ou Quilt e instale mods, resource packs e shaders sem abrir o navegador.", li: ["Modrinth e CurseForge na mesma busca", "Ligue, desligue e atualize cada mod", "Exporte uma instância para mandar a um amigo"], img: "1.21" },
-      { id: "pvp", name: "PVP", h: "A espada é só para combate.", p: "Uma instância dedicada ao PVP: escolha a versão de combate, OptiFine ou Fabric, e entre no jogo.", li: ["Do 1.8 clássico ao 1.21", "Troca de versão em um clique", "Skin própria para o PVP"], img: "1.8" },
+      { id: "home", name: "Início", h: "Volte para onde parou.", p: "A última instância que você jogou aparece em destaque, com as recentes logo abaixo e modpacks em alta para descobrir.", li: ["Um clique para continuar jogando", "Seções que você liga e desliga", "O progresso do download fica no rodapé"], img: "1.20", t: "217 138 168" },
+      { id: "vanilla", name: "Vanilla", h: "O jogo puro, em qualquer versão.", p: "Do 1.8 ao lançamento mais recente, com snapshots se você quiser. O launcher baixa o Java certo para cada versão.", li: ["Uma instância para cada versão", "Mundos e configurações separados", "Memória e Java ajustáveis por instância"], img: "1.18", t: "79 143 184" },
+      { id: "mods", name: "Mods", h: "A bigorna é a forja dos mods.", p: "Crie instâncias com Fabric, Forge, NeoForge ou Quilt e instale mods, resource packs e shaders sem abrir o navegador.", li: ["Modrinth e CurseForge na mesma busca", "Ligue, desligue e atualize cada mod", "Exporte uma instância para mandar a um amigo"], img: "1.21", t: "200 100 44" },
+      { id: "pvp", name: "PVP", h: "A espada é só para combate.", p: "Uma instância dedicada ao PVP: escolha a versão de combate, OptiFine ou Fabric, e entre no jogo.", li: ["Do 1.8 clássico ao 1.21", "Troca de versão em um clique", "Skin própria para o PVP"], img: "1.8", t: "60 150 140" },
     ];
     const rail = document.getElementById("rail"), panel = document.getElementById("panel"), cap = document.getElementById("cap");
     AREAS.forEach((a, k) => rail.insertAdjacentHTML("beforeend", `<button role="tab" aria-label="${a.name}" title="${a.name}" data-k="${k}"><img src="assets/icons/${a.id}.svg" alt="" /></button>`));
@@ -315,7 +415,9 @@
       cap.style.transform = `translate(${b.offsetLeft - 8}px, ${b.offsetTop - 8}px)`;
       panel.innerHTML = `<div><h3>${a.h}</h3><p>${a.p}</p><ul>${a.li.map((x) => `<li>${x}</li>`).join("")}</ul></div><div class="shot" style="background-image:url(assets/banners/${a.img}.webp)"></div>`;
     };
-    rail.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) show(+b.dataset.k); });
+    rail.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { show(+b.dataset.k); holdUntil = Date.now() + 6000; timers.forEach(clearTimeout); timers = []; setTint(AREAS[+b.dataset.k].t); if (!reduce) later(() => { pick(cur); act(); }, 6000); } });
+    const seen = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && (e.target.classList.add("in"), seen.unobserve(e.target))), { threshold: 0.45 });
+    document.querySelectorAll(".choice").forEach((c) => seen.observe(c));
     addEventListener("resize", () => show(+rail.querySelector('[aria-selected="true"]').dataset.k));
     show(2);
 
