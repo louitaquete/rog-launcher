@@ -56,11 +56,31 @@
     .play.sent { background: rgb(61 220 132 / 0.15); color: var(--play); }
     .under { font-size: 14px; color: var(--muted); }
 
-    /* Abertura */
-    .hero { position: relative; padding-top: 128px; }
-    .hero h1 { font-size: clamp(38px, 5.6vw, 76px); max-width: 14ch; }
-    .hero .lede { margin-top: 22px; font-size: clamp(16px, 1.5vw, 19px); }
+    /* Abertura: o mundo da instância ocupa a tela inteira */
+    .hero { position: relative; height: 100svh; min-height: 620px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 70px 0 clamp(196px, 26vh, 250px); overflow: hidden; isolation: isolate; }
+    .slides { position: absolute; inset: 0; z-index: -2; animation: pow 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .slide { position: absolute; inset: 0; background: center / cover; opacity: 0; transition: opacity 900ms ease; }
+    .slide.on { opacity: 1; animation: kb 10s linear forwards; }
+    @keyframes kb { from { scale: 1; } to { scale: 1.09; } }
+    @keyframes pow { from { scale: 1.22; filter: brightness(2.4) saturate(1.5); } }
+    .veil { position: absolute; inset: 0; z-index: -1; background: radial-gradient(70% 60% at 50% 42%, rgb(11 11 12 / 0.5), rgb(11 11 12 / 0.2) 70%), linear-gradient(to bottom, rgb(11 11 12 / 0.72) 0%, rgb(var(--tint) / 0.12) 34%, rgb(11 11 12 / 0.5) 68%, var(--bg) 100%); }
+    .hero h1 { font-size: clamp(40px, min(7.6vw, 10.4vh), 116px); max-width: 12ch; margin-inline: auto; line-height: 1.02; letter-spacing: -0.035em; text-wrap: balance; text-shadow: 0 6px 40px rgb(0 0 0 / 0.45); }
+    .hero .lede { margin: 18px auto 0; font-size: clamp(16px, 1.5vw, 20px); color: var(--ink); opacity: 0.86; max-width: 50ch; }
     .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 34px; }
+    .hero .cta { justify-content: center; flex-direction: column; gap: 10px; margin-top: 26px; }
+    .hero .play { height: 64px; padding: 0 38px; font-size: 19px; box-shadow: 0 18px 50px rgb(0 0 0 / 0.45); }
+    .hero .under { color: var(--ink); opacity: 0.7; }
+    .thumbs { display: flex; justify-content: center; gap: 8px; margin-top: clamp(20px, 3.4vh, 34px); animation: rise 700ms 320ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .thumbs button { position: relative; width: clamp(56px, 6vw, 84px); aspect-ratio: 84 / 50; border-radius: 6px; overflow: hidden; background: center / cover; opacity: 0.55; outline: 2px solid transparent; transition: opacity 200ms, outline-color 200ms, translate 200ms; }
+    .thumbs button:hover { opacity: 0.9; translate: 0 -2px; }
+    .thumbs button.on { opacity: 1; outline-color: var(--ink); }
+    .thumbs button i { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--ink); }
+    .thumbs button.on i { animation: fill var(--dur, 7200ms) linear forwards; }
+    @keyframes fill { to { width: 100%; } }
+    .cue { position: absolute; left: 50%; bottom: clamp(136px, 18vh, 180px); translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 13px; color: var(--ink); opacity: 0.8; text-decoration: none; animation: fade 800ms 900ms backwards; }
+    .cue svg { animation: nudge 1.6s ease-in-out infinite; }
+    @keyframes nudge { 50% { translate: 0 6px; } }
+    .demo { position: relative; z-index: 2; margin-top: clamp(-220px, -21vh, -150px); }
     @keyframes rise { from { opacity: 0; translate: 0 22px; } }
     @keyframes land { from { opacity: 0; translate: -50% 90px; } }
     @keyframes fade { from { opacity: 0; } }
@@ -70,7 +90,7 @@
     .glow, .floor-box { animation: fade 1200ms 300ms ease-out backwards; }
 
     /* Palco: chão em grade + a janela do launcher */
-    .stage { position: relative; height: calc(min(1000px, 92vw) * 0.6 + clamp(90px, 13vw, 190px)); margin-top: clamp(28px, 4vw, 52px); perspective: 1400px; }
+    .stage { position: relative; height: calc(min(1000px, 92vw) * 0.6 + clamp(90px, 13vw, 190px)); perspective: 1400px; }
     .glow { position: absolute; inset: -12% 0 0 0; background: radial-gradient(58% 60% at 50% 46%, rgb(var(--tint) / 0.5), transparent 72%); }
     .floor-box { position: absolute; inset: 34% 0 0 0; overflow: hidden; -webkit-mask-image: linear-gradient(to top, #000 22%, transparent 96%); mask-image: linear-gradient(to top, #000 22%, transparent 96%); }
     .floor { position: absolute; left: -75%; right: -75%; bottom: -4%; height: 190%; transform-origin: 50% 100%; transform: perspective(460px) rotateX(70deg);
@@ -176,7 +196,6 @@
 
     @media (max-width: 860px) {
       .top a.link { display: none; }
-      .hero { padding-top: 120px; }
       .w-grid { grid-template-columns: repeat(3, 1fr); } .w-grid .cov:nth-child(n + 4) { display: none; }
       .win { font-size: clamp(6px, 1.9vw, 11px); aspect-ratio: 1000 / 700; }
       .areas { grid-template-columns: 1fr; }
@@ -188,7 +207,7 @@
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .floor { animation: none; }
-      .hero h1, .hero .lede, .hero .cta, .win, .glow, .floor-box, .panel * { animation: none !important; }
+      .hero h1, .hero .lede, .hero .cta, .thumbs, .slides, .slide.on, .cue, .cue svg, .win, .glow, .floor-box, .panel * { animation: none !important; }
       .choice .cb, .choice .draw, .choice .plus { opacity: 1; translate: none; scale: 1; }
       *, :root { transition-duration: 0ms !important; }
     }
@@ -206,18 +225,24 @@
 
   <main>
     <section class="hero">
+      <div class="slides" id="slides" aria-hidden="true"></div>
+      <div class="veil" aria-hidden="true"></div>
       <div class="wrap">
         <h1>Todo o seu Minecraft em um launcher só.</h1>
-        <p class="lede">Vanilla, mods, modpacks e PVP, cada um na sua instância. Gratuito, de código aberto e feito para Windows.</p>
+        <p class="lede">Vanilla, mods, modpacks e PVP, cada um na sua instância. Gratuito e de código aberto.</p>
         <div class="cta">
           <a class="play dl off" href="https://github.com/louitaquete/rog-launcher/releases">
-            <svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8 L10 6 L3 10.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg>
+            <svg width="16" height="16" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8 L10 6 L3 10.2 Z" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg>
             <span class="dl-text">Procurando a versão mais recente…</span>
           </a>
           <span class="under" id="ver">Minecraft: Java Edition, Windows 10 e 11</span>
         </div>
+        <div class="thumbs" id="thumbs" aria-label="Trocar o mundo de fundo"></div>
       </div>
+      <a class="cue" href="#stage">Role para ver por dentro<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg></a>
+    </section>
 
+    <section class="demo">
       <div class="stage" id="stage">
         <div class="glow"></div>
         <div class="floor-box"><div class="floor"></div></div>
@@ -322,6 +347,10 @@
     const covers = document.getElementById("covers"), dock = document.getElementById("dock"), anvil = document.querySelector(".w-rail span.on");
     covers.innerHTML = INST.map((i, k) => `<button class="cov" data-k="${k}" style="background-image:url(assets/banners/${i.img}.webp)" aria-label="${i.n}"><em>Em jogo</em><b>${i.n}</b><small>${i.v}</small><i></i></button>`).join("");
     const cards = [...covers.querySelectorAll(".cov")];
+    const slidesBox = document.getElementById("slides"), thumbsBox = document.getElementById("thumbs");
+    slidesBox.innerHTML = INST.map((i) => `<div class="slide" style="background-image:url(assets/banners/${i.img}.webp)"></div>`).join("");
+    thumbsBox.innerHTML = INST.map((i, k) => `<button data-k="${k}" aria-label="${i.n}" style="background-image:url(assets/banners/${i.img}.webp)"><i></i></button>`).join("");
+    const slides = [...slidesBox.children], thumbs = [...thumbsBox.children];
     let cur = 0, timers = [], holdUntil = 0;
     const later = (fn, ms) => timers.push(setTimeout(fn, ms));
     const idle = (k) => {
@@ -332,6 +361,8 @@
     const pick = (k) => {
       cur = k;
       cards.forEach((c, n) => c.classList.toggle("on", n === k));
+      slides.forEach((c, n) => c.classList.toggle("on", n === k));
+      thumbs.forEach((c, n) => c.classList.toggle("on", n === k));
       setTint(INST[k].t);
       idle(k);
     };
@@ -339,6 +370,10 @@
     const act = () => {
       timers.forEach(clearTimeout); timers = [];
       const wait = Math.max(0, holdUntil - Date.now());
+      // A linha sob a miniatura marca quanto falta para trocar de mundo.
+      const line = thumbs[cur].querySelector("i");
+      thumbs[cur].style.setProperty("--dur", wait + 7200 + "ms");
+      line.style.animation = "none"; void line.offsetWidth; line.style.animation = "";
       later(() => dock.querySelector("u")?.classList.add("press"), wait + 1500);
       later(() => {
         dock.innerHTML = `Baixando <b>${INST[cur].n}</b> <span class="bar"><s></s></span> <span id="pct">0%</span> <u>Cancelar</u>`;
@@ -357,7 +392,7 @@
       later(() => { pick((cur + 1) % INST.length); act(); }, wait + 7200);
     };
     const choose = (e) => {
-      const c = e.target.closest(".cov");
+      const c = e.target.closest("[data-k]");
       if (!c || +c.dataset.k === cur && Date.now() < holdUntil) return;
       holdUntil = Date.now() + 2500; // dá um tempo antes de retomar o roteiro
       pick(+c.dataset.k);
@@ -366,6 +401,7 @@
     covers.addEventListener("pointerover", choose);
     covers.addEventListener("focusin", choose);
     covers.addEventListener("click", choose);
+    thumbsBox.addEventListener("click", choose);
     pick(0);
     if (!reduce) {
       act();
