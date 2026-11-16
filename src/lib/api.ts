@@ -35,6 +35,7 @@ export interface Instance {
   overrides: Overrides;
   skin: { enabled: boolean; skinId: string | null };
   launchVersion: string | null;
+  pinned?: boolean;
 }
 
 export interface NewInstance {
@@ -297,6 +298,10 @@ export interface ContentMeta {
   versionNumber: string;
   title: string;
   iconUrl: string | null;
+  /** Veio como dependência de outro mod. */
+  auto?: boolean;
+  /** Projetos que este exige. */
+  deps?: string[];
 }
 
 export interface ContentItem {

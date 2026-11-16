@@ -38,6 +38,12 @@ pub struct Meta {
     pub version_number: String,
     pub title: String,
     pub icon_url: Option<String>,
+    /// Veio junto como dependência de outro mod (não foi escolha direta do jogador).
+    #[serde(default)]
+    pub auto: bool,
+    /// Projetos que este exige (para avisar antes de remover uma biblioteca).
+    #[serde(default)]
+    pub deps: Vec<String>,
 }
 
 /// Item mostrado na lista de instalados.

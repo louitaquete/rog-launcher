@@ -46,6 +46,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loginOpen, setLoginOpen] = useState(false);
   const [update, setUpdate] = useState<{ version: string; url: string; download: string | null } | null>(null);
   const checked = useRef(false);
+  // Escala da interface: vale para o app inteiro, janelas e menus incluídos.
+  useEffect(() => {
+    const z = Math.min(1.5, Math.max(0.8, (settings?.appearance.uiScale ?? 100) / 100));
+    document.documentElement.style.setProperty("--ui", String(z));
+  }, [settings?.appearance.uiScale]);
   useEffect(() => {
     if (!settings || checked.current) return;
     checked.current = true;

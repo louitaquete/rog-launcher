@@ -88,6 +88,9 @@ pub struct Instance {
     /// Versão a abrir quando há loader (pasta em `versions/`, ex.: "fabric-loader-0.16.9-1.21.4").
     #[serde(default)]
     pub launch_version: Option<String>,
+    /// Fixada no topo da biblioteca.
+    #[serde(default)]
+    pub pinned: bool,
 }
 
 fn yes() -> bool {
@@ -196,6 +199,7 @@ impl Store {
         }
 
         let inst = Instance {
+            pinned: false,
             id: id.clone(),
             name: name.to_string(),
             kind: new.kind,
@@ -258,6 +262,7 @@ impl Store {
             return Ok(());
         }
         let inst = Instance {
+            pinned: false,
             id: PVP_ID.into(),
             name: "Minecraft PVP".into(),
             kind: Kind::Pvp,

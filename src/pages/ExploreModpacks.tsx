@@ -41,6 +41,119 @@ export function ModsTabs() {
   );
 }
 
+const CATS = [
+  { id: "", label: "Vitrine" },
+  { id: "optimization", label: "Otimização" },
+  { id: "adventure", label: "Aventura e RPG" },
+  { id: "technology", label: "Tecnologia" },
+  { id: "magic", label: "Magia" },
+  { id: "multiplayer", label: "Para jogar com amigos" },
+  { id: "lightweight", label: "Leves" },
+  { id: "challenging", label: "Hardcore" },
+];
+const loaderChips = (h: Hit) => (h.categories ?? []).filter((c) => ["fabric", "forge", "neoforge", "quilt"].includes(c)).slice(0, 2).map((c) => <Chip key={c}>{LOADERS.find((l) => l.value === c)?.label}</Chip>);
+
+/** Card de loja: imagem em cima, texto embaixo. De propósito diferente do card da biblioteca. */
+function StoreCard({ item: h, mine, active, onOpen }: { item: Item; mine: boolean; active?: boolean; onOpen: (i: Item) => void }) {
+  return (
+    <button onClick={() => onOpen(h)} className={`group flex flex-col overflow-hidden !rounded-[10px] border bg-surface text-left hover:bg-raised ${active ? "border-ink" : "border-transparent hover:border-muted"}`}>
+      <span className="relative block h-[124px] w-full shrink-0 overflow-hidden bg-raised">
+        {(h.featured_gallery || h.icon_url) && <img src={h.featured_gallery || h.icon_url!} alt="" loading="lazy" className={`h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.04] ${h.featured_gallery ? "" : "scale-110 blur-xl brightness-75"}`} />}
+        {!h.featured_gallery && h.icon_url && <img src={h.icon_url} alt="" className="absolute top-1/2 left-1/2 h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 rounded-[10px] object-cover shadow-[0_8px_24px_rgba(0,0,0,0.5)]" />}
+        {mine && <span className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-[6px] bg-[#0b0b0c]/75 px-2 py-1 text-xs font-medium text-playing"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>Na sua biblioteca</span>}
+        <span className="absolute top-2.5 right-2.5 rounded-[6px] bg-[#0b0b0c]/75 px-2 py-1 text-xs font-medium text-ink">{SRC[h.src]}</span>
+      </span>
+      <span className="flex w-full flex-col gap-1.5 px-3.5 py-3">
+        <span className="flex items-center gap-2">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-ink">{h.title}</span>
+            <span className="block truncate text-xs text-muted">por {h.author}</span>
+          </span>
+          <span className="shrink-0 rounded-[6px] bg-ink px-3.5 py-1.5 text-sm font-medium text-[#111112] opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Instalar</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          {loaderChips(h)}
+          <span className="flex-1" />
+          <span className="text-xs font-medium text-muted">↓ {fmtCount(h.downloads)}</span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/** Vitrine: um destaque que alterna e prateleiras por tema. */
+function Showcase({ cf, source, mine, onOpen, onAll }: { cf: boolean; source: "all" | Src; mine: Set<string>; onOpen: (i: Item) => void; onAll: (cat: string, sort: Sort) => void }) {
+  const [shelves, setShelves] = useState<Record<string, Item[] | null>>({});
+  const [n, setN] = useState(0);
+  const [hold, setHold] = useState(false);
+  const mr = source !== "curseforge", cff = cf && source !== "modrinth";
+  const defs = [
+    mr && { key: "top", title: "Populares no Modrinth", cat: "", sort: "downloads" as Sort, get: () => searchModpacks("", 0, { sort: "downloads", limit: 8 }).then((r) => r.hits.map((h) => ({ ...h, src: "modrinth" as Src }))) },
+    cff && { key: "cf", title: "Em alta no CurseForge", cat: "", sort: "relevance" as Sort, get: () => cfModpackApi.search("", 0, { sort: 2 }).then((r) => r.hits.map((h) => ({ ...h, src: "curseforge" as Src }))) },
+    ...(mr ? [["multiplayer", "Para jogar com amigos"], ["adventure", "Aventura e RPG"], ["technology", "Tecnologia"]].map(([c, t]) => ({ key: c, title: t, cat: c, sort: "relevance" as Sort, get: () => searchModpacks("", 0, { category: c, limit: 8 }).then((r) => r.hits.map((h) => ({ ...h, src: "modrinth" as Src }))) })) : []),
+  ].filter(Boolean) as { key: string; title: string; cat: string; sort: Sort; get: () => Promise<Item[]> }[];
+  const sig = defs.map((d) => d.key).join(",");
+  useEffect(() => {
+    let live = true;
+    setShelves({});
+    for (const d of defs) d.get().then((l) => live && setShelves((s) => ({ ...s, [d.key]: l }))).catch(() => live && setShelves((s) => ({ ...s, [d.key]: [] })));
+    return () => {
+      live = false;
+    };
+  }, [sig]);
+
+  // Destaque: os mais baixados que têm imagem de galeria, alternando a cada 7 s.
+  const first = shelves[defs[0]?.key ?? ""];
+  const feat = (first ?? []).filter((h) => h.featured_gallery).slice(0, 4);
+  useEffect(() => {
+    if (hold || feat.length < 2) return;
+    const t = setInterval(() => setN((x) => x + 1), 7000);
+    return () => clearInterval(t);
+  }, [hold, feat.length]);
+  const f = feat.length ? feat[n % feat.length] : null;
+
+  return (
+    <>
+      {first === null || first === undefined ? (
+        <div className="h-[236px] shrink-0 animate-pulse rounded-[14px] bg-surface" />
+      ) : f && (
+        <section onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} className="relative h-[236px] shrink-0 overflow-hidden rounded-[14px] bg-raised">
+          <img key={f.project_id} src={f.featured_gallery!} alt="" className="absolute inset-0 h-full w-full animate-[rog-fade_500ms_ease-out] object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0b0b0c]/97 via-[#0b0b0c]/70 to-transparent" />
+          <div className="relative flex h-full max-w-[640px] flex-col justify-end gap-2 px-8 py-[26px]">
+            <span className="self-start rounded-[6px] bg-ink px-2 py-1 text-xs font-medium text-[#111112]">Em destaque</span>
+            <h2 className="m-0 truncate text-[28px] leading-9 font-semibold text-ink">{f.title}</h2>
+            <p className="m-0 line-clamp-2 text-sm text-soft">{f.description}</p>
+            <div className="flex items-center gap-2 pb-2">{loaderChips(f)}<Chip>{SRC[f.src]}</Chip><span className="text-xs text-soft">{fmtCount(f.downloads)} de downloads</span></div>
+            <div className="flex gap-2.5">
+              <button onClick={() => onOpen(f)} className="h-12 min-w-[150px] bg-ink px-6 text-base font-semibold text-[#111112] hover:bg-white">Instalar</button>
+              <button onClick={() => onOpen(f)} className="h-12 bg-active px-5 text-sm font-medium text-ink hover:bg-[#34343a]">Ver detalhes</button>
+            </div>
+          </div>
+          <div className="absolute right-8 bottom-[26px] flex gap-1.5">
+            {feat.map((x, i) => <button key={x.project_id} aria-label={`Destaque ${i + 1}`} onClick={() => setN(i)} className={`h-1 !rounded-[2px] transition-[width,background] ${i === n % feat.length ? "w-7 bg-ink" : "w-3.5 bg-ink/30 hover:bg-ink/60"}`} />)}
+          </div>
+        </section>
+      )}
+      {defs.map((d) => {
+        const l = shelves[d.key];
+        if (l && l.length === 0) return null;
+        return (
+          <section key={d.key} className="flex shrink-0 flex-col gap-3 pt-1">
+            <div className="flex items-baseline">
+              <h3 className="m-0 flex-1 text-base font-semibold text-ink">{d.title}</h3>
+              {d.key !== "cf" && <button onClick={() => onAll(d.cat, d.sort)} className="p-0 text-xs font-medium text-soft hover:text-ink">Ver todos</button>}
+            </div>
+            <div className="grid auto-rows-[0px] grid-cols-[repeat(auto-fill,minmax(250px,1fr))] grid-rows-[auto] gap-x-4 overflow-hidden">
+              {l ? l.map((h) => <StoreCard key={h.project_id} item={h} mine={mine.has(h.title.toLowerCase())} onOpen={onOpen} />) : Array.from({ length: 4 }, (_, i) => <div key={i} className="h-[206px] animate-pulse rounded-[10px] bg-surface" />)}
+            </div>
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
 function Filter({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
     <label className="flex h-11 shrink-0 items-center gap-2 rounded-[6px] bg-surface pl-3 text-sm text-muted">
@@ -59,6 +172,10 @@ export function ExploreModpacks() {
   const [version, setVersion] = useState("");
   const [loader, setLoader] = useState("");
   const [sort, setSort] = useState<Sort>("relevance");
+  const [cat, setCat] = useState("");
+  const { instances } = useApp();
+  const mine = new Set((instances ?? []).map((i) => i.name.toLowerCase()));
+  const showcase = !query && !cat && !version && !loader;
   const [mc, setMc] = useState<string[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -80,12 +197,14 @@ export function ExploreModpacks() {
       const page = more ? pages.current + 1 : 0;
       setLoading(true);
       setError(null);
-      const want: Src[] = source === "all" ? (cf ? ["modrinth", "curseforge"] : ["modrinth"]) : [source];
+      if (showcase) return;
+      const text = query.trim();
+      const want: Src[] = cat ? ["modrinth"] : source === "all" ? (cf ? ["modrinth", "curseforge"] : ["modrinth"]) : [source];
       const res = await Promise.allSettled(
         want.map((s) =>
           s === "modrinth"
-            ? searchModpacks(query, page * 20, { version, loader, sort })
-            : cfModpackApi.search(query, page * 20, { version, loader: LOADERS.find((l) => l.value === loader)?.cf, sort: SORTS.find((x) => x.value === sort)!.cf }),
+            ? searchModpacks(text, page * 20, { version, loader, sort, category: cat || undefined })
+            : cfModpackApi.search(text, page * 20, { version, loader: LOADERS.find((l) => l.value === loader)?.cf, sort: SORTS.find((x) => x.value === sort)!.cf }),
         ),
       );
       if (n !== seq.current) return;
@@ -112,7 +231,7 @@ export function ExploreModpacks() {
       }
       setLoading(false);
     },
-    [source, cf, query, version, loader, sort],
+    [source, cf, query, version, loader, sort, cat, showcase],
   );
 
   useEffect(() => {
@@ -126,7 +245,7 @@ export function ExploreModpacks() {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <h1 className="m-0 text-[28px] leading-9 font-semibold text-ink">Mods</h1>
-            <p className="m-0 text-sm text-muted">Escolha um pacote pronto e a instância é criada para você</p>
+            <p className="m-0 text-sm text-muted">Pacotes prontos do Modrinth{cf ? " e do CurseForge" : ""}</p>
           </div>
           {cf && (
             <Segmented
@@ -146,49 +265,34 @@ export function ExploreModpacks() {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={cf ? "Buscar modpacks no Modrinth e no CurseForge…" : "Buscar modpacks no Modrinth…"}
-            className="h-11 min-w-0 flex-1 border border-transparent bg-surface px-3.5 text-sm text-ink outline-none placeholder:text-[#55555b] focus:border-[#5a5a5f]"
+            placeholder="O que você quer jogar? Busque por nome, tema ou mod…"
+            className="h-11 min-w-0 flex-1 border border-transparent bg-surface px-4 text-sm text-ink outline-none placeholder:text-[#55555b] focus:border-[#5a5a5f]"
           />
           <Filter label="Versão" value={version} onChange={setVersion} options={[{ value: "", label: "Todas" }, ...mc.map((v) => ({ value: v, label: v }))]} />
           <Filter label="Loader" value={loader} onChange={setLoader} options={LOADERS} />
-          <Filter label="Ordenar" value={sort} onChange={(v) => setSort(v as Sort)} options={SORTS} />
+          {!showcase && <Filter label="Ordenar" value={sort} onChange={(v) => setSort(v as Sort)} options={SORTS} />}
         </div>
-        {note && <p className="m-0 text-xs text-muted">{note}</p>}
-        {error && <p className="m-0 text-sm text-danger">{error}</p>}
-
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4">
-          {items.map((h) => (
-            <button
-              key={h.src + h.project_id}
-              onClick={() => setOpen(h)}
-              className={`group flex flex-col overflow-hidden !rounded-[10px] border-2 bg-surface text-left ${open?.project_id === h.project_id && open.src === h.src ? "border-ink" : "border-transparent hover:border-[#3a3a40]"}`}
-            >
-              <span className="relative block h-[138px] w-full overflow-hidden bg-raised">
-                {(h.featured_gallery || h.icon_url) && (
-                  <img src={h.featured_gallery || h.icon_url!} alt="" loading="lazy" className={`h-full w-full object-cover transition-[transform,filter] duration-200 group-hover:scale-[1.03] group-hover:brightness-110 ${h.featured_gallery ? "" : "scale-110 blur-xl brightness-75"}`} />
-                )}
-                {!h.featured_gallery && h.icon_url && <img src={h.icon_url} alt="" className="absolute top-1/2 left-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-[10px] object-cover shadow-[0_8px_24px_rgba(0,0,0,0.5)]" />}
-                <span className="absolute top-2.5 left-2.5 rounded-[6px] bg-black/60 px-2 py-[3px] text-xs font-medium text-ink">{SRC[h.src]}</span>
-              </span>
-              <span className="flex w-full flex-col gap-1.5 px-4 py-3.5">
-                <span className="flex items-baseline gap-2">
-                  <span className="truncate text-base font-semibold text-ink">{h.title}</span>
-                  <span className="shrink-0 text-xs text-muted">por {h.author}</span>
-                </span>
-                <span className="truncate text-sm text-soft">{h.description}</span>
-                <span className="flex items-center gap-1.5 pt-1">
-                  {(h.categories ?? []).filter((c) => ["fabric", "forge", "neoforge", "quilt"].includes(c)).slice(0, 2).map((c) => <Chip key={c}>{LOADERS.find((l) => l.value === c)?.label}</Chip>)}
-                  <span className="flex-1" />
-                  <span className="text-xs font-medium text-muted">↓ {fmtCount(h.downloads)}</span>
-                </span>
-              </span>
-            </button>
+        <div className="flex flex-wrap gap-2">
+          {CATS.map((c) => (
+            <button key={c.id} onClick={() => { setCat(c.id); if (!c.id) { setQuery(""); setSort("relevance"); } }} className={`shrink-0 px-3 py-1.5 text-sm font-medium ${(c.id ? cat === c.id : showcase) ? "bg-ink text-[#111112]" : "bg-surface text-soft hover:bg-raised hover:text-ink"}`}>{c.label}</button>
           ))}
-          {loading && Array.from({ length: items.length ? 3 : 6 }, (_, i) => <div key={i} className="h-[246px] animate-pulse rounded-[10px] bg-surface" style={{ opacity: 1 - i * 0.12 }} />)}
         </div>
-        {!loading && !error && items.length === 0 && <p className="m-0 py-10 text-center text-sm text-muted">Nenhum modpack encontrado com esses filtros.</p>}
-        {!loading && items.length > 0 && items.length < total && (
-          <button onClick={() => load(true)} className="self-center bg-active px-4 py-2 text-sm font-medium text-ink hover:bg-[#34343a]">Carregar mais</button>
+        {showcase ? (
+          <Showcase cf={cf} source={source} mine={mine} onOpen={setOpen} onAll={(c, s) => { setCat(c); setSort(s); if (!c) setQuery(" "); }} />
+        ) : (
+          <>
+            {cat && cf && source !== "modrinth" && <p className="m-0 text-xs text-muted">Os temas vêm do Modrinth; para ver o CurseForge, use a busca ou a vitrine.</p>}
+            {note && <p className="m-0 text-xs text-muted">{note}</p>}
+            {error && <p className="m-0 text-sm text-danger">{error}</p>}
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
+              {items.map((h) => <StoreCard key={h.src + h.project_id} item={h} mine={mine.has(h.title.toLowerCase())} active={open?.project_id === h.project_id && open.src === h.src} onOpen={setOpen} />)}
+              {loading && Array.from({ length: items.length ? 4 : 8 }, (_, i) => <div key={i} className="h-[220px] animate-pulse rounded-[10px] bg-surface" style={{ opacity: 1 - i * 0.1 }} />)}
+            </div>
+            {!loading && !error && items.length === 0 && <p className="m-0 py-10 text-center text-sm text-muted">Nenhum modpack encontrado com esses filtros.</p>}
+            {!loading && items.length > 0 && items.length < total && (
+              <button onClick={() => load(true)} className="self-center bg-active px-4 py-2 text-sm font-medium text-ink hover:bg-[#34343a]">Carregar mais</button>
+            )}
+          </>
         )}
       </div>
       {open && <Details item={open} onClose={() => setOpen(null)} />}

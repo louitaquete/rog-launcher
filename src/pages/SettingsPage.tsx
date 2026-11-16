@@ -165,8 +165,8 @@ export function SettingsPage() {
 
         {section === "aparencia" && (
           <Group title="Interface">
-            <Row title="Escala da interface" desc="Tamanho de textos e botões">
-              <Segmented value={String(appearance.uiScale)} onChange={(v) => set("appearance", { uiScale: Number(v) })} options={["90", "100", "110", "125"].map((v) => ({ value: v, label: `${v}%` }))} />
+            <Row title="Escala da interface" desc="Aumenta ou diminui tudo: textos, botões e cards">
+              <Segmented value={String(appearance.uiScale)} onChange={(v) => set("appearance", { uiScale: Number(v) })} options={["80", "90", "100", "110", "125", "150"].map((v) => ({ value: v, label: `${v}%` }))} />
             </Row>
             <Row title="Animações" desc="Transições e efeitos de hover">
               <Toggle on={appearance.animations} onChange={(v) => set("appearance", { animations: v })} />

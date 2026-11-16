@@ -77,36 +77,51 @@ async function bestVersion(inst: Instance, kind: ContentKind, projectId: string)
   return list.find((v) => v.version_type === "release") ?? list[0] ?? null;
 }
 
-/** Instala o projeto e as dependências obrigatórias. Devolve os títulos instalados. */
-export async function install(inst: Instance, kind: ContentKind, projectId: string, done = new Set<string>()): Promise<string[]> {
+/**
+ * Instala o projeto e as dependências obrigatórias. Devolve os títulos instalados.
+ * O que entra como dependência fica marcado como `auto` (biblioteca); o que o jogador já tinha não é mexido.
+ */
+export async function install(inst: Instance, kind: ContentKind, projectId: string, done = new Set<string>(), auto = false, have?: Set<string>): Promise<string[]> {
   if (done.has(projectId)) return [];
   done.add(projectId);
+  have ??= new Set((await contentApi.list(inst.id)).flatMap((i) => (i.meta ? [i.meta.projectId] : [])));
   const [project, version] = await Promise.all([
     get<{ title: string; icon_url: string | null }>(`/project/${projectId}`),
     bestVersion(inst, kind, projectId),
   ]);
   if (!version) throw new Error(`${project.title} não tem versão para ${inst.mcVersion}`);
   const file = version.files.find((f) => f.primary) ?? version.files[0];
+  const deps = version.dependencies.flatMap((d) => (d.dependency_type === "required" && d.project_id ? [d.project_id] : []));
   await contentApi.install(inst.id, {
     url: file.url,
     sha1: file.hashes.sha1,
-    meta: {
-      kind,
-      file: file.filename,
-      source: "modrinth",
-      projectId,
-      versionId: version.id,
-      versionNumber: version.version_number,
-      title: project.title,
-      iconUrl: project.icon_url,
-    },
+    meta: { kind, file: file.filename, source: "modrinth", projectId, versionId: version.id, versionNumber: version.version_number, title: project.title, iconUrl: project.icon_url, auto, deps },
   });
   const installed = [project.title];
-  for (const d of version.dependencies) {
-    if (d.dependency_type !== "required" || !d.project_id) continue;
-    installed.push(...(await install(inst, kind === "shader" ? "mod" : kind, d.project_id, done)));
+  for (const d of deps) {
+    if (have.has(d)) continue; // já está lá: não reinstala nem vira "biblioteca"
+    installed.push(...(await install(inst, kind === "shader" ? "mod" : kind, d, done, true, have)));
   }
   return installed;
+}
+
+/** Para cada item do Modrinth, a versão mais nova compatível quando ela é diferente da instalada. */
+export async function checkUpdates(inst: Instance, items: { kind: ContentKind; meta: { source: string; projectId: string; versionId: string } | null }[]): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  const todo = items.filter((i) => i.meta?.source === "modrinth");
+  for (let k = 0; k < todo.length; k += 6) {
+    await Promise.all(
+      todo.slice(k, k + 6).map(async (i) => {
+        try {
+          const v = await bestVersion(inst, i.kind, i.meta!.projectId);
+          if (v && v.id !== i.meta!.versionId) out[i.meta!.projectId] = v.version_number;
+        } catch {
+          /* sem internet ou projeto removido */
+        }
+      }),
+    );
+  }
+  return out;
 }
 
 export const fmtCount = (n: number) =>
@@ -121,7 +136,7 @@ export async function updateAll(inst: Instance): Promise<number> {
     try {
       const v = await bestVersion(inst, i.kind, i.meta.projectId);
       if (v && v.id !== i.meta.versionId) {
-        await install(inst, i.kind, i.meta.projectId);
+        await install(inst, i.kind, i.meta.projectId, new Set(), !!i.meta.auto);
         n++;
       }
     } catch {
@@ -132,11 +147,12 @@ export async function updateAll(inst: Instance): Promise<number> {
 }
 
 /** Busca modpacks no Modrinth. */
-export async function searchModpacks(query: string, offset = 0, f: { version?: string; loader?: string; sort?: Sort } = {}) {
+export async function searchModpacks(query: string, offset = 0, f: { version?: string; loader?: string; sort?: Sort; category?: string; limit?: number } = {}) {
   const facets: string[][] = [["project_type:modpack"]];
+  if (f.category) facets.push([`categories:${f.category}`]);
   if (f.version) facets.push([`versions:${f.version}`]);
   if (f.loader) facets.push([`categories:${f.loader}`]);
-  const q = new URLSearchParams({ query, index: f.sort ?? "relevance", limit: "20", offset: String(offset), facets: JSON.stringify(facets) });
+  const q = new URLSearchParams({ query, index: f.sort ?? "relevance", limit: String(f.limit ?? 20), offset: String(offset), facets: JSON.stringify(facets) });
   return get<{ hits: Hit[]; total_hits: number }>(`/search?${q}`);
 }
 

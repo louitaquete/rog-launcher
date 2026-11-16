@@ -174,6 +174,8 @@ pub async fn install(client: &reqwest::Client, game: &Path, kind: Kind, mc: &str
                 url: url.to_string(),
                 sha1,
                 meta: Meta {
+                    auto: false,
+                    deps: Vec::new(),
                     kind,
                     file: file["fileName"].as_str().unwrap_or_default().into(),
                     source: "curseforge".into(),
