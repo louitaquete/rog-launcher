@@ -60,7 +60,78 @@ export function Sidebar() {
   );
 }
 
+/** Nick válido no Minecraft: 3–16 caracteres, letras, números e _. */
+export const validNick = (n: string) => /^[A-Za-z0-9_]{3,16}$/.test(n);
+
+/** Build de testes: no lugar da conta, um seletor de nick para o modo offline. */
+function NickButton() {
+  const { settings, updateSettings } = useApp();
+  const nick = settings?.general.devNickname?.trim() || "Jogador";
+  const [menu, setMenu] = useState(false);
+  const [draft, setDraft] = useState(nick);
+  const menuRef = useDismiss<HTMLDivElement>(menu, useCallback(() => setMenu(false), []));
+  const ok = validNick(draft.trim());
+  function save() {
+    if (!ok) return;
+    updateSettings((s) => ({ ...s, general: { ...s.general, devNickname: draft.trim() } }));
+    setMenu(false);
+  }
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        aria-label="Nick do modo offline"
+        onClick={() => {
+          setDraft(nick);
+          setMenu((m) => !m);
+        }}
+        className="group flex h-16 w-16 items-center justify-center hover:bg-raised"
+      >
+        <span className="flex h-8 w-8 items-center justify-center bg-active font-brand text-sm font-bold text-ink">{nick.slice(0, 1).toUpperCase()}</span>
+        {!menu && (
+          <span className="pointer-events-none absolute left-[74px] z-30 rounded-[6px] bg-active px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-ink opacity-0 shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-opacity group-hover:opacity-100">
+            {nick} · offline
+          </span>
+        )}
+      </button>
+      {menu && (
+        <div className="absolute bottom-0 left-16 z-30 w-64 border border-edge bg-raised shadow-[0_8px_24px_rgba(0,0,0,0.6)]">
+          <div className="border-b border-line px-4 py-3">
+            <p className="m-0 text-sm font-semibold">Modo offline</p>
+            <p className="m-0 text-xs text-muted">Build de testes · sem conta</p>
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              save();
+            }}
+            className="flex flex-col gap-2 px-4 py-3"
+          >
+            <label className="text-xs text-muted" htmlFor="rog-nick">Nick</label>
+            <input
+              id="rog-nick"
+              autoFocus
+              value={draft}
+              maxLength={16}
+              onChange={(e) => setDraft(e.target.value)}
+              className="h-9 border border-edge bg-bar px-2.5 text-sm text-ink outline-none focus:border-soft"
+            />
+            {!ok && <p className="m-0 text-xs text-danger">3 a 16 caracteres: letras, números e _</p>}
+            <button type="submit" disabled={!ok} className="h-9 bg-ink text-xs font-semibold text-[#111112] hover:bg-white disabled:opacity-40">
+              Salvar nick
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AccountButton() {
+  const { devOffline } = useApp();
+  return devOffline ? <NickButton /> : <MicrosoftAccountButton />;
+}
+
+function MicrosoftAccountButton() {
   const { account, setAccount, setLoginOpen } = useApp();
   const [menu, setMenu] = useState(false);
   const menuRef = useDismiss<HTMLDivElement>(menu, useCallback(() => setMenu(false), []));

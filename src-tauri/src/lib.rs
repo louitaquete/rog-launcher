@@ -127,7 +127,9 @@ fn dev_offline() -> bool {
 }
 
 async fn account_for(settings: &store::settings::Settings, root: &std::path::Path) -> Res<launch::args::Account> {
-    if cfg!(feature = "dev-offline") && auth::load(root).is_none() {
+    // Build de testes: sempre offline com o nick escolhido, nunca usa conta real.
+    if cfg!(feature = "dev-offline") {
+        let _ = root;
         let nick = settings.general.dev_nickname.trim();
         let nick = if nick.is_empty() { "Jogador" } else { nick };
         return Ok(launch::args::Account::offline(nick));

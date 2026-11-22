@@ -113,7 +113,7 @@ export function SettingsPage() {
             </Row>
             {devOffline && (
               <Row title="Nick do modo de teste" desc="Build de desenvolvedor: o jogo abre offline com este nome">
-                <CommitInput value={general.devNickname} onCommit={(v) => set("general", { devNickname: v.trim().slice(0, 16) || "Jogador" })} className="w-[200px]" />
+                <CommitInput value={general.devNickname} onCommit={(v) => /^[A-Za-z0-9_]{3,16}$/.test(v.trim()) && set("general", { devNickname: v.trim() })} className="w-[200px]" />
               </Row>
             )}
             <Row title="Aviso do Kill game" desc={general.killWarningDismissed ? "Desligado: o Kill game fecha o jogo direto" : "Aparece antes de forçar o fechamento do jogo"}>

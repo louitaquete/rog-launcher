@@ -27,7 +27,7 @@ const baseOf = (mc: string) => BASES.find((b) => b.subs.includes(mc) || mc.start
 const fabricAllowed = (base: string) => Number(base.split(".")[1]) >= 16;
 
 export function PvpPlay({ instance }: { instance: Instance }) {
-  const { installs, games, launchErrors, cancelInstall, refresh, setLoginOpen, account } = useApp();
+  const { installs, games, launchErrors, cancelInstall, refresh, setLoginOpen, account, devOffline, settings } = useApp();
   const [inst, setInst] = useState(instance);
   const savedBase = baseOf(instance.mcVersion);
   const [base, setBase] = useState(savedBase);
@@ -129,7 +129,9 @@ export function PvpPlay({ instance }: { instance: Instance }) {
           </div>
           <div className={row}>
             <span className={lab}>Conta</span>
-            {account ? (
+            {devOffline ? (
+              <span className="flex h-10 min-w-0 flex-1 items-center truncate rounded-[6px] bg-active px-3 text-sm font-medium text-ink">{settings?.general.devNickname?.trim() || "Jogador"} · offline</span>
+            ) : account ? (
               <span className="flex h-10 min-w-0 flex-1 items-center truncate rounded-[6px] bg-active px-3 text-sm font-medium text-ink">{account.name}</span>
             ) : (
               <button onClick={() => setLoginOpen(true)} className="h-10 flex-1 bg-active px-3 text-left text-sm font-medium text-soft hover:text-ink">Entrar →</button>
